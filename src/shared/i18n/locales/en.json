@@ -1,0 +1,15 @@
+{
+  "app_name": "SomaSmart",
+  "login": "Login",
+  "register": "Register",
+  "email_or_username": "Email or Username",
+  "password": "Password",
+  "role": "Role",
+  "student": "Student",
+  "teacher": "Teacher",
+  "admin": "Admin",
+  "submit": "Submit",
+  "offline": "Offline",
+  "online": "Online"
+}
+

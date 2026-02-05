@@ -1,0 +1,10 @@
+node_modules
+dist
+.DS_Store
+.cache
+.corepack
+playwright-report
+test-results
+coverage
+.npm-cache
+.idea
