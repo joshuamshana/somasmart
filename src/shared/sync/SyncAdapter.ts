@@ -3,6 +3,8 @@ import type {
   AppSetting,
   Coupon,
   CurriculumCategory,
+  CurriculumClass,
+  CurriculumLevel,
   CurriculumSubject,
   Lesson,
   LessonAsset,
@@ -31,6 +33,8 @@ export type PullBundle = {
   schools?: School[];
   settings?: AppSetting[];
   curriculumCategories?: CurriculumCategory[];
+  curriculumLevels?: CurriculumLevel[];
+  curriculumClasses?: CurriculumClass[];
   curriculumSubjects?: CurriculumSubject[];
   lessons?: Lesson[];
   lessonContents?: LessonContent[];

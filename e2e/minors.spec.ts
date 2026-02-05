@@ -7,7 +7,6 @@ test("Parental controls: minors messaging blocked unless enabled by school", asy
   await page.getByLabel("Full name").fill("Minor Student");
   await page.getByLabel("Username").fill(studentUsername);
   await page.getByLabel("Password").fill("password123");
-  await page.getByLabel("Role").selectOption("student");
   await page.getByLabel("School code (optional)").fill("SOMA001");
   await page.getByLabel("Student is a minor (parental controls)").check();
   await page.getByRole("button", { name: "Register" }).click();

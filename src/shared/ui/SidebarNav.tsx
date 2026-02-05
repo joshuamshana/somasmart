@@ -17,11 +17,6 @@ function useWithSearch(to: string) {
   return location.search && !to.includes("?") ? `${to}${location.search}` : to;
 }
 
-function isActive(pathname: string, to: string) {
-  if (to === "/admin") return pathname === "/admin";
-  return pathname === to || pathname.startsWith(`${to}/`);
-}
-
 export function SidebarNav({
   groups,
   onNavigate
@@ -30,6 +25,24 @@ export function SidebarNav({
   onNavigate?: () => void;
 }) {
   const location = useLocation();
+  const pathname = location.pathname;
+
+  // Choose a single "best match" to avoid multiple items highlighted when paths share prefixes
+  // (e.g. "/teacher/lessons" and "/teacher/lessons/new").
+  const bestActiveTo = React.useMemo(() => {
+    let best: string | null = null;
+    for (const g of groups) {
+      for (const i of g.items) {
+        const to = i.to;
+        const matches =
+          to === "/admin" ? pathname === "/admin" : pathname === to || pathname.startsWith(`${to}/`);
+        if (!matches) continue;
+        if (!best || to.length > best.length) best = to;
+      }
+    }
+    return best;
+  }, [groups, pathname]);
+
   return (
     <div className="space-y-6">
       {groups.map((g) => (
@@ -38,7 +51,7 @@ export function SidebarNav({
           <div className="mt-2 space-y-1">
             {g.items.map((i) => {
               const target = useWithSearch(i.to);
-              const active = isActive(location.pathname, i.to);
+              const active = bestActiveTo === i.to;
               return (
                 <Link
                   key={i.to}
@@ -59,4 +72,3 @@ export function SidebarNav({
     </div>
   );
 }
-

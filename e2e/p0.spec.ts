@@ -5,7 +5,6 @@ test("P0: student registers -> opens lesson -> completes quiz", async ({ page, c
   await page.getByLabel("Full name").fill("Student One");
   await page.getByLabel("Username").fill(`student_${Date.now()}`);
   await page.getByLabel("Password").fill("password123");
-  await page.getByLabel("Role").selectOption("student");
   await page.getByRole("button", { name: "Register" }).click();
   await expect(page.getByRole("link", { name: "Lessons", exact: true })).toBeVisible();
 
@@ -27,13 +26,19 @@ test("P0: teacher registers -> admin approves -> teacher submits lesson -> admin
 }) => {
   const teacherUsername = `teacher_${Date.now()}`;
 
-  await page.goto("/register");
+  // School admin creates teacher (pending)
+  await page.goto("/login");
+  await page.getByLabel("Username").fill("schooladmin");
+  await page.getByLabel("Password").fill("school123");
+  await page.getByRole("button", { name: "Login" }).click();
+  await page.getByRole("link", { name: "Users", exact: true }).click();
+  await page.getByLabel("Role").selectOption("teacher");
   await page.getByLabel("Full name").fill("Teacher Two");
   await page.getByLabel("Username").fill(teacherUsername);
   await page.getByLabel("Password").fill("password123");
-  await page.getByLabel("Role").selectOption("teacher");
-  await page.getByRole("button", { name: "Register" }).click();
-  await expect(page.getByRole("button", { name: "Login" })).toBeVisible();
+  await page.getByRole("button", { name: "Create" }).click();
+  await expect(page.getByText("Teacher created (pending admin approval).")).toBeVisible();
+  await page.getByRole("button", { name: "Logout" }).click();
 
   // admin approves teacher
   await page.goto("/login");
@@ -57,13 +62,16 @@ test("P0: teacher registers -> admin approves -> teacher submits lesson -> admin
   await expect(page.getByRole("link", { name: "Upload Lesson", exact: true })).toBeVisible();
   await page.getByRole("link", { name: "Upload Lesson", exact: true }).click();
   await page.getByLabel("Title").fill("Teacher Lesson 1");
-  await page.getByLabel("Subject").fill("Science");
+  await page.getByLabel("Level").selectOption({ label: "Primary" });
+  await page.getByLabel("Class").selectOption({ label: "Class 1" });
+  await page.getByLabel("Subject").selectOption({ label: "ICT" });
   await page.getByLabel("Tags (comma separated; include 'trial' for free lessons)").fill("trial");
   await page.getByLabel("Description").fill("A teacher-created lesson.");
+  await page.getByRole("button", { name: "Next" }).click();
   await page.getByRole("button", { name: "Add text" }).click();
   await page.getByLabel("Text block 1").fill("Lesson content");
   await page.getByRole("button", { name: "Submit for approval" }).click();
-  await expect(page.getByText("Submitted for approval.")).toBeVisible();
+  await expect(page).toHaveURL(/\/teacher\/lessons/);
   await page.getByRole("button", { name: "Logout" }).click();
 
   // admin approves lesson
@@ -82,7 +90,6 @@ test("P0: student unlocks content via coupon", async ({ page }) => {
   await page.getByLabel("Full name").fill("Student Two");
   await page.getByLabel("Username").fill(`student_${Date.now()}`);
   await page.getByLabel("Password").fill("password123");
-  await page.getByLabel("Role").selectOption("student");
   await page.getByRole("button", { name: "Register" }).click();
   await expect(page.getByRole("link", { name: "Payments", exact: true })).toBeVisible();
 

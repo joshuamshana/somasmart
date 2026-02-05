@@ -10,14 +10,16 @@ This file is the requirements backlog for SomaSmart (offline-first PWA). IDs are
 
 ## Milestone 1 — Auth + roles
 - REQ-0101 Self-registration for students
-- REQ-0102 Self-registration for teachers (status = pending)
+- REQ-0102 Teachers cannot self-register; School Admin creates teachers (pending) and System Admin approves lifecycle
+- REQ-0106 Register page supports students only (teacher registration hidden/blocked with guidance)
+- REQ-0107 School Admin teacher creation syncs to System Admin (cross-device)
 - REQ-0103 Login for seeded admin accounts
 - REQ-0104 Role-gated routes and logout
 - REQ-0105 Teacher access blocked until admin approval
 
 ## Milestone 2 — Student lessons + offline player
 - REQ-0201 Student sees approved lessons
-- REQ-0202 Filter/search lessons by level/subject/language
+- REQ-0202 Filter/search lessons by level/class/subject/language
 - REQ-0203 Lesson player supports text, images, audio, PDF, PPTX (best-effort)
 - REQ-0204 Locked lessons show unlock guidance
 
@@ -27,7 +29,7 @@ This file is the requirements backlog for SomaSmart (offline-first PWA). IDs are
 - REQ-0303 Tutor suggests next steps (repeat/retry/suggest)
 
 ## Milestone 4 — Teacher lesson builder
-- REQ-0401 Teacher builds full lesson with blocks + quiz
+- REQ-0401 Teacher builds full lesson with governed metadata (level/class/subject) + blocks + quiz
 - REQ-0402 Teacher submits for approval (pending_approval)
 
 ## Milestone 5 — Admin dashboard approvals
@@ -83,7 +85,12 @@ Improve teacher day-to-day workflow and visibility (no backend required; offline
 - REQ-2005 Teacher dashboard: sync widget (lastSync, queued, failed) + “Sync now” shortcut
 - REQ-2006 Teacher dashboard: student engagement summary for teacher’s lessons (views/completions/avg score) from local progress/quizAttempts
 - REQ-2007 Teacher lessons list: table view w/ search + filters + status pills + row actions (preview/edit/resubmit/delete w confirm)
-- REQ-2008 Teacher lesson editing: open existing draft/rejected lesson in builder and resubmit (no new builder UX, reuse current)
+- REQ-2008 Teacher lesson editing: open existing lesson in builder via `/teacher/lessons/:lessonId/edit` and resubmit (rejected/unpublished/draft)
+
+## Milestone 13 — Curriculum hierarchy + text variants + nav hardening
+- REQ-2010 Curriculum hierarchy: Level/Class/Subject admin-defined + teacher governed selection
+- REQ-2011 Text blocks have variants (title/subtitle/heading/body) and render appropriately
+- REQ-2012 Sidebar nav highlights only best match (no multiple active items)
 
 ## Milestone 19 — Full Admin Control (CRUD + confirmations)
 - REQ-1901 Confirmation dialogs required for destructive actions

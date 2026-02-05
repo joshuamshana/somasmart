@@ -9,7 +9,6 @@ test("Admin support desk: sees synced message and resolves it", async ({ page })
   await page.getByLabel("Full name").fill("Support Student");
   await page.getByLabel("Username").fill(studentUsername);
   await page.getByLabel("Password").fill("password123");
-  await page.getByLabel("Role").selectOption("student");
   await page.getByRole("button", { name: "Register" }).click();
   await expect(page.getByRole("link", { name: "Support", exact: true })).toBeVisible();
 

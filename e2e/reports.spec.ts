@@ -5,7 +5,6 @@ test("Reports: student exports progress PDF", async ({ page }) => {
   await page.getByLabel("Full name").fill("Report Student");
   await page.getByLabel("Username").fill(`report_student_${Date.now()}`);
   await page.getByLabel("Password").fill("password123");
-  await page.getByLabel("Role").selectOption("student");
   await page.getByRole("button", { name: "Register" }).click();
   await expect(page.getByRole("link", { name: "Lessons", exact: true })).toBeVisible();
 
@@ -21,4 +20,3 @@ test("Reports: student exports progress PDF", async ({ page }) => {
   const download = await downloadPromise;
   expect(download.suggestedFilename()).toMatch(/somasmart_progress_.*\.pdf/);
 });
-

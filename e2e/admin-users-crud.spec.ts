@@ -11,6 +11,7 @@ test("Admin users CRUD: create/edit/reset/suspend/activate/delete student + admi
   await page.getByLabel("Username").fill("admin");
   await page.getByLabel("Password").fill("admin123");
   await page.getByRole("button", { name: "Login" }).click();
+  await expect(page.getByRole("link", { name: "Students", exact: true })).toBeVisible({ timeout: 30_000 });
 
   // Student CRUD
   await page.goto(`/admin/students?device=${device}`);

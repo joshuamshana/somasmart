@@ -3,10 +3,13 @@ import { db } from "@/shared/db/db";
 import type {
   AppSetting,
   CurriculumCategory,
+  CurriculumClass,
+  CurriculumLevel,
   CurriculumSubject
 } from "@/shared/types";
 import { Card } from "@/shared/ui/Card";
 import { Input } from "@/shared/ui/Input";
+import { Select } from "@/shared/ui/Select";
 import { Button } from "@/shared/ui/Button";
 import { ConfirmDialog } from "@/shared/ui/ConfirmDialog";
 import { useAuth } from "@/features/auth/authContext";
@@ -74,6 +77,8 @@ async function exportBackup(): Promise<BackupBundleV1> {
       users: await db.users.toArray(),
       schools: await db.schools.toArray(),
       curriculumCategories: await db.curriculumCategories.toArray(),
+      curriculumLevels: await db.curriculumLevels.toArray(),
+      curriculumClasses: await db.curriculumClasses.toArray(),
       curriculumSubjects: await db.curriculumSubjects.toArray(),
       lessons: await db.lessons.toArray(),
       lessonContents: await db.lessonContents.toArray(),
@@ -109,6 +114,8 @@ async function importBackup(bundle: BackupBundleV1) {
       db.users,
       db.schools,
       db.curriculumCategories,
+      db.curriculumLevels,
+      db.curriculumClasses,
       db.curriculumSubjects,
       db.lessons,
       db.lessonContents,
@@ -132,6 +139,8 @@ async function importBackup(bundle: BackupBundleV1) {
         db.users.clear(),
         db.schools.clear(),
         db.curriculumCategories.clear(),
+        db.curriculumLevels.clear(),
+        db.curriculumClasses.clear(),
         db.curriculumSubjects.clear(),
         db.lessons.clear(),
         db.lessonContents.clear(),
@@ -154,6 +163,8 @@ async function importBackup(bundle: BackupBundleV1) {
       await db.users.bulkPut(t.users ?? []);
       await db.schools.bulkPut(t.schools ?? []);
       await db.curriculumCategories.bulkPut(t.curriculumCategories ?? []);
+      await db.curriculumLevels.bulkPut(t.curriculumLevels ?? []);
+      await db.curriculumClasses.bulkPut(t.curriculumClasses ?? []);
       await db.curriculumSubjects.bulkPut(t.curriculumSubjects ?? []);
       await db.lessons.bulkPut(t.lessons ?? []);
       await db.lessonContents.bulkPut(t.lessonContents ?? []);
@@ -202,11 +213,20 @@ export function AdminSettingsPage() {
   const [maxPptxMb, setMaxPptxMb] = useState("20");
 
   const [categories, setCategories] = useState<CurriculumCategory[]>([]);
+  const [levels, setLevels] = useState<CurriculumLevel[]>([]);
+  const [classes, setClasses] = useState<CurriculumClass[]>([]);
   const [subjects, setSubjects] = useState<CurriculumSubject[]>([]);
+
   const [catName, setCatName] = useState("");
+  const [levelName, setLevelName] = useState("");
+  const [levelSortOrder, setLevelSortOrder] = useState("1");
+  const [className, setClassName] = useState("");
+  const [classSortOrder, setClassSortOrder] = useState("1");
   const [subName, setSubName] = useState("");
-  const [subLevel, setSubLevel] = useState<CurriculumSubject["level"]>("Primary");
   const [subCategoryId, setSubCategoryId] = useState<string>("");
+
+  const [selectedLevelId, setSelectedLevelId] = useState<string>("");
+  const [selectedClassId, setSelectedClassId] = useState<string>("");
 
   async function refresh() {
     const settings = await db.settings.toArray();
@@ -221,9 +241,18 @@ export function AdminSettingsPage() {
 
     const cats = (await db.curriculumCategories.toArray()).filter((c) => !c.deletedAt);
     setCategories(cats.sort((a, b) => a.name.localeCompare(b.name)));
+    const lvls = (await db.curriculumLevels.toArray()).filter((l) => !l.deletedAt);
+    setLevels(lvls.sort((a, b) => a.sortOrder - b.sortOrder || a.name.localeCompare(b.name)));
+    const cls = (await db.curriculumClasses.toArray()).filter((c) => !c.deletedAt);
+    setClasses(cls.sort((a, b) => a.sortOrder - b.sortOrder || a.name.localeCompare(b.name)));
     const subs = (await db.curriculumSubjects.toArray()).filter((s) => !s.deletedAt);
     setSubjects(subs.sort((a, b) => a.name.localeCompare(b.name)));
+
     if (!subCategoryId && cats.length) setSubCategoryId(cats[0].id);
+    if (!selectedLevelId && lvls.length) setSelectedLevelId(lvls[0].id);
+    const levelId = selectedLevelId || (lvls[0]?.id ?? "");
+    const classesForLevel = levelId ? cls.filter((c) => c.levelId === levelId && !c.deletedAt) : [];
+    if (!selectedClassId && classesForLevel.length) setSelectedClassId(classesForLevel[0].id);
   }
 
   useEffect(() => {
@@ -233,14 +262,15 @@ export function AdminSettingsPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const subjectsByCat = useMemo(() => {
-    const map: Record<string, CurriculumSubject[]> = {};
-    for (const s of subjects) {
-      map[s.categoryId] ??= [];
-      map[s.categoryId].push(s);
-    }
-    return map;
-  }, [subjects]);
+  const classesForSelectedLevel = useMemo(
+    () => classes.filter((c) => c.levelId === selectedLevelId && !c.deletedAt),
+    [classes, selectedLevelId]
+  );
+
+  const subjectsForSelectedClass = useMemo(
+    () => subjects.filter((s) => s.classId === selectedClassId && !s.deletedAt),
+    [subjects, selectedClassId]
+  );
 
   return (
     <div className="space-y-4">
@@ -328,7 +358,356 @@ export function AdminSettingsPage() {
         {msg ? <div className="mt-3 text-sm text-text">{msg}</div> : null}
       </Card>
 
-      <Card title="Curriculum (categories + subjects)">
+      <Card title="Curriculum (levels → classes → subjects)">
+        <div className="grid gap-4 lg:grid-cols-3">
+          <div className="space-y-3">
+            <div className="text-sm font-semibold text-text">Levels</div>
+            <div className="grid gap-3">
+              <Input label="New level name" value={levelName} onChange={(e) => setLevelName(e.target.value)} />
+              <Input
+                label="Level sort order"
+                value={levelSortOrder}
+                onChange={(e) => setLevelSortOrder(e.target.value)}
+              />
+              <Button
+                variant="secondary"
+                onClick={async () => {
+                  const name = levelName.trim();
+                  if (!name) return;
+                  const sortOrder = Number(levelSortOrder || "1");
+                  const row: CurriculumLevel = {
+                    id: newId("lvl"),
+                    name,
+                    sortOrder: Number.isFinite(sortOrder) ? sortOrder : 1,
+                    createdAt: nowIso(),
+                    updatedAt: nowIso()
+                  };
+                  await db.curriculumLevels.put(row);
+                  setLevelName("");
+                  await enqueueOutboxEvent({ type: "settings_push", payload: {} });
+                  if (user) {
+                    await logAudit({
+                      actorUserId: user.id,
+                      action: "curriculum_update",
+                      entityType: "settings",
+                      entityId: "curriculum",
+                      details: { createLevel: { name, sortOrder } }
+                    });
+                  }
+                  await refresh();
+                }}
+              >
+                Add level
+              </Button>
+            </div>
+
+            <div className="space-y-2">
+              {levels.map((l) => (
+                <button
+                  key={l.id}
+                  type="button"
+                  onClick={() => {
+                    setSelectedLevelId(l.id);
+                    setSelectedClassId("");
+                  }}
+                  className={`w-full rounded-lg border px-3 py-2 text-left text-sm ${
+                    selectedLevelId === l.id
+                      ? "border-brand bg-surface2"
+                      : "border-border bg-surface hover:border-border/80"
+                  }`}
+                >
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="font-semibold text-text">{l.name}</div>
+                    <div className="text-xs text-muted">#{l.sortOrder}</div>
+                  </div>
+                </button>
+              ))}
+              {levels.length === 0 ? <div className="text-sm text-muted">No levels yet.</div> : null}
+            </div>
+
+            <Button
+              variant="danger"
+              disabled={!selectedLevelId}
+              onClick={() => {
+                const levelRow = levels.find((x) => x.id === selectedLevelId);
+                if (!levelRow) return;
+                const hasChildren = classes.some((c) => c.levelId === levelRow.id && !c.deletedAt);
+                if (hasChildren) {
+                  setMsg("Cannot delete a level that still has classes. Delete classes first.");
+                  return;
+                }
+                setConfirm({
+                  title: "Delete level?",
+                  description: "This will remove the level from curriculum selection (soft delete).",
+                  confirmLabel: "Delete",
+                  danger: true,
+                  requireText: "DELETE",
+                  run: async () => {
+                    const row = await db.curriculumLevels.get(levelRow.id);
+                    if (!row) return;
+                    await db.curriculumLevels.put({ ...row, deletedAt: nowIso(), updatedAt: nowIso() });
+                    await enqueueOutboxEvent({ type: "settings_push", payload: {} });
+                    if (user) {
+                      await logAudit({
+                        actorUserId: user.id,
+                        action: "curriculum_delete",
+                        entityType: "settings",
+                        entityId: "curriculum",
+                        details: { deleteLevelId: levelRow.id }
+                      });
+                    }
+                    setSelectedLevelId("");
+                    setSelectedClassId("");
+                    await refresh();
+                  }
+                });
+              }}
+            >
+              Delete selected level
+            </Button>
+          </div>
+
+          <div className="space-y-3">
+            <div className="text-sm font-semibold text-text">Classes</div>
+            <Select
+              label="Level"
+              value={selectedLevelId}
+              onChange={(e) => {
+                setSelectedLevelId(e.target.value);
+                setSelectedClassId("");
+              }}
+            >
+              <option value="">Select level…</option>
+              {levels.map((l) => (
+                <option key={l.id} value={l.id}>
+                  {l.name}
+                </option>
+              ))}
+            </Select>
+
+            <div className="grid gap-3">
+              <Input label="New class name" value={className} onChange={(e) => setClassName(e.target.value)} />
+              <Input
+                label="Class sort order"
+                value={classSortOrder}
+                onChange={(e) => setClassSortOrder(e.target.value)}
+              />
+              <Button
+                variant="secondary"
+                disabled={!selectedLevelId}
+                onClick={async () => {
+                  if (!selectedLevelId) return;
+                  const name = className.trim();
+                  if (!name) return;
+                  const sortOrder = Number(classSortOrder || "1");
+                  const row: CurriculumClass = {
+                    id: newId("cls"),
+                    levelId: selectedLevelId,
+                    name,
+                    sortOrder: Number.isFinite(sortOrder) ? sortOrder : 1,
+                    createdAt: nowIso(),
+                    updatedAt: nowIso()
+                  };
+                  await db.curriculumClasses.put(row);
+                  setClassName("");
+                  await enqueueOutboxEvent({ type: "settings_push", payload: {} });
+                  if (user) {
+                    await logAudit({
+                      actorUserId: user.id,
+                      action: "curriculum_update",
+                      entityType: "settings",
+                      entityId: "curriculum",
+                      details: { createClass: { levelId: selectedLevelId, name, sortOrder } }
+                    });
+                  }
+                  await refresh();
+                }}
+              >
+                Add class
+              </Button>
+            </div>
+
+            <div className="space-y-2">
+              {classesForSelectedLevel.map((c) => (
+                <button
+                  key={c.id}
+                  type="button"
+                  onClick={() => setSelectedClassId(c.id)}
+                  className={`w-full rounded-lg border px-3 py-2 text-left text-sm ${
+                    selectedClassId === c.id
+                      ? "border-brand bg-surface2"
+                      : "border-border bg-surface hover:border-border/80"
+                  }`}
+                >
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="font-semibold text-text">{c.name}</div>
+                    <div className="text-xs text-muted">#{c.sortOrder}</div>
+                  </div>
+                </button>
+              ))}
+              {selectedLevelId && classesForSelectedLevel.length === 0 ? (
+                <div className="text-sm text-muted">No classes for this level yet.</div>
+              ) : null}
+            </div>
+
+            <Button
+              variant="danger"
+              disabled={!selectedClassId}
+              onClick={() => {
+                const classRow = classes.find((x) => x.id === selectedClassId);
+                if (!classRow) return;
+                const hasChildren = subjects.some((s) => s.classId === classRow.id && !s.deletedAt);
+                if (hasChildren) {
+                  setMsg("Cannot delete a class that still has subjects. Delete subjects first.");
+                  return;
+                }
+                setConfirm({
+                  title: "Delete class?",
+                  description: "This will remove the class from curriculum selection (soft delete).",
+                  confirmLabel: "Delete",
+                  danger: true,
+                  requireText: "DELETE",
+                  run: async () => {
+                    const row = await db.curriculumClasses.get(classRow.id);
+                    if (!row) return;
+                    await db.curriculumClasses.put({ ...row, deletedAt: nowIso(), updatedAt: nowIso() });
+                    await enqueueOutboxEvent({ type: "settings_push", payload: {} });
+                    if (user) {
+                      await logAudit({
+                        actorUserId: user.id,
+                        action: "curriculum_delete",
+                        entityType: "settings",
+                        entityId: "curriculum",
+                        details: { deleteClassId: classRow.id }
+                      });
+                    }
+                    setSelectedClassId("");
+                    await refresh();
+                  }
+                });
+              }}
+            >
+              Delete selected class
+            </Button>
+          </div>
+
+          <div className="space-y-3">
+            <div className="text-sm font-semibold text-text">Subjects</div>
+            <Select
+              label="Class"
+              value={selectedClassId}
+              onChange={(e) => setSelectedClassId(e.target.value)}
+              disabled={!selectedLevelId}
+            >
+              <option value="">Select class…</option>
+              {classesForSelectedLevel.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.name}
+                </option>
+              ))}
+            </Select>
+
+            <div className="grid gap-3">
+              <Input label="Subject name" value={subName} onChange={(e) => setSubName(e.target.value)} />
+              <Select
+                label="Category (optional)"
+                value={subCategoryId}
+                onChange={(e) => setSubCategoryId(e.target.value)}
+              >
+                <option value="">Uncategorized</option>
+                {categories.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.name}
+                  </option>
+                ))}
+              </Select>
+              <Button
+                variant="secondary"
+                disabled={!selectedClassId}
+                onClick={async () => {
+                  if (!selectedClassId) return;
+                  const name = subName.trim();
+                  if (!name) return;
+                  const row: CurriculumSubject = {
+                    id: newId("sub"),
+                    classId: selectedClassId,
+                    categoryId: subCategoryId || undefined,
+                    name,
+                    createdAt: nowIso(),
+                    updatedAt: nowIso()
+                  };
+                  await db.curriculumSubjects.put(row);
+                  setSubName("");
+                  await enqueueOutboxEvent({ type: "settings_push", payload: {} });
+                  if (user) {
+                    await logAudit({
+                      actorUserId: user.id,
+                      action: "curriculum_update",
+                      entityType: "settings",
+                      entityId: "curriculum",
+                      details: { createSubject: { classId: selectedClassId, name, categoryId: subCategoryId || null } }
+                    });
+                  }
+                  await refresh();
+                }}
+              >
+                Add subject
+              </Button>
+            </div>
+
+            <div className="space-y-2">
+              {subjectsForSelectedClass.map((s) => (
+                <div
+                  key={s.id}
+                  data-testid={`subject-row-${s.id}`}
+                  className="flex items-center justify-between gap-3 rounded-lg border border-border bg-surface px-3 py-2"
+                >
+                  <div className="min-w-0">
+                    <div className="truncate text-sm font-semibold text-text">{s.name}</div>
+                    <div className="mt-1 text-xs text-muted">
+                      {categories.find((c) => c.id === s.categoryId)?.name ?? "Uncategorized"}
+                    </div>
+                  </div>
+                  <Button
+                    variant="danger"
+                    onClick={() =>
+                      setConfirm({
+                        title: "Delete subject?",
+                        description: "This will remove the subject from active curriculum lists on this device.",
+                        confirmLabel: "Delete",
+                        danger: true,
+                        run: async () => {
+                          const row = await db.curriculumSubjects.get(s.id);
+                          if (!row) return;
+                          await db.curriculumSubjects.put({ ...row, deletedAt: nowIso(), updatedAt: nowIso() });
+                          await enqueueOutboxEvent({ type: "settings_push", payload: {} });
+                          if (user) {
+                            await logAudit({
+                              actorUserId: user.id,
+                              action: "curriculum_delete",
+                              entityType: "settings",
+                              entityId: "curriculum",
+                              details: { deleteSubjectId: s.id }
+                            });
+                          }
+                          await refresh();
+                        }
+                      })
+                    }
+                  >
+                    Delete
+                  </Button>
+                </div>
+              ))}
+              {selectedClassId && subjectsForSelectedClass.length === 0 ? (
+                <div className="text-sm text-muted">No subjects for this class yet.</div>
+              ) : null}
+            </div>
+          </div>
+        </div>
+      </Card>
+
+      <Card title="Subject categories (optional)">
         <div className="grid gap-3 md:grid-cols-3">
           <Input label="New category name" value={catName} onChange={(e) => setCatName(e.target.value)} />
           <div className="self-end">
@@ -363,156 +742,43 @@ export function AdminSettingsPage() {
           </div>
         </div>
 
-        <div className="mt-4 grid gap-3 md:grid-cols-4">
-          <label className="block">
-            <div className="mb-1 text-sm text-muted">Category</div>
-            <select
-              className="w-full rounded-lg border border-border bg-surface px-3 py-2 text-sm text-text"
-              value={subCategoryId}
-              onChange={(e) => setSubCategoryId(e.target.value)}
-            >
-              {categories.map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.name}
-                </option>
-              ))}
-            </select>
-          </label>
-          <Input label="Subject name" value={subName} onChange={(e) => setSubName(e.target.value)} />
-          <label className="block">
-            <div className="mb-1 text-sm text-muted">Level</div>
-            <select
-              className="w-full rounded-lg border border-border bg-surface px-3 py-2 text-sm text-text"
-              value={subLevel}
-              onChange={(e) => setSubLevel(e.target.value as any)}
-            >
-              <option value="Preschool">Preschool</option>
-              <option value="Primary">Primary</option>
-              <option value="Secondary">Secondary</option>
-              <option value="Vocational">Vocational</option>
-            </select>
-          </label>
-          <div className="self-end">
-            <Button
-              variant="secondary"
-              onClick={async () => {
-                if (!subCategoryId) return;
-                const name = subName.trim();
-                if (!name) return;
-                const row: CurriculumSubject = {
-                  id: newId("sub"),
-                  categoryId: subCategoryId,
-                  name,
-                  level: subLevel,
-                  createdAt: nowIso(),
-                  updatedAt: nowIso()
-                };
-                await db.curriculumSubjects.put(row);
-                setSubName("");
-                await enqueueOutboxEvent({ type: "settings_push", payload: {} });
-                if (user) {
-                  await logAudit({
-                    actorUserId: user.id,
-                    action: "curriculum_update",
-                    entityType: "settings",
-                    entityId: "curriculum",
-                    details: { createSubject: { name, level: subLevel, categoryId: subCategoryId } }
-                  });
-                }
-                await refresh();
-              }}
-            >
-              Add subject
-            </Button>
-          </div>
-        </div>
-
-        <div className="mt-5 grid gap-4 md:grid-cols-2">
+        <div className="mt-4 grid gap-3 md:grid-cols-2">
           {categories.map((c) => (
-            <div key={c.id} className="rounded-xl border border-border bg-surface p-3">
-              <div className="flex items-center justify-between gap-2">
-                <div className="font-semibold">{c.name}</div>
-                <Button
-                  variant="danger"
-                  onClick={() =>
-                    setConfirm({
-                      title: "Delete category?",
-                      description: "Subjects under this category will remain but become uncategorized in MVP.",
-                      confirmLabel: "Delete",
-                      danger: true,
-                      requireText: "DELETE",
-                      run: async () => {
-                        const row = await db.curriculumCategories.get(c.id);
-                        if (!row) return;
-                        await db.curriculumCategories.put({ ...row, deletedAt: nowIso(), updatedAt: nowIso() });
-                        await enqueueOutboxEvent({ type: "settings_push", payload: {} });
-                        if (user) {
-                          await logAudit({
-                            actorUserId: user.id,
-                            action: "curriculum_delete",
-                            entityType: "settings",
-                            entityId: "curriculum",
-                            details: { deleteCategoryId: c.id }
-                          });
-                        }
-                        await refresh();
+            <div key={c.id} className="flex items-center justify-between gap-2 rounded-xl border border-border bg-surface p-3">
+              <div className="font-semibold text-text">{c.name}</div>
+              <Button
+                variant="danger"
+                onClick={() =>
+                  setConfirm({
+                    title: "Delete category?",
+                    description: "Subjects will remain but become uncategorized.",
+                    confirmLabel: "Delete",
+                    danger: true,
+                    requireText: "DELETE",
+                    run: async () => {
+                      const row = await db.curriculumCategories.get(c.id);
+                      if (!row) return;
+                      await db.curriculumCategories.put({ ...row, deletedAt: nowIso(), updatedAt: nowIso() });
+                      await enqueueOutboxEvent({ type: "settings_push", payload: {} });
+                      if (user) {
+                        await logAudit({
+                          actorUserId: user.id,
+                          action: "curriculum_delete",
+                          entityType: "settings",
+                          entityId: "curriculum",
+                          details: { deleteCategoryId: c.id }
+                        });
                       }
-                    })
-                  }
-                >
-                  Delete
-                </Button>
-              </div>
-              <div className="mt-2 text-sm text-muted">
-                {(subjectsByCat[c.id] ?? []).length} subjects
-              </div>
-              {(subjectsByCat[c.id] ?? []).length ? (
-                <div className="mt-3 space-y-2">
-                  {(subjectsByCat[c.id] ?? []).map((s) => (
-                    <div
-                      key={s.id}
-                      data-testid={`subject-row-${s.id}`}
-                      className="flex items-center justify-between gap-3 rounded-lg border border-border bg-surface2 px-3 py-2"
-                    >
-                      <div>
-                        <div className="text-sm text-text">{s.name}</div>
-                        <div className="text-xs text-muted">{s.level}</div>
-                      </div>
-                      <Button
-                        variant="danger"
-                        onClick={() =>
-                          setConfirm({
-                            title: "Delete subject?",
-                            description: "This will remove the subject from active curriculum lists on this device.",
-                            confirmLabel: "Delete",
-                            danger: true,
-                            run: async () => {
-                              const row = await db.curriculumSubjects.get(s.id);
-                              if (!row) return;
-                              await db.curriculumSubjects.put({ ...row, deletedAt: nowIso(), updatedAt: nowIso() });
-                              await enqueueOutboxEvent({ type: "settings_push", payload: {} });
-                              if (user) {
-                                await logAudit({
-                                  actorUserId: user.id,
-                                  action: "curriculum_delete",
-                                  entityType: "settings",
-                                  entityId: "curriculum",
-                                  details: { deleteSubjectId: s.id }
-                                });
-                              }
-                              await refresh();
-                            }
-                          })
-                        }
-                      >
-                        Delete
-                      </Button>
-                    </div>
-                  ))}
-                </div>
-              ) : null}
+                      await refresh();
+                    }
+                  })
+                }
+              >
+                Delete
+              </Button>
             </div>
           ))}
+          {categories.length === 0 ? <div className="text-sm text-muted">No categories yet.</div> : null}
         </div>
       </Card>
 

@@ -15,7 +15,7 @@ import type {
   QuizAttempt,
   User
 } from "@/shared/types";
-import type { AppSetting, Coupon, CurriculumCategory, CurriculumSubject, School } from "@/shared/types";
+import type { AppSetting, Coupon, CurriculumCategory, CurriculumClass, CurriculumLevel, CurriculumSubject, School } from "@/shared/types";
 
 function getLastSyncKey() {
   const device = getDeviceId();
@@ -120,8 +120,10 @@ async function hydrateEvent(evt: OutboxEvent): Promise<OutboxEvent> {
   if (evt.type === "settings_push") {
     const settings = await db.settings.toArray();
     const curriculumCategories = await db.curriculumCategories.toArray();
+    const curriculumLevels = await db.curriculumLevels.toArray();
+    const curriculumClasses = await db.curriculumClasses.toArray();
     const curriculumSubjects = await db.curriculumSubjects.toArray();
-    return { ...evt, payload: { settings, curriculumCategories, curriculumSubjects } };
+    return { ...evt, payload: { settings, curriculumCategories, curriculumLevels, curriculumClasses, curriculumSubjects } };
   }
 
   if (evt.type === "lesson_approved" || evt.type === "lesson_rejected") {
@@ -274,6 +276,8 @@ export async function applyPullBundle(bundle: PullBundle, currentUserId?: string
       db.schools,
       db.settings,
       db.curriculumCategories,
+      db.curriculumLevels,
+      db.curriculumClasses,
       db.curriculumSubjects,
       db.lessons,
       db.lessonContents,
@@ -293,6 +297,8 @@ export async function applyPullBundle(bundle: PullBundle, currentUserId?: string
       if (bundle.schools) await db.schools.bulkPut(bundle.schools as School[]);
       if (bundle.settings) await db.settings.bulkPut(bundle.settings as AppSetting[]);
       if (bundle.curriculumCategories) await db.curriculumCategories.bulkPut(bundle.curriculumCategories as CurriculumCategory[]);
+      if (bundle.curriculumLevels) await db.curriculumLevels.bulkPut(bundle.curriculumLevels as CurriculumLevel[]);
+      if (bundle.curriculumClasses) await db.curriculumClasses.bulkPut(bundle.curriculumClasses as CurriculumClass[]);
       if (bundle.curriculumSubjects) await db.curriculumSubjects.bulkPut(bundle.curriculumSubjects as CurriculumSubject[]);
       if (bundle.lessons) await applyLessons(bundle.lessons);
       if (bundle.lessonContents) await db.lessonContents.bulkPut(bundle.lessonContents);

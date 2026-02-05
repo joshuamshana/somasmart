@@ -1,6 +1,7 @@
 export type Role = "student" | "teacher" | "admin" | "school_admin";
 export type UserStatus = "active" | "pending" | "suspended";
-export type Level = "Preschool" | "Primary" | "Secondary" | "Vocational";
+// Levels are admin-defined. We keep this as a string type for flexibility and offline governance.
+export type Level = string;
 
 export type User = {
   id: string;
@@ -31,6 +32,9 @@ export type Lesson = {
   title: string;
   schoolId?: string;
   subject: string;
+  className?: string;
+  curriculumLevelId?: string;
+  curriculumClassId?: string;
   curriculumSubjectId?: string;
   level: Level;
   language: "en" | "sw" | string;
@@ -46,7 +50,7 @@ export type Lesson = {
 };
 
 export type LessonBlock =
-  | { id: string; type: "text"; text: string }
+  | { id: string; type: "text"; variant: "title" | "subtitle" | "heading" | "body"; text: string }
   | { id: string; type: "image"; assetId: string; mime: string; name: string }
   | { id: string; type: "audio"; assetId: string; mime: string; name: string }
   | { id: string; type: "video"; assetId: string; mime: string; name: string }
@@ -146,11 +150,30 @@ export type CurriculumCategory = {
   deletedAt?: string;
 };
 
+export type CurriculumLevel = {
+  id: string;
+  name: string;
+  sortOrder: number;
+  createdAt: string;
+  updatedAt: string;
+  deletedAt?: string;
+};
+
+export type CurriculumClass = {
+  id: string;
+  levelId: string;
+  name: string;
+  sortOrder: number;
+  createdAt: string;
+  updatedAt: string;
+  deletedAt?: string;
+};
+
 export type CurriculumSubject = {
   id: string;
-  categoryId: string;
+  classId: string;
   name: string;
-  level: Level;
+  categoryId?: string;
   createdAt: string;
   updatedAt: string;
   deletedAt?: string;

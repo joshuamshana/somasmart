@@ -4,6 +4,8 @@ import type {
   AppSetting,
   Coupon,
   CurriculumCategory,
+  CurriculumClass,
+  CurriculumLevel,
   CurriculumSubject,
   Lesson,
   LessonAsset,
@@ -119,6 +121,8 @@ export class MockSyncAdapter implements SyncAdapter {
         if (evt.type === "settings_push") {
           const settings = (payload.settings as AppSetting[] | undefined) ?? [];
           const categories = (payload.curriculumCategories as CurriculumCategory[] | undefined) ?? [];
+          const levels = (payload.curriculumLevels as CurriculumLevel[] | undefined) ?? [];
+          const classes = (payload.curriculumClasses as CurriculumClass[] | undefined) ?? [];
           const subjects = (payload.curriculumSubjects as CurriculumSubject[] | undefined) ?? [];
           if (settings.length) {
             await serverDb.settings.bulkPut(settings);
@@ -127,6 +131,14 @@ export class MockSyncAdapter implements SyncAdapter {
           if (categories.length) {
             await serverDb.curriculumCategories.bulkPut(categories);
             for (const c of categories) await recordChange({ entityType: "curriculumCategory", entityId: c.id });
+          }
+          if (levels.length) {
+            await serverDb.curriculumLevels.bulkPut(levels);
+            for (const l of levels) await recordChange({ entityType: "curriculumLevel", entityId: l.id });
+          }
+          if (classes.length) {
+            await serverDb.curriculumClasses.bulkPut(classes);
+            for (const c of classes) await recordChange({ entityType: "curriculumClass", entityId: c.id });
           }
           if (subjects.length) {
             await serverDb.curriculumSubjects.bulkPut(subjects);
@@ -338,6 +350,8 @@ export class MockSyncAdapter implements SyncAdapter {
       schools: await maybe("school", () => serverDb.schools.toArray()),
       settings: await maybe("setting", () => serverDb.settings.toArray()),
       curriculumCategories: await maybe("curriculumCategory", () => serverDb.curriculumCategories.toArray()),
+      curriculumLevels: await maybe("curriculumLevel", () => serverDb.curriculumLevels.toArray()),
+      curriculumClasses: await maybe("curriculumClass", () => serverDb.curriculumClasses.toArray()),
       curriculumSubjects: await maybe("curriculumSubject", () => serverDb.curriculumSubjects.toArray()),
       lessons: await maybe("lesson", () => serverDb.lessons.toArray()),
       lessonContents: await maybe("lessonContent", () => serverDb.lessonContents.toArray()),

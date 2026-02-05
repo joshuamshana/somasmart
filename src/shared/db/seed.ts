@@ -2,6 +2,8 @@ import { db } from "@/shared/db/db";
 import type {
   Coupon,
   CurriculumCategory,
+  CurriculumClass,
+  CurriculumLevel,
   CurriculumSubject,
   Lesson,
   LessonBlock,
@@ -71,20 +73,153 @@ export async function seedIfEmpty() {
     updatedAt: SEED_NOW_ISO
   };
 
+  const lvlPrimary: CurriculumLevel = {
+    id: "lvl_seed_primary",
+    name: "Primary",
+    sortOrder: 2,
+    createdAt: SEED_NOW_ISO,
+    updatedAt: SEED_NOW_ISO
+  };
+
+  const lvlPreschool: CurriculumLevel = {
+    id: "lvl_seed_preschool",
+    name: "Preschool",
+    sortOrder: 1,
+    createdAt: SEED_NOW_ISO,
+    updatedAt: SEED_NOW_ISO
+  };
+
+  const lvlSecondary: CurriculumLevel = {
+    id: "lvl_seed_secondary",
+    name: "Secondary",
+    sortOrder: 3,
+    createdAt: SEED_NOW_ISO,
+    updatedAt: SEED_NOW_ISO
+  };
+
+  const lvlHigh: CurriculumLevel = {
+    id: "lvl_seed_high",
+    name: "High",
+    sortOrder: 4,
+    createdAt: SEED_NOW_ISO,
+    updatedAt: SEED_NOW_ISO
+  };
+
+  const lvlUniversity: CurriculumLevel = {
+    id: "lvl_seed_university",
+    name: "University",
+    sortOrder: 5,
+    createdAt: SEED_NOW_ISO,
+    updatedAt: SEED_NOW_ISO
+  };
+
+  const clsPrimary1: CurriculumClass = {
+    id: "cls_seed_primary_1",
+    levelId: lvlPrimary.id,
+    name: "Class 1",
+    sortOrder: 1,
+    createdAt: SEED_NOW_ISO,
+    updatedAt: SEED_NOW_ISO
+  };
+
+  const primaryClasses: CurriculumClass[] = Array.from({ length: 7 }).map((_, i) => ({
+    id: `cls_seed_primary_${i + 1}`,
+    levelId: lvlPrimary.id,
+    name: `Class ${i + 1}`,
+    sortOrder: i + 1,
+    createdAt: SEED_NOW_ISO,
+    updatedAt: SEED_NOW_ISO
+  }));
+
+  const clsPreschool1: CurriculumClass = {
+    id: "cls_seed_preschool_1",
+    levelId: lvlPreschool.id,
+    name: "Pre-1",
+    sortOrder: 1,
+    createdAt: SEED_NOW_ISO,
+    updatedAt: SEED_NOW_ISO
+  };
+
+  const clsPreschool2: CurriculumClass = {
+    id: "cls_seed_preschool_2",
+    levelId: lvlPreschool.id,
+    name: "Pre-2",
+    sortOrder: 2,
+    createdAt: SEED_NOW_ISO,
+    updatedAt: SEED_NOW_ISO
+  };
+
+  const clsSecondary1: CurriculumClass = {
+    id: "cls_seed_secondary_1",
+    levelId: lvlSecondary.id,
+    name: "Form 1",
+    sortOrder: 1,
+    createdAt: SEED_NOW_ISO,
+    updatedAt: SEED_NOW_ISO
+  };
+
+  const secondaryClasses: CurriculumClass[] = Array.from({ length: 4 }).map((_, i) => ({
+    id: `cls_seed_secondary_${i + 1}`,
+    levelId: lvlSecondary.id,
+    name: `Form ${i + 1}`,
+    sortOrder: i + 1,
+    createdAt: SEED_NOW_ISO,
+    updatedAt: SEED_NOW_ISO
+  }));
+
+  const clsHigh5: CurriculumClass = {
+    id: "cls_seed_high_5",
+    levelId: lvlHigh.id,
+    name: "Form 5",
+    sortOrder: 5,
+    createdAt: SEED_NOW_ISO,
+    updatedAt: SEED_NOW_ISO
+  };
+
+  const highClasses: CurriculumClass[] = [
+    { ...clsHigh5 },
+    {
+      id: "cls_seed_high_6",
+      levelId: lvlHigh.id,
+      name: "Form 6",
+      sortOrder: 6,
+      createdAt: SEED_NOW_ISO,
+      updatedAt: SEED_NOW_ISO
+    }
+  ];
+
+  const clsUniversity1: CurriculumClass = {
+    id: "cls_seed_university_1",
+    levelId: lvlUniversity.id,
+    name: "Year 1",
+    sortOrder: 1,
+    createdAt: SEED_NOW_ISO,
+    updatedAt: SEED_NOW_ISO
+  };
+
+  const universityClasses: CurriculumClass[] = Array.from({ length: 4 }).map((_, i) => ({
+    id: `cls_seed_university_${i + 1}`,
+    levelId: lvlUniversity.id,
+    name: `Year ${i + 1}`,
+    sortOrder: i + 1,
+    createdAt: SEED_NOW_ISO,
+    updatedAt: SEED_NOW_ISO
+  }));
+
   const subMathPrimary: CurriculumSubject = {
     id: "sub_seed_math_primary",
+    classId: clsPrimary1.id,
     categoryId: catMath.id,
     name: "Math",
-    level: "Primary",
     createdAt: SEED_NOW_ISO,
     updatedAt: SEED_NOW_ISO
   };
 
   const subIctPrimary: CurriculumSubject = {
     id: "sub_seed_ict_primary",
+    classId: clsPrimary1.id,
     categoryId: catIct.id,
     name: "ICT",
-    level: "Primary",
     createdAt: SEED_NOW_ISO,
     updatedAt: SEED_NOW_ISO
   };
@@ -94,9 +229,12 @@ export async function seedIfEmpty() {
     id: lessonId,
     title: "Introduction to Numbers",
     schoolId: school.id,
+    curriculumLevelId: lvlPrimary.id,
+    curriculumClassId: clsPrimary1.id,
     subject: "Math",
+    className: clsPrimary1.name,
     curriculumSubjectId: subMathPrimary.id,
-    level: "Primary",
+    level: lvlPrimary.name,
     language: "en",
     tags: ["numbers", "basics", "trial"],
     description: "Learn counting from 1 to 10.",
@@ -107,7 +245,7 @@ export async function seedIfEmpty() {
   };
 
   const blocks: LessonBlock[] = [
-    { id: "block_seed_numbers_1", type: "text", text: "Count with me: 1, 2, 3..." }
+    { id: "block_seed_numbers_1", type: "text", variant: "body", text: "Count with me: 1, 2, 3..." }
   ];
 
   const quiz: Quiz = {
@@ -142,6 +280,8 @@ export async function seedIfEmpty() {
       db.users,
       db.schools,
       db.curriculumCategories,
+      db.curriculumLevels,
+      db.curriculumClasses,
       db.curriculumSubjects,
       db.lessons,
       db.lessonContents,
@@ -156,6 +296,18 @@ export async function seedIfEmpty() {
 
       await db.curriculumCategories.put(catMath);
       await db.curriculumCategories.put(catIct);
+      await db.curriculumLevels.put(lvlPreschool);
+      await db.curriculumLevels.put(lvlPrimary);
+      await db.curriculumLevels.put(lvlSecondary);
+      await db.curriculumLevels.put(lvlHigh);
+      await db.curriculumLevels.put(lvlUniversity);
+
+      await db.curriculumClasses.put(clsPreschool1);
+      await db.curriculumClasses.put(clsPreschool2);
+      await db.curriculumClasses.bulkPut(primaryClasses);
+      await db.curriculumClasses.bulkPut(secondaryClasses);
+      await db.curriculumClasses.bulkPut(highClasses);
+      await db.curriculumClasses.bulkPut(universityClasses);
       await db.curriculumSubjects.put(subMathPrimary);
       await db.curriculumSubjects.put(subIctPrimary);
 

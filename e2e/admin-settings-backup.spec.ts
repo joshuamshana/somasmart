@@ -5,6 +5,8 @@ test("Admin settings: curriculum CRUD + backup/export/reset/import roundtrip", a
   const device = `adminSettings_${Date.now()}`;
 
   const categoryName = `Cat ${Date.now()}`;
+  const levelName = `Level ${Date.now()}`;
+  const className = `Class ${Date.now()}`;
   const subjectName = `Sub ${Date.now()}`;
   const schoolName = `Backup School ${Date.now()}`;
 
@@ -12,6 +14,7 @@ test("Admin settings: curriculum CRUD + backup/export/reset/import roundtrip", a
   await page.getByLabel("Username").fill("admin");
   await page.getByLabel("Password").fill("admin123");
   await page.getByRole("button", { name: "Login" }).click();
+  await expect(page.getByRole("link", { name: "Schools", exact: true })).toBeVisible({ timeout: 30_000 });
 
   // Create a school and curriculum data so the backup has something meaningful.
   await page.goto(`/admin/schools?device=${device}`);
@@ -23,11 +26,22 @@ test("Admin settings: curriculum CRUD + backup/export/reset/import roundtrip", a
   await page.goto(`/admin/settings?device=${device}`);
   await page.getByLabel("New category name").fill(categoryName);
   await page.getByRole("button", { name: "Add category" }).click();
-  await expect(page.locator("div.font-semibold", { hasText: categoryName })).toBeVisible();
+  await expect(page.locator("div.font-semibold").filter({ hasText: categoryName })).toBeVisible();
+
+  await page.getByLabel("New level name").fill(levelName);
+  await page.getByRole("button", { name: "Add level" }).click();
+  await expect(page.getByRole("button", { name: levelName })).toBeVisible();
+  await page.getByRole("button", { name: levelName }).click();
+
+  await page.getByLabel("New class name").fill(className);
+  await page.getByRole("button", { name: "Add class" }).click();
+  await expect(page.getByRole("button", { name: className })).toBeVisible();
+  await page.getByRole("button", { name: className }).click();
 
   await page.getByLabel("Subject name").fill(subjectName);
+  await page.getByLabel("Category (optional)").selectOption({ label: categoryName });
   await page.getByRole("button", { name: "Add subject" }).click();
-  await expect(page.getByText(new RegExp(subjectName))).toBeVisible();
+  await expect(page.getByText(subjectName)).toBeVisible();
 
   // Export backup
   const downloadPromise = page.waitForEvent("download");
@@ -50,6 +64,7 @@ test("Admin settings: curriculum CRUD + backup/export/reset/import roundtrip", a
   await page.getByLabel("Username").fill("admin");
   await page.getByLabel("Password").fill("admin123");
   await page.getByRole("button", { name: "Login" }).click();
+  await expect(page.getByRole("link", { name: "Settings", exact: true })).toBeVisible({ timeout: 30_000 });
 
   // Import backup (overwrites local data and redirects to login)
   await page.goto(`/admin/settings?device=${device}`);
@@ -67,11 +82,14 @@ test("Admin settings: curriculum CRUD + backup/export/reset/import roundtrip", a
   await page.getByLabel("Username").fill("admin");
   await page.getByLabel("Password").fill("admin123");
   await page.getByRole("button", { name: "Login" }).click();
+  await expect(page.getByRole("link", { name: "Schools", exact: true })).toBeVisible({ timeout: 30_000 });
 
   await page.goto(`/admin/schools?device=${device}`);
   await expect(page.getByRole("button", { name: new RegExp(schoolName) }).first()).toBeVisible();
 
   await page.goto(`/admin/settings?device=${device}`);
-  await expect(page.locator("div.font-semibold", { hasText: categoryName })).toBeVisible();
-  await expect(page.getByText(new RegExp(subjectName))).toBeVisible();
+  await expect(page.locator("div.font-semibold").filter({ hasText: categoryName })).toBeVisible();
+  await expect(page.getByRole("button", { name: new RegExp(levelName) }).first()).toBeVisible();
+  await expect(page.getByRole("button", { name: new RegExp(className) }).first()).toBeVisible();
+  await expect(page.getByText(subjectName)).toBeVisible();
 });

@@ -12,7 +12,9 @@ Trace requirements to implementation and tests. Status meanings:
 | REQ-0003 | `vitest`, `src/**/*.test.ts` | `npm test` | done |
 | REQ-0004 | `playwright.config.ts`, `e2e/*` | `npm run test:e2e` | done |
 | REQ-0101 | `src/features/auth/*` | `e2e/p0.spec.ts` | done |
-| REQ-0102 | `src/features/auth/*`, `src/shared/sync/*` | `e2e/p0.spec.ts`, `e2e/sync.spec.ts` | done |
+| REQ-0102 | `src/features/auth/RegisterPage.tsx`, `src/features/school/SchoolUsersPage.tsx`, `src/features/admin/AdminTeachersPage.tsx` | `e2e/p0.spec.ts`, `e2e/sync.spec.ts` | done |
+| REQ-0106 | `src/features/auth/RegisterPage.tsx`, `src/features/auth/authContext.tsx` | `e2e/p0.spec.ts` | done |
+| REQ-0107 | `src/features/school/SchoolUsersPage.tsx`, `src/shared/sync/*` | `e2e/sync.spec.ts`, `e2e/notifications.spec.ts` | done |
 | REQ-0103 | `src/shared/db/seed.ts`, `src/features/auth/*` | `e2e/*` (admin logins) | done |
 | REQ-0104 | `src/app/router.tsx`, `src/features/auth/RequireRole.tsx` | `e2e/*` (role flows) | partial |
 | REQ-0105 | `src/features/auth/*`, `src/shared/sync/*` | `e2e/sync.spec.ts` | done |
@@ -63,12 +65,14 @@ Trace requirements to implementation and tests. Status meanings:
 | REQ-1907 | `src/features/admin/AdminSettingsPage.tsx` | `e2e/admin-settings-backup.spec.ts` | done |
 | REQ-1908 | `src/features/admin/AdminSupportPage.tsx` | `e2e/admin-support.spec.ts` | done |
 | REQ-1909 | `src/shared/sync/*` | `e2e/sync.spec.ts`, `e2e/sync-students.spec.ts`, `e2e/sync-admin-*.spec.ts` | done |
-| REQ-2001 | (planned) `src/features/teacher/TeacherDashboard.tsx` | (planned) `e2e/teacher-dashboard.spec.ts` | planned |
+| REQ-2001 | `src/features/teacher/TeacherLayout.tsx`, `src/features/teacher/TeacherDashboard.tsx` | `e2e/teacher-layout.spec.ts`, `e2e/teacher-dashboard.spec.ts` | done |
 | REQ-2002 | (planned) `src/features/teacher/TeacherDashboard.tsx` | (planned) unit stats tests | planned |
-| REQ-2003 | (planned) `src/features/teacher/TeacherDashboard.tsx`, `src/features/teacher/TeacherLessonsPage.tsx` | (planned) `e2e/teacher-dashboard.spec.ts` | planned |
-| REQ-2004 | (planned) `src/features/teacher/TeacherDashboard.tsx` | (planned) `e2e/teacher-dashboard.spec.ts` | planned |
-| REQ-2005 | (planned) `src/features/teacher/TeacherDashboard.tsx`, `src/features/sync/SyncPage.tsx` | (planned) `e2e/teacher-dashboard.spec.ts` | planned |
-| REQ-2006 | (planned) `src/features/teacher/TeacherDashboard.tsx`, `src/shared/db/progressRepo.ts` | (planned) unit + e2e | planned |
-| REQ-2007 | (planned) `src/features/teacher/TeacherLessonsPage.tsx` | (planned) `e2e/teacher-lessons.spec.ts` | planned |
-| REQ-2008 | (planned) `src/features/teacher/TeacherLessonBuilderPage.tsx` | (planned) `e2e/teacher-edit-resubmit.spec.ts` | planned |
-
+| REQ-2003 | `src/features/teacher/TeacherDashboard.tsx` | (add targeted e2e) | partial |
+| REQ-2004 | `src/features/teacher/TeacherDashboard.tsx` | (add targeted e2e) | partial |
+| REQ-2005 | `src/features/teacher/TeacherDashboard.tsx`, `src/shared/sync/SyncContext.tsx` | `e2e/sync.spec.ts` | partial |
+| REQ-2006 | `src/features/teacher/TeacherDashboard.tsx` | (add unit + e2e) | partial |
+| REQ-2007 | `src/features/teacher/TeacherLessonsPage.tsx` | `e2e/teacher-lessons-actions.spec.ts` | done |
+| REQ-2008 | `src/features/teacher/TeacherLessonBuilderPage.tsx`, `src/app/router.tsx` | `e2e/teacher-lessons-actions.spec.ts` | done |
+| REQ-2010 | `src/shared/types.ts`, `src/shared/db/db.ts`, `src/shared/db/seed.ts`, `src/features/admin/AdminSettingsPage.tsx`, `src/features/teacher/TeacherLessonBuilderPage.tsx`, `src/shared/sync/*` | `e2e/admin-settings-backup.spec.ts`, `e2e/p0.spec.ts`, `e2e/sync.spec.ts`, `e2e/video.spec.ts`, `e2e/teacher-lesson-creator.spec.ts` | done |
+| REQ-2011 | `src/shared/types.ts`, `src/features/teacher/TeacherLessonBuilderPage.tsx`, `src/features/content/LessonPlayer.tsx` | `e2e/teacher-text-variants.spec.ts` | done |
+| REQ-2012 | `src/shared/ui/SidebarNav.tsx` | `e2e/teacher-nav-active.spec.ts` | done |

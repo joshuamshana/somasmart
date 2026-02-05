@@ -48,7 +48,6 @@ test("Admin lessons governance: create new version for teacher; expire approved 
   // Student should not see expired lesson in catalog
   await page.getByRole("button", { name: "Logout" }).click();
   await page.goto(`/register?device=${device}`);
-  await page.getByLabel("Role").selectOption("student");
   await page.getByLabel("Full name").fill("Student X");
   await page.getByLabel("Username").fill(`s_${Date.now()}`);
   await page.getByLabel("Password").fill("pass123");

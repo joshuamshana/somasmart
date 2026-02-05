@@ -9,16 +9,16 @@ const groups = [
     label: "Teaching",
     items: [
       { label: "Dashboard", to: "/teacher" },
-      { label: "My lessons", to: "/teacher/lessons" },
-      { label: "Create lesson", to: "/teacher/lessons/new" }
+      { label: "Lessons", to: "/teacher/lessons" },
+      { label: "Lesson creator", to: "/teacher/lessons/new" }
     ]
   },
   {
     label: "Tools",
     items: [
-      { label: "Support", to: "/teacher/support" },
-      { label: "Notifications", to: "/notifications" },
-      { label: "Sync", to: "/sync" }
+      { label: "Support inbox", to: "/teacher/support" },
+      { label: "Alerts", to: "/notifications" },
+      { label: "Sync status", to: "/sync" }
     ]
   }
 ] as const;
@@ -96,4 +96,3 @@ export function TeacherLayout() {
     </div>
   );
 }
-

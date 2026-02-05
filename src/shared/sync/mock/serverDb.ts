@@ -4,6 +4,8 @@ import type {
   AppSetting,
   Coupon,
   CurriculumCategory,
+  CurriculumClass,
+  CurriculumLevel,
   CurriculumSubject,
   Lesson,
   LessonAsset,
@@ -28,6 +30,8 @@ export type ServerChange = {
     | "school"
     | "setting"
     | "curriculumCategory"
+    | "curriculumLevel"
+    | "curriculumClass"
     | "curriculumSubject"
     | "lesson"
     | "lessonContent"
@@ -49,6 +53,8 @@ export class SomaSmartMockServerDB extends Dexie {
   schools!: Table<School, string>;
   settings!: Table<AppSetting, string>;
   curriculumCategories!: Table<CurriculumCategory, string>;
+  curriculumLevels!: Table<CurriculumLevel, string>;
+  curriculumClasses!: Table<CurriculumClass, string>;
   curriculumSubjects!: Table<CurriculumSubject, string>;
   lessons!: Table<Lesson, string>;
   lessonContents!: Table<LessonContent, string>;
@@ -117,6 +123,30 @@ export class SomaSmartMockServerDB extends Dexie {
       payments: "id, studentId, status, createdAt",
       licenseGrants: "id, studentId, sourcePaymentId, createdAt",
       coupons: "code, active",
+      messages: "id, fromUserId, toUserId, status, createdAt",
+      notifications: "id, userId, type, createdAt, readAt",
+      auditLogs: "id, actorUserId, action, entityType, entityId, createdAt",
+      changes: "id, createdAt, entityType, entityId"
+    });
+
+    this.version(4).stores({
+      users: "id, role, status, username, schoolId, createdAt, deletedAt",
+      schools: "id, code, createdAt, deletedAt",
+      settings: "key, updatedAt",
+      curriculumCategories: "id, name, updatedAt, deletedAt",
+      curriculumLevels: "id, name, sortOrder, updatedAt, deletedAt",
+      curriculumClasses: "id, levelId, name, sortOrder, updatedAt, deletedAt",
+      curriculumSubjects: "id, classId, name, updatedAt, deletedAt, categoryId",
+      lessons:
+        "id, status, subject, className, curriculumSubjectId, curriculumClassId, curriculumLevelId, schoolId, level, language, createdByUserId, createdAt, updatedAt, deletedAt",
+      lessonContents: "lessonId",
+      lessonAssets: "id, lessonId, kind, createdAt",
+      quizzes: "id, lessonId",
+      progress: "id, studentId, lessonId, lastSeenAt",
+      quizAttempts: "id, studentId, quizId, createdAt",
+      payments: "id, studentId, status, createdAt",
+      licenseGrants: "id, studentId, sourcePaymentId, createdAt, deletedAt",
+      coupons: "code, active, deletedAt, batchId",
       messages: "id, fromUserId, toUserId, status, createdAt",
       notifications: "id, userId, type, createdAt, readAt",
       auditLogs: "id, actorUserId, action, entityType, entityId, createdAt",

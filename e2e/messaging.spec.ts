@@ -7,7 +7,6 @@ test("Optional: offline messaging student <-> teacher", async ({ page }) => {
   await page.getByLabel("Full name").fill("Messaging Student");
   await page.getByLabel("Username").fill(studentUsername);
   await page.getByLabel("Password").fill("password123");
-  await page.getByLabel("Role").selectOption("student");
   await page.getByLabel("School code (optional)").fill("SOMA001");
   await page.getByRole("button", { name: "Register" }).click();
 
@@ -28,4 +27,3 @@ test("Optional: offline messaging student <-> teacher", async ({ page }) => {
   await page.getByLabel("Student").selectOption({ label: `Messaging Student (${studentUsername})` });
   await expect(page.getByText("Hello teacher")).toBeVisible();
 });
-

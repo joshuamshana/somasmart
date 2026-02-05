@@ -9,7 +9,6 @@ test("Admin: suspend student and see audit log", async ({ page }) => {
   await page.getByLabel("Full name").fill("Student X");
   await page.getByLabel("Username").fill(studentUsername);
   await page.getByLabel("Password").fill("password123");
-  await page.getByLabel("Role").selectOption("student");
   await page.getByRole("button", { name: "Register" }).click();
   await expect(page.getByText("Welcome")).toBeVisible();
 

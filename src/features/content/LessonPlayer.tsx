@@ -29,23 +29,23 @@ function AssetBlock({ block }: { block: Extract<LessonBlock, { assetId: string }
   const asset = useAsset(block.assetId);
   const url = useAssetObjectUrl(asset?.id ?? null);
 
-  if (!asset) return <div className="text-sm text-slate-400">Loading asset…</div>;
+  if (!asset) return <div className="text-sm text-muted">Loading asset…</div>;
 
   if (block.type === "image") {
-    return url ? <img src={url} alt={asset.name} className="max-w-full rounded border border-slate-800" /> : null;
+    return url ? <img src={url} alt={asset.name} className="max-w-full rounded-lg border border-border" /> : null;
   }
   if (block.type === "audio") {
     return url ? (
       <audio controls src={url} className="w-full" />
     ) : (
-      <div className="text-sm text-slate-400">Audio unavailable.</div>
+      <div className="text-sm text-muted">Audio unavailable.</div>
     );
   }
   if (block.type === "video") {
     return url ? (
-      <video controls src={url} className="w-full max-h-[60vh] rounded border border-slate-800 bg-black" />
+      <video controls src={url} className="w-full max-h-[60vh] rounded-lg border border-border bg-black" />
     ) : (
-      <div className="text-sm text-slate-400">Video unavailable.</div>
+      <div className="text-sm text-muted">Video unavailable.</div>
     );
   }
   if (block.type === "pdf") {
@@ -62,15 +62,40 @@ export function LessonPlayer({ blocks }: { blocks: LessonBlock[] }) {
     <div className="space-y-6">
       {blocks.map((b) => {
         if (b.type === "text") {
+          const base = "whitespace-pre-wrap";
+          if (b.variant === "title") {
+            return (
+              <h1 key={b.id} className={`${base} text-2xl font-bold text-text`}>
+                {b.text}
+              </h1>
+            );
+          }
+          if (b.variant === "subtitle") {
+            return (
+              <h2 key={b.id} className={`${base} text-xl font-semibold text-text`}>
+                {b.text}
+              </h2>
+            );
+          }
+          if (b.variant === "heading") {
+            return (
+              <h3 key={b.id} className={`${base} text-lg font-semibold text-text`}>
+                {b.text}
+              </h3>
+            );
+          }
           return (
-            <div key={b.id} className="whitespace-pre-wrap rounded border border-slate-800 bg-slate-950 p-4 text-sm leading-6 text-slate-100">
+            <div
+              key={b.id}
+              className="whitespace-pre-wrap rounded-xl border border-border bg-surface p-4 text-sm leading-6 text-text"
+            >
               {b.text}
             </div>
           );
         }
         return (
           <div key={b.id} className="space-y-2">
-            <div className="text-xs text-slate-400">{b.name}</div>
+            <div className="text-xs text-muted">{b.name}</div>
             <AssetBlock block={b} />
           </div>
         );
