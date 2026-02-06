@@ -1,143 +1,171 @@
-import type { LessonAsset, LessonBlock, Quiz } from "@/shared/types";
+import type { LessonAsset, LessonBlock, LessonBlockV2, Quiz } from "@/shared/types";
+import { mapLegacyBlocksToV2, normalizeBlockV2 } from "@/shared/content/lessonContent";
+
+export type LessonStepGate = {
+  quizId: string;
+  requiredToContinue: true;
+  passScorePct: number;
+};
 
 export type LessonStep =
   | {
       key: string;
-      type: "content";
+      type: "block";
       title: string;
       sectionTitle?: string;
-      block: Exclude<LessonBlock, { type: "step_break" } | { type: "quiz" }>;
+      blockId: string;
+      blocks: Exclude<LessonBlock, { type: "step_break" } | { type: "quiz" }>[];
+      quizGate?: LessonStepGate;
     }
   | {
       key: string;
       type: "pdf_page";
       title: string;
       sectionTitle?: string;
+      blockId: string;
       assetId: string;
       page: number;
       pageCount: number;
       name: string;
       mime: string;
-      blockId: string;
-    }
-  | {
-      key: string;
-      type: "quiz";
-      title: string;
-      sectionTitle?: string;
-      quizId: string;
-      requiredToContinue: true;
-      passScorePct: number;
-      blockId: string;
+      quizGate?: LessonStepGate;
     };
 
-export function stepKeyForBlock(blockId: string) {
-  return `block:${blockId}`;
+export function stepKeyForBlockV2(blockId: string) {
+  return `blockv2:${blockId}`;
 }
 
-export function stepKeyForPdfPage(blockId: string, page: number) {
-  return `pdf:${blockId}:page:${page}`;
+export function stepKeyForPdfPageV2(blockId: string, page: number) {
+  return `pdfv2:${blockId}:page:${page}`;
 }
 
-export function stepKeyForQuizBlock(blockId: string, quizId: string) {
-  return `quiz:${blockId}:${quizId}`;
+function blockTitle(block: LessonBlockV2) {
+  if (block.title?.trim()) return block.title.trim();
+  const media = block.components.find((c) => c.type === "media");
+  if (media) return media.name || media.mediaType.toUpperCase();
+  const firstText = block.components.find(
+    (c): c is Extract<typeof c, { type: "text" }> => c.type === "text" && c.text.trim().length > 0
+  );
+  if (firstText) return firstText.text.trim().slice(0, 80);
+  if (block.quizGate) return "Quiz";
+  return "Step";
 }
 
-function titleFromTextBlock(block: Extract<LessonBlock, { type: "text" }>) {
-  const raw = (block.text ?? "").trim();
-  const firstLine = raw.split("\n")[0]?.trim() ?? "";
-  if (block.variant === "title" || block.variant === "subtitle" || block.variant === "heading") {
-    return firstLine || "Reading";
+function mapComponentToLegacyBlock(component: LessonBlockV2["components"][number], blockId: string): LessonBlock | null {
+  if (component.type === "text") {
+    return {
+      id: `${blockId}:${component.id}`,
+      type: "text",
+      variant: component.variant,
+      text: component.text
+    };
   }
-  return firstLine ? firstLine.slice(0, 80) : "Reading";
+  return {
+    id: `${blockId}:${component.id}`,
+    type: component.mediaType,
+    assetId: component.assetId,
+    mime: component.mime,
+    name: component.name
+  } satisfies LessonBlock;
 }
 
-export function buildLessonSteps({
-  blocks,
-  assetsById,
-  quizzesById
+export function buildStepsFromBlocksV2({
+  blocksV2,
+  assetsById
 }: {
-  blocks: LessonBlock[];
+  blocksV2: LessonBlockV2[];
   assetsById: Record<string, LessonAsset | undefined>;
-  quizzesById: Record<string, Quiz | undefined>;
 }): LessonStep[] {
   const steps: LessonStep[] = [];
   let sectionTitle: string | undefined = undefined;
 
-  const hasExplicitQuizSteps = blocks.some((b) => b.type === "quiz");
+  for (const block of blocksV2) {
+    const media = block.components.filter((c) => c.type === "media");
+    const mediaItem = media[0] ?? null;
+    const gate = block.quizGate
+      ? {
+          quizId: block.quizGate.quizId,
+          requiredToContinue: true as const,
+          passScorePct: Number.isFinite(block.quizGate.passScorePct) ? block.quizGate.passScorePct : 70
+        }
+      : undefined;
 
-  for (const block of blocks) {
-    if (block.type === "step_break") {
-      const t = (block.title ?? "").trim();
-      sectionTitle = t ? t : undefined;
+    if (block.isDivider) {
+      sectionTitle = block.title?.trim() || undefined;
       continue;
     }
 
-    if (block.type === "quiz") {
-      const passScorePct = typeof block.passScorePct === "number" ? block.passScorePct : 70;
-      steps.push({
-        key: stepKeyForQuizBlock(block.id, block.quizId),
-        type: "quiz",
-        title: (block.title ?? "").trim() || "Quiz",
-        sectionTitle,
-        quizId: block.quizId,
-        requiredToContinue: true,
-        passScorePct,
-        blockId: block.id
-      });
-      continue;
-    }
-
-    if (block.type === "pdf") {
-      const asset = assetsById[block.assetId];
+    if (mediaItem?.mediaType === "pdf") {
+      const asset = assetsById[mediaItem.assetId];
       const pageCount = Math.max(1, asset?.pageCount ?? 1);
       for (let page = 1; page <= pageCount; page++) {
         steps.push({
-          key: stepKeyForPdfPage(block.id, page),
+          key: stepKeyForPdfPageV2(block.id, page),
           type: "pdf_page",
-          title: `${block.name} — Page ${page}`,
+          title: `${mediaItem.name} — Page ${page}`,
           sectionTitle,
-          assetId: block.assetId,
+          blockId: block.id,
+          assetId: mediaItem.assetId,
           page,
           pageCount,
-          name: block.name,
-          mime: block.mime,
-          blockId: block.id
+          name: mediaItem.name,
+          mime: mediaItem.mime,
+          quizGate: page === pageCount ? gate : undefined
         });
       }
       continue;
     }
 
-    let title = "Step";
-    if (block.type === "text") title = titleFromTextBlock(block);
-    else if ("name" in block) title = block.name;
+    const renderedBlocks = block.components
+      .map((component) => mapComponentToLegacyBlock(component, block.id))
+      .filter(Boolean) as Exclude<LessonBlock, { type: "step_break" } | { type: "quiz" }>[];
 
     steps.push({
-      key: stepKeyForBlock(block.id),
-      type: "content",
-      title,
+      key: stepKeyForBlockV2(block.id),
+      type: "block",
+      title: blockTitle(block),
       sectionTitle,
-      block
+      blockId: block.id,
+      blocks: renderedBlocks,
+      quizGate: gate
     });
-  }
-
-  if (!hasExplicitQuizSteps) {
-    const legacyQuizzes = Object.values(quizzesById).filter(Boolean) as Quiz[];
-    legacyQuizzes.sort((a, b) => a.id.localeCompare(b.id));
-    for (const quiz of legacyQuizzes) {
-      steps.push({
-        key: `quiz:legacy:${quiz.id}`,
-        type: "quiz",
-        title: "Quiz",
-        sectionTitle,
-        quizId: quiz.id,
-        requiredToContinue: true,
-        passScorePct: 70,
-        blockId: `legacy_${quiz.id}`
-      });
-    }
   }
 
   return steps;
 }
 
+export function buildLessonSteps({
+  blocks,
+  blocksV2,
+  assetsById,
+  quizzesById
+}: {
+  blocks?: LessonBlock[];
+  blocksV2?: LessonBlockV2[];
+  assetsById: Record<string, LessonAsset | undefined>;
+  quizzesById: Record<string, Quiz | undefined>;
+}): LessonStep[] {
+  const candidateBlocks =
+    blocksV2 ??
+    mapLegacyBlocksToV2({
+      blocks: blocks ?? [],
+      quizzesById
+    });
+  const normalized = candidateBlocks.map((block) => {
+    const issues = normalizeBlockV2(block);
+    if (issues.length === 0) return block;
+    const media = block.components.filter((c) => c.type === "media");
+    const text = block.components.filter((c) => c.type === "text");
+    if (media.some((m) => m.mediaType === "pdf")) {
+      return {
+        ...block,
+        components: media.filter((m) => m.mediaType === "pdf").slice(0, 1)
+      };
+    }
+    return {
+      ...block,
+      components: [...text, ...media.slice(0, 1)]
+    };
+  });
+  return buildStepsFromBlocksV2({ blocksV2: normalized, assetsById });
+}

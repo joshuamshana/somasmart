@@ -63,6 +63,31 @@ export type LessonBlock =
   | { id: string; type: "step_break"; title?: string }
   | { id: string; type: "quiz"; quizId: string; title?: string; requiredToContinue: true; passScorePct?: number };
 
+export type LessonComponent =
+  | { id: string; type: "text"; variant: "title" | "subtitle" | "heading" | "body"; text: string }
+  | {
+      id: string;
+      type: "media";
+      mediaType: "image" | "audio" | "video" | "pdf" | "pptx";
+      assetId: string;
+      name: string;
+      mime: string;
+    };
+
+export type LessonBlockV2 = {
+  id: string;
+  title?: string;
+  isDivider?: boolean;
+  components: LessonComponent[];
+  quizGate?: { quizId: string; requiredToContinue: true; passScorePct: number };
+};
+
+export type LessonContentV2 = {
+  lessonId: string;
+  version: 2;
+  blocksV2: LessonBlockV2[];
+};
+
 export type LessonAsset = {
   id: string;
   lessonId: string;

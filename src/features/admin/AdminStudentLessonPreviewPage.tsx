@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { Link, useLocation, useParams } from "react-router-dom";
-import type { Lesson, LessonAsset, LessonBlock, Quiz } from "@/shared/types";
+import type { Lesson, LessonAsset, LessonBlockV2, Quiz } from "@/shared/types";
 import { db } from "@/shared/db/db";
 import { PageHeader } from "@/shared/ui/PageHeader";
 import { Card } from "@/shared/ui/Card";
@@ -10,6 +10,7 @@ import { getLessonEffectiveAccessPolicy } from "@/shared/access/accessEngine";
 import { Select } from "@/shared/ui/Select";
 import { buildLessonSteps } from "@/features/content/lessonSteps";
 import { LessonStepperPlayer } from "@/features/content/LessonStepperPlayer";
+import { getLessonBlocksV2 } from "@/shared/content/lessonContent";
 
 type PreviewMode = "unlocked" | "locked";
 
@@ -20,7 +21,7 @@ export function AdminStudentLessonPreviewPage() {
   const search = location.search ?? "";
 
   const [lesson, setLesson] = useState<Lesson | null>(null);
-  const [blocks, setBlocks] = useState<LessonBlock[]>([]);
+  const [blocksV2, setBlocksV2] = useState<LessonBlockV2[]>([]);
   const [assetsById, setAssetsById] = useState<Record<string, LessonAsset | undefined>>({});
   const [quizzesById, setQuizzesById] = useState<Record<string, Quiz | undefined>>({});
   const [subjectDefaults, setSubjectDefaults] = useState<Record<string, import("@/shared/types").AccessPolicy>>({});
@@ -44,25 +45,14 @@ export function AdminStudentLessonPreviewPage() {
     (async () => {
       if (!lessonId) return;
       const l = await db.lessons.get(lessonId);
-      const content = await db.lessonContents.get(lessonId);
+      const q = await db.quizzes.where("lessonId").equals(lessonId).toArray();
+      const quizMap: Record<string, Quiz | undefined> = {};
+      for (const quiz of q) quizMap[quiz.id] = quiz;
+      const contentV2 = await getLessonBlocksV2({ lessonId, quizzesById: quizMap });
       if (cancelled) return;
       setLesson(l ?? null);
-      setBlocks(content?.blocks ?? []);
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, [lessonId]);
-
-  useEffect(() => {
-    let cancelled = false;
-    (async () => {
-      if (!lessonId) return;
-      const q = await db.quizzes.where("lessonId").equals(lessonId).toArray();
-      if (cancelled) return;
-      const map: Record<string, Quiz | undefined> = {};
-      for (const quiz of q) map[quiz.id] = quiz;
-      setQuizzesById(map);
+      setQuizzesById(quizMap);
+      setBlocksV2(contentV2);
     })();
     return () => {
       cancelled = true;
@@ -74,9 +64,22 @@ export function AdminStudentLessonPreviewPage() {
     (async () => {
       const ids = Array.from(
         new Set(
-          blocks
-            .filter((b): b is Extract<LessonBlock, { assetId: string }> => "assetId" in b)
-            .map((b) => b.assetId)
+          blocksV2.flatMap((block) =>
+            block.components
+              .filter(
+                (
+                  component
+                ): component is {
+                  id: string;
+                  type: "media";
+                  mediaType: "image" | "audio" | "video" | "pdf" | "pptx";
+                  assetId: string;
+                  name: string;
+                  mime: string;
+                } => component.type === "media"
+              )
+              .map((component) => component.assetId)
+          )
         )
       );
       if (ids.length === 0) {
@@ -92,7 +95,7 @@ export function AdminStudentLessonPreviewPage() {
     return () => {
       cancelled = true;
     };
-  }, [blocks]);
+  }, [blocksV2]);
 
   useEffect(() => {
     let cancelled = false;
@@ -128,7 +131,7 @@ export function AdminStudentLessonPreviewPage() {
     return getLessonEffectiveAccessPolicy({ lesson, subjectDefaultsByCurriculumSubjectId: subjectDefaults });
   }, [lesson, subjectDefaults]);
 
-  const steps = useMemo(() => buildLessonSteps({ blocks, assetsById, quizzesById }), [assetsById, blocks, quizzesById]);
+  const steps = useMemo(() => buildLessonSteps({ blocksV2, assetsById, quizzesById }), [assetsById, blocksV2, quizzesById]);
 
   if (!lessonId) return <div>Missing lesson id.</div>;
   if (!lesson) return <div>Loading…</div>;

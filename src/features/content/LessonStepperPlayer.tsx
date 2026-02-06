@@ -49,10 +49,7 @@ export function LessonStepperPlayer({
   async function next() {
     if (!activeStep) return;
     if (!canAdvance(activeStep, progressState).ok) return;
-
-    if (activeStep.type !== "quiz") {
-      await onMarkStepComplete?.(activeStep.key);
-    }
+    await onMarkStepComplete?.(activeStep.key);
 
     if (isLast) {
       await onFinish?.();
@@ -71,57 +68,44 @@ export function LessonStepperPlayer({
   function renderStep() {
     if (!activeStep) return <div className="text-sm text-muted">No steps.</div>;
 
-    if (activeStep.type === "content") {
-      return <LessonPlayer blocks={[activeStep.block]} />;
-    }
-
     if (activeStep.type === "pdf_page") {
       const asset = assetsById[activeStep.assetId];
-      if (!asset) return <div className="text-sm text-muted">Loading PDF…</div>;
       return (
-        <PdfViewer
-          blob={asset.blob}
-          page={activeStep.page}
-          onNumPages={(n) => onPdfNumPages?.(activeStep.assetId, n)}
-        />
+        <div className="space-y-3">
+          {!asset ? (
+            <div className="text-sm text-muted">Loading PDF…</div>
+          ) : (
+            <PdfViewer
+              blob={asset.blob}
+              page={activeStep.page}
+              onNumPages={(n) => onPdfNumPages?.(activeStep.assetId, n)}
+            />
+          )}
+          <QuizGate
+            step={activeStep}
+            mode={mode}
+            quizzesById={quizzesById}
+            bestScoreByQuizId={bestScoreByQuizId}
+            studentId={studentId}
+            onQuizAttempt={onQuizAttempt}
+            onMarkStepComplete={onMarkStepComplete}
+          />
+        </div>
       );
     }
 
-    const quiz = quizzesById[activeStep.quizId];
-    const best = bestScoreByQuizId[activeStep.quizId];
-    const passed = typeof best === "number" && best >= activeStep.passScorePct;
-
     return (
       <div className="space-y-3">
-        <div className="rounded-xl border border-border bg-surface p-3">
-          <div className="text-sm font-semibold text-text">Pass: {activeStep.passScorePct}% to continue</div>
-          <div className="mt-1 text-xs text-muted">
-            Best score:{" "}
-            <span className={passed ? "font-semibold text-emerald-300" : "font-semibold text-amber-200"}>
-              {typeof best === "number" ? `${best}%` : "—"}
-            </span>
-          </div>
-        </div>
-
-        {!quiz ? (
-          <div className="text-sm text-muted">Quiz unavailable.</div>
-        ) : mode === "student" ? (
-          <QuizRunner
-            quiz={quiz}
-            studentId={studentId ?? ""}
-            onComplete={async (attempt) => {
-              onQuizAttempt?.(attempt);
-              if (attempt.score >= activeStep.passScorePct) {
-                await onMarkStepComplete?.(activeStep.key, {
-                  quizAttemptId: attempt.id,
-                  bestScore: attempt.score
-                });
-              }
-            }}
-          />
-        ) : (
-          <QuizPreview quiz={quiz} />
-        )}
+        {activeStep.blocks.length > 0 ? <LessonPlayer blocks={activeStep.blocks} /> : null}
+        <QuizGate
+          step={activeStep}
+          mode={mode}
+          quizzesById={quizzesById}
+          bestScoreByQuizId={bestScoreByQuizId}
+          studentId={studentId}
+          onQuizAttempt={onQuizAttempt}
+          onMarkStepComplete={onMarkStepComplete}
+        />
       </div>
     );
   }
@@ -200,3 +184,59 @@ export function LessonStepperPlayer({
   );
 }
 
+function QuizGate({
+  step,
+  mode,
+  quizzesById,
+  bestScoreByQuizId,
+  studentId,
+  onQuizAttempt,
+  onMarkStepComplete
+}: {
+  step: LessonStep;
+  mode: "student" | "preview";
+  quizzesById: Record<string, Quiz | undefined>;
+  bestScoreByQuizId: Record<string, number | undefined>;
+  studentId?: string;
+  onQuizAttempt?: (attempt: QuizAttempt) => void;
+  onMarkStepComplete?: (stepKey: string, extra?: { quizAttemptId?: string; bestScore?: number }) => void | Promise<void>;
+}) {
+  const gate = step.quizGate;
+  if (!gate) return null;
+  const quiz = quizzesById[gate.quizId];
+  const best = bestScoreByQuizId[gate.quizId];
+  const passed = typeof best === "number" && best >= gate.passScorePct;
+
+  return (
+    <div className="space-y-3">
+      <div className="rounded-xl border border-border bg-surface p-3">
+        <div className="text-sm font-semibold text-text">Pass: {gate.passScorePct}% to continue</div>
+        <div className="mt-1 text-xs text-muted">
+          Best score:{" "}
+          <span className={passed ? "font-semibold text-emerald-300" : "font-semibold text-amber-200"}>
+            {typeof best === "number" ? `${best}%` : "—"}
+          </span>
+        </div>
+      </div>
+      {!quiz ? (
+        <div className="text-sm text-muted">Quiz unavailable.</div>
+      ) : mode === "student" ? (
+        <QuizRunner
+          quiz={quiz}
+          studentId={studentId ?? ""}
+          onComplete={async (attempt) => {
+            onQuizAttempt?.(attempt);
+            if (attempt.score >= gate.passScorePct) {
+              await onMarkStepComplete?.(step.key, {
+                quizAttemptId: attempt.id,
+                bestScore: attempt.score
+              });
+            }
+          }}
+        />
+      ) : (
+        <QuizPreview quiz={quiz} />
+      )}
+    </div>
+  );
+}

@@ -5,20 +5,22 @@ export type LessonProgressState = {
   bestScoreByQuizId: Record<string, number | undefined>;
 };
 
+function hasPassedGate(step: LessonStep, state: LessonProgressState) {
+  const gate = step.quizGate;
+  if (!gate) return true;
+  const best = state.bestScoreByQuizId[gate.quizId];
+  return typeof best === "number" && best >= gate.passScorePct;
+}
+
 export function isStepComplete(step: LessonStep, state: LessonProgressState) {
-  if (step.type === "quiz") {
-    const best = state.bestScoreByQuizId[step.quizId];
-    return typeof best === "number" && best >= step.passScorePct;
-  }
-  return state.completedStepKeys.has(step.key);
+  if (!hasPassedGate(step, state)) return false;
+  return step.quizGate ? true : state.completedStepKeys.has(step.key);
 }
 
 export function canAdvance(step: LessonStep, state: LessonProgressState) {
-  if (step.type === "quiz") {
-    if (isStepComplete(step, state)) return { ok: true as const };
-    return { ok: false as const, reason: `Pass ${step.passScorePct}% to continue` };
+  if (step.quizGate && !hasPassedGate(step, state)) {
+    return { ok: false as const, reason: `Pass ${step.quizGate.passScorePct}% to continue` };
   }
-  // Content/PDF steps are marked complete when the user clicks Next.
   return { ok: true as const };
 }
 

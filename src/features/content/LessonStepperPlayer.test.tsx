@@ -31,19 +31,19 @@ describe("LessonStepperPlayer", () => {
     const user = userEvent.setup();
     const steps: LessonStep[] = [
       {
-        key: "block:b1",
-        type: "content",
+        key: "blockv2:b1",
+        type: "block",
         title: "Reading",
-        block: { id: "b1", type: "text", variant: "body", text: "Hello" }
+        blockId: "b1",
+        blocks: [{ id: "b1:t1", type: "text", variant: "body", text: "Hello" }]
       },
       {
-        key: "quiz:legacy:q1",
-        type: "quiz",
+        key: "blockv2:b2",
+        type: "block",
         title: "Quiz",
-        quizId: "q1",
-        requiredToContinue: true,
-        passScorePct: 70,
-        blockId: "legacy_q1"
+        blockId: "b2",
+        blocks: [],
+        quizGate: { quizId: "q1", requiredToContinue: true, passScorePct: 70 }
       }
     ];
     const quiz: Quiz = { id: "q1", lessonId: "l1", questions: [] };
@@ -78,7 +78,7 @@ describe("LessonStepperPlayer", () => {
     expect(screen.getByRole("button", { name: "Next" })).toBeEnabled();
 
     await user.click(screen.getByRole("button", { name: "Next" }));
-    expect(onMark).toHaveBeenCalledWith("block:b1");
+    expect(onMark).toHaveBeenCalledWith("blockv2:b1");
 
     // quiz step: next should be disabled until pass
     expect(screen.getByRole("button", { name: "Finish" })).toBeDisabled();

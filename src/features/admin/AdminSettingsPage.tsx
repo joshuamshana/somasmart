@@ -83,6 +83,7 @@ async function exportBackup(): Promise<BackupBundleV1> {
       curriculumSubjects: await db.curriculumSubjects.toArray(),
       lessons: await db.lessons.toArray(),
       lessonContents: await db.lessonContents.toArray(),
+      lessonContentsV2: await db.lessonContentsV2.toArray(),
       lessonAssets: lessonAssetsExport,
       quizzes: await db.quizzes.toArray(),
       progress: await db.progress.toArray(),
@@ -120,6 +121,7 @@ async function importBackup(bundle: BackupBundleV1) {
       db.curriculumSubjects,
       db.lessons,
       db.lessonContents,
+      db.lessonContentsV2,
       db.lessonAssets,
       db.quizzes,
       db.progress,
@@ -145,6 +147,7 @@ async function importBackup(bundle: BackupBundleV1) {
         db.curriculumSubjects.clear(),
         db.lessons.clear(),
         db.lessonContents.clear(),
+        db.lessonContentsV2.clear(),
         db.lessonAssets.clear(),
         db.quizzes.clear(),
         db.progress.clear(),
@@ -169,6 +172,7 @@ async function importBackup(bundle: BackupBundleV1) {
       await db.curriculumSubjects.bulkPut(t.curriculumSubjects ?? []);
       await db.lessons.bulkPut(t.lessons ?? []);
       await db.lessonContents.bulkPut(t.lessonContents ?? []);
+      await db.lessonContentsV2.bulkPut(t.lessonContentsV2 ?? []);
       await db.lessonAssets.bulkPut(lessonAssets ?? []);
       await db.quizzes.bulkPut(t.quizzes ?? []);
       await db.progress.bulkPut(t.progress ?? []);

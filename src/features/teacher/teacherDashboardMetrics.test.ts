@@ -39,9 +39,9 @@ describe("teacherDashboardMetrics", () => {
 
   it("returns unread notifications sorted newest first", () => {
     const notifications: Notification[] = [
-      { id: "1", userId: "u", title: "old", createdAt: "2026-01-01T10:00:00.000Z", readAt: undefined },
-      { id: "2", userId: "u", title: "read", createdAt: "2026-01-02T10:00:00.000Z", readAt: "2026-01-03T00:00:00Z" },
-      { id: "3", userId: "u", title: "new", createdAt: "2026-01-03T10:00:00.000Z", readAt: undefined }
+      { id: "1", userId: "u", type: "system", title: "old", createdAt: "2026-01-01T10:00:00.000Z", readAt: undefined },
+      { id: "2", userId: "u", type: "system", title: "read", createdAt: "2026-01-02T10:00:00.000Z", readAt: "2026-01-03T00:00:00Z" },
+      { id: "3", userId: "u", type: "system", title: "new", createdAt: "2026-01-03T10:00:00.000Z", readAt: undefined }
     ];
     const result = buildUnreadNotifications(notifications);
     expect(result.map((n) => n.id)).toEqual(["3", "1"]);
@@ -90,4 +90,3 @@ describe("teacherDashboardMetrics", () => {
     expect(metrics.lastActivityAt).toBe("2026-01-04T10:00:00.000Z");
   });
 });
-
