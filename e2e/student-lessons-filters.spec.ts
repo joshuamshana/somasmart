@@ -16,7 +16,7 @@ test("Student lessons filters: level → class → subject cascade filters lesso
   await expect(page.getByRole("button", { name: "Logout" })).toBeVisible({ timeout: 30_000 });
 
   await page.goto(`/student/lessons?device=${device}`);
-  await expect(page.getByRole("main").getByText("Lessons")).toBeVisible({ timeout: 30_000 });
+  await expect(page.getByLabel("Level")).toBeVisible({ timeout: 30_000 });
 
   const level = visibleSelectByLabel(page, "Level");
   const klass = visibleSelectByLabel(page, "Class");

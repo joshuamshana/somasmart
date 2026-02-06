@@ -8,6 +8,7 @@ test("School admin: create student and grant sponsored access", async ({ page })
   await page.getByLabel("Username").fill("schooladmin");
   await page.getByLabel("Password").fill("school123");
   await page.getByRole("button", { name: "Login" }).click();
+  await expect(page.getByTestId("school-layout")).toBeVisible({ timeout: 30_000 });
 
   await expect(page.getByText("SomaSmart Demo School")).toBeVisible();
   await expect(page.getByText("Students")).toBeVisible();
@@ -26,14 +27,14 @@ test("School admin: create student and grant sponsored access", async ({ page })
   await page.getByRole("button", { name: "Create" }).click();
   await expect(page.getByText("Student created.")).toBeVisible();
 
-  await page.getByRole("link", { name: "Licenses", exact: true }).click();
+  await page.getByTestId("school-sidebar-panel").getByRole("link", { name: "Licenses", exact: true }).click();
   await page
     .getByLabel("Student")
     .selectOption({ label: `School Student (${studentUsername})` });
   await page.getByRole("button", { name: "Grant access" }).click();
   await expect(page.getByText("Sponsored access granted.")).toBeVisible();
 
-  await page.getByRole("button", { name: "Logout" }).click();
+  await page.getByTestId("school-sidebar-logout").click();
 
   await page.goto(`/login?device=${device}`);
   await page.getByLabel("Username").fill(studentUsername);

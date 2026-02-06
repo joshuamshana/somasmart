@@ -12,7 +12,13 @@ test("Sync: student registration + suspension propagate across devices", async (
   await page.getByLabel("Username").fill(studentUsername);
   await page.getByLabel("Password").fill("password123");
   await page.getByRole("button", { name: "Register" }).click();
+  if (page.url().includes("/login")) {
+    await page.getByLabel("Username").fill(studentUsername);
+    await page.getByLabel("Password").fill("password123");
+    await page.getByRole("button", { name: "Login" }).click();
+  }
   await expect(page.getByText("Learn", { exact: true })).toBeVisible();
+  await expect(page.getByTestId("student-sidebar-logout")).toBeVisible({ timeout: 30_000 });
 
   await page.goto(`/sync?device=${deviceStudentA}&server=${server}`);
   await page.getByRole("button", { name: "Sync now" }).click();
@@ -52,7 +58,7 @@ test("Sync: student registration + suspension propagate across devices", async (
   await expect(page.getByTestId("sync-queued")).toContainText("0");
   await expect(page.getByTestId("sync-failed")).toContainText("0");
 
-  await page.getByRole("button", { name: "Logout" }).click();
+  await page.getByTestId("student-sidebar-logout").click();
   await expect(page.getByRole("button", { name: "Login" })).toBeVisible();
 
   await page.goto(`/login?device=${deviceStudentA}&server=${server}`);

@@ -25,11 +25,13 @@ test("Video block: teacher uploads -> admin approves -> student plays offline", 
     mimeType: "video/webm",
     buffer: Buffer.from([0x1a, 0x45, 0xdf, 0xa3, 0x00, 0x00, 0x00, 0x00])
   });
-  await expect(page.getByLabel("Block 2").getByText(/VIDEO/)).toBeVisible();
+  await expect(page.getByText(/\(VIDEO\)/)).toBeVisible();
 
-  await page.getByRole("button", { name: "Submit for approval" }).click();
+  await page.getByRole("button", { name: "Next" }).click();
+  await page.getByRole("button", { name: "Next" }).click();
+  await page.getByRole("button", { name: "Submit for approval" }).first().click();
   await expect(page).toHaveURL(/\/teacher\/lessons/);
-  await page.getByRole("button", { name: "Logout" }).click();
+  await page.getByTestId("teacher-sidebar-logout").click();
 
   await page.goto("/login");
   await page.getByLabel("Username").fill("admin");

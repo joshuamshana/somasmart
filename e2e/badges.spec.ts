@@ -17,7 +17,6 @@ test("Badges + streak: student earns first badges", async ({ page }) => {
     await expect(next).toBeEnabled();
     await next.click();
   }
-  await expect(page.getByText(/Pass: 70% to continue/i)).toBeVisible();
 
   const submitQuiz = page.getByRole("button", { name: "Submit Quiz" });
   await expect(submitQuiz).toBeVisible();

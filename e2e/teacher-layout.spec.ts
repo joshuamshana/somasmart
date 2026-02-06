@@ -8,17 +8,17 @@ test("Teacher layout: sidebar navigation works and preserves query params", asyn
   await page.getByLabel("Username").fill("teacher1");
   await page.getByLabel("Password").fill("teacher123");
   await page.getByRole("button", { name: "Login" }).click();
-  await expect(page.getByRole("button", { name: "Logout" })).toBeVisible({ timeout: 30_000 });
+  await expect(page.getByTestId("teacher-sidebar-logout")).toBeVisible({ timeout: 30_000 });
 
   await page.goto(`/teacher?device=${device}&server=${server}`);
   await expect(page.getByTestId("teacher-layout")).toBeVisible();
   await expect(page.getByTestId("teacher-sidebar")).toBeVisible();
 
-  await page.getByRole("link", { name: "Lessons", exact: true }).click();
+  await page.getByRole("link", { name: "My Lessons", exact: true }).click();
   await expect(page).toHaveURL(new RegExp(`/teacher/lessons\\?device=${device}&server=${server}`));
   await expect(page.getByRole("heading", { name: "My lessons" })).toBeVisible();
 
-  await page.getByRole("link", { name: "Lesson creator", exact: true }).click();
+  await page.getByRole("link", { name: "Upload Lesson", exact: true }).click();
   await expect(page).toHaveURL(new RegExp(`/teacher/lessons/new\\?device=${device}&server=${server}`));
   await expect(page.getByRole("heading", { name: "Create lesson" })).toBeVisible();
 
@@ -37,26 +37,35 @@ test("Teacher layout: sidebar navigation works and preserves query params", asyn
   await page.getByRole("link", { name: "Sync status", exact: true }).click();
   await expect(page).toHaveURL(new RegExp(`/sync\\?device=${device}&server=${server}`));
   await expect(page.getByRole("button", { name: "Sync now" })).toBeVisible();
+
+  await page.goto(`/teacher?device=${device}&server=${server}`);
+  await page.getByTestId("teacher-sidebar-logout").click();
+  await expect(page.getByLabel("Username")).toBeVisible({ timeout: 30_000 });
 });
 
 test("Teacher layout: mobile drawer navigation works", async ({ page }) => {
+  const server = `srv_teacher_nav_mobile_${Date.now()}`;
+  const device = `teach_mobile_${server}`;
   await page.setViewportSize({ width: 390, height: 844 });
 
-  await page.goto("/login");
+  await page.goto(`/login?device=${device}&server=${server}`);
   await page.getByLabel("Username").fill("teacher1");
   await page.getByLabel("Password").fill("teacher123");
   await page.getByRole("button", { name: "Login" }).click();
-  await expect(page.getByRole("button", { name: "Logout" })).toBeVisible({ timeout: 30_000 });
-  await expect(page.getByRole("link", { name: "My Lessons", exact: true })).toBeHidden();
+  await expect(page).toHaveURL(/\/teacher/, { timeout: 30_000 });
 
-  await page.goto("/teacher");
+  await page.goto(`/teacher?device=${device}&server=${server}`);
   await expect(page.getByTestId("teacher-mobile-header")).toBeVisible();
   await page.getByRole("button", { name: "Menu" }).click();
   await expect(page.getByText("Teacher menu")).toBeVisible();
 
-  await page.getByRole("link", { name: "Lessons", exact: true }).click();
+  await page.getByRole("link", { name: "My Lessons", exact: true }).click();
   await expect(page.getByRole("heading", { name: "My lessons" })).toBeVisible();
   await expect(page.getByText("Teacher menu")).toHaveCount(0);
+
+  await page.getByRole("button", { name: "Menu" }).click();
+  await page.getByTestId("teacher-drawer-logout").click();
+  await expect(page.getByLabel("Username")).toBeVisible({ timeout: 30_000 });
 });
 
 test("Teacher layout: sidebar scroll is independent from main body", async ({ page }) => {
@@ -69,7 +78,7 @@ test("Teacher layout: sidebar scroll is independent from main body", async ({ pa
   await page.getByLabel("Username").fill("teacher1");
   await page.getByLabel("Password").fill("teacher123");
   await page.getByRole("button", { name: "Login" }).click();
-  await expect(page.getByRole("button", { name: "Logout" })).toBeVisible({ timeout: 30_000 });
+  await expect(page.getByTestId("teacher-sidebar-logout")).toBeVisible({ timeout: 30_000 });
 
   await page.goto(`/teacher?device=${device}&server=${server}`);
   await expect(page.getByTestId("teacher-layout")).toBeVisible();

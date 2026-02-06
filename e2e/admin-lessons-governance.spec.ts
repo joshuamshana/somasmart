@@ -27,7 +27,7 @@ test("Admin lessons governance: create new version for teacher; expire approved 
   await page.getByRole("button", { name: "Login" }).click();
   await expect(page.getByRole("link", { name: "My Lessons", exact: true })).toBeVisible({ timeout: 30_000 });
   await page.goto(`/teacher/lessons?device=${device}`);
-  await expect(page.getByText(/Introduction to Numbers \(v2\)/)).toBeVisible();
+  await expect(page.getByRole("table").getByText(/Introduction to Numbers \(v2\)/)).toBeVisible();
 
   // Admin unpublishes the original lesson
   await page.getByRole("button", { name: "Logout" }).click();

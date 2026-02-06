@@ -20,6 +20,10 @@ test("Admin layout: sidebar navigation works", async ({ page }) => {
 
   await page.getByRole("link", { name: "Settings", exact: true }).click();
   await expect(page.getByRole("heading", { name: "Settings" })).toBeVisible();
+
+  await page.getByTestId("admin-sidebar-panel").getByRole("link", { name: "Notifications", exact: true }).click();
+  await expect(page).toHaveURL(new RegExp(`/notifications\\?device=${device}`));
+  await expect(page.getByRole("button", { name: "Mark all read" })).toBeVisible();
 });
 
 test("Admin layout: mobile drawer navigation works", async ({ page }) => {
@@ -35,6 +39,20 @@ test("Admin layout: mobile drawer navigation works", async ({ page }) => {
   await page.getByRole("link", { name: "Teachers", exact: true }).click();
   await expect(page.getByRole("heading", { name: "Teacher management" })).toBeVisible();
   await expect(page.getByRole("dialog")).toHaveCount(0);
+});
+
+test("Admin layout: sidebar and drawer expose logout", async ({ page }) => {
+  const device = `adminLayoutLogout_${Date.now()}`;
+  await loginAsAdmin(page, device);
+
+  await page.getByTestId("admin-sidebar-logout").click();
+  await expect(page.getByLabel("Username")).toBeVisible({ timeout: 30_000 });
+
+  await page.setViewportSize({ width: 390, height: 844 });
+  await loginAsAdmin(page, device);
+  await page.getByRole("button", { name: "Menu" }).click();
+  await page.getByTestId("admin-drawer-logout").click();
+  await expect(page.getByLabel("Username")).toBeVisible({ timeout: 30_000 });
 });
 
 test("Admin layout: sidebar scroll is independent from main body", async ({ page }) => {

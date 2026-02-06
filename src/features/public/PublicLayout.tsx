@@ -3,58 +3,41 @@ import { Dialog, Transition } from "@headlessui/react";
 import { Outlet, useLocation } from "react-router-dom";
 import { SidebarNav } from "@/shared/ui/SidebarNav";
 import { Button } from "@/shared/ui/Button";
-import { useAuth } from "@/features/auth/authContext";
 
 const groups = [
   {
-    label: "Teaching",
-    items: [
-      { label: "Dashboard", to: "/teacher" },
-      { label: "My Lessons", to: "/teacher/lessons" },
-      { label: "Upload Lesson", to: "/teacher/lessons/new" }
-    ]
+    label: "Learn",
+    items: [{ label: "Home", to: "/" }]
   },
   {
-    label: "Tools",
+    label: "Access",
     items: [
-      { label: "Support inbox", to: "/teacher/support" },
-      { label: "Alerts", to: "/notifications" },
-      { label: "Sync status", to: "/sync" },
-      { label: "Appearance", to: "/settings/appearance" }
+      { label: "Login", to: "/login" },
+      { label: "Register", to: "/register" }
     ]
   }
 ] as const;
 
-export function TeacherLayout({ children }: { children?: React.ReactNode }) {
+export function PublicLayout({ children }: { children?: React.ReactNode }) {
   const [open, setOpen] = useState(false);
-  const { logout } = useAuth();
   const location = useLocation();
 
-  const title = location.pathname
-    .replace("/teacher", "Teacher")
-    .replaceAll("-", " ")
-    .replaceAll("/", " / ");
+  const title =
+    location.pathname === "/login" ? "Login" : location.pathname === "/register" ? "Register" : "Learn";
 
   return (
-    <div className="grid gap-4 lg:grid-cols-[260px_1fr]" data-testid="teacher-layout">
-      {/* Desktop sidebar */}
-      <aside className="hidden lg:block" data-testid="teacher-sidebar">
+    <div className="grid gap-4 lg:grid-cols-[260px_1fr]" data-testid="public-layout">
+      <aside className="hidden lg:block" data-testid="public-sidebar">
         <div
           className="sticky top-[72px] h-[calc(100vh-96px)] overflow-y-auto overscroll-contain rounded-xl border border-border bg-surface p-3 shadow-sm"
-          data-testid="teacher-sidebar-panel"
+          data-testid="public-sidebar-panel"
         >
-          <div className="mb-3 px-2 text-sm font-semibold text-text">Teacher</div>
+          <div className="mb-3 px-2 text-sm font-semibold text-text">Public</div>
           <SidebarNav groups={groups as any} />
-          <div className="mt-6 border-t border-border pt-3">
-            <Button className="w-full" variant="secondary" onClick={logout} data-testid="teacher-sidebar-logout">
-              Logout
-            </Button>
-          </div>
         </div>
       </aside>
 
-      {/* Mobile header + drawer */}
-      <div className="lg:hidden" data-testid="teacher-mobile-header">
+      <div className="lg:hidden" data-testid="public-mobile-header">
         <div className="flex items-center justify-between rounded-xl border border-border bg-surface p-3 shadow-sm">
           <div className="text-sm font-semibold text-text">{title}</div>
           <Button variant="secondary" onClick={() => setOpen(true)}>
@@ -87,25 +70,12 @@ export function TeacherLayout({ children }: { children?: React.ReactNode }) {
                 >
                   <Dialog.Panel className="max-h-[calc(100vh-2rem)] w-full max-w-sm overflow-y-auto overscroll-contain rounded-xl border border-border bg-surface p-3 shadow-lg">
                     <div className="mb-3 flex items-center justify-between gap-3 px-2">
-                      <Dialog.Title className="text-sm font-semibold text-text">Teacher menu</Dialog.Title>
+                      <Dialog.Title className="text-sm font-semibold text-text">Public menu</Dialog.Title>
                       <button className="text-sm text-muted hover:text-text" onClick={() => setOpen(false)}>
                         Close
                       </button>
                     </div>
                     <SidebarNav groups={groups as any} onNavigate={() => setOpen(false)} />
-                    <div className="mt-6 border-t border-border pt-3">
-                      <Button
-                        className="w-full"
-                        variant="secondary"
-                        onClick={() => {
-                          setOpen(false);
-                          logout();
-                        }}
-                        data-testid="teacher-drawer-logout"
-                      >
-                        Logout
-                      </Button>
-                    </div>
                   </Dialog.Panel>
                 </Transition.Child>
               </div>

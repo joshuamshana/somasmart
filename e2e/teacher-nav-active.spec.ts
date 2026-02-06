@@ -5,7 +5,7 @@ test("Teacher nav: only one sidebar item is active on nested routes", async ({ p
   await page.getByLabel("Username").fill("teacher1");
   await page.getByLabel("Password").fill("teacher123");
   await page.getByRole("button", { name: "Login" }).click();
-  await expect(page.getByRole("button", { name: "Logout" })).toBeVisible({ timeout: 30_000 });
+  await expect(page.getByTestId("teacher-sidebar-logout")).toBeVisible({ timeout: 30_000 });
 
   await page.goto("/teacher/lessons/new");
   await expect(page.getByRole("heading", { name: "Create lesson" })).toBeVisible();
@@ -13,6 +13,5 @@ test("Teacher nav: only one sidebar item is active on nested routes", async ({ p
   const sidebar = page.getByTestId("teacher-sidebar");
   const activeLinks = sidebar.locator("a.bg-surface2");
   await expect(activeLinks).toHaveCount(1);
-  await expect(activeLinks.first()).toHaveText("Lesson creator");
+  await expect(activeLinks.first()).toHaveText("Upload Lesson");
 });
-

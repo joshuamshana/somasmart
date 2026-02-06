@@ -5,7 +5,7 @@ test("Teacher lessons: delete requires confirmation; cancel keeps lesson", async
   await page.getByLabel("Username").fill("teacher1");
   await page.getByLabel("Password").fill("teacher123");
   await page.getByRole("button", { name: "Login" }).click();
-  await expect(page.getByRole("button", { name: "Logout" })).toBeVisible({ timeout: 30_000 });
+  await expect(page.getByTestId("teacher-sidebar-logout")).toBeVisible({ timeout: 30_000 });
 
   const title = `Delete Me ${Date.now()}`;
   await page.goto("/teacher/lessons/new");
@@ -19,10 +19,12 @@ test("Teacher lessons: delete requires confirmation; cancel keeps lesson", async
   await page.getByRole("button", { name: "Next" }).click();
   await page.getByRole("button", { name: "Add text" }).click();
   await page.getByLabel("Text block 1").fill("Hello");
-  await page.getByRole("button", { name: "Save draft" }).click();
+  await page.getByRole("button", { name: "Next" }).click();
+  await page.getByRole("button", { name: "Next" }).click();
+  await page.getByRole("button", { name: "Save draft" }).first().click();
 
   await page.goto("/teacher/lessons");
-  const row = page.getByRole("row").filter({ hasText: title });
+  const row = page.getByRole("table").getByRole("row").filter({ hasText: title });
   await expect(row).toBeVisible();
 
   // Open navigates to the edit builder and pre-fills metadata.

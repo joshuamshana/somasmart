@@ -41,6 +41,10 @@ import { NotificationsPage } from "@/features/notifications/NotificationsPage";
 import { PublicLessonGateRedirect } from "@/features/content/PublicLessonGateRedirect";
 import { RouteErrorPage } from "@/app/RouteErrorPage";
 import { AppearanceSettingsPage } from "@/features/settings/AppearanceSettingsPage";
+import { StudentLayout } from "@/features/student/StudentLayout";
+import { PublicLayout } from "@/features/public/PublicLayout";
+import { SchoolLayout } from "@/features/school/SchoolLayout";
+import { RoleScopedLayout } from "@/app/RoleScopedLayout";
 
 const router = createBrowserRouter([
   {
@@ -49,62 +53,67 @@ const router = createBrowserRouter([
     errorElement: <RouteErrorPage />,
     children: [
       { index: true, element: <StartRedirect /> },
-      { path: "login", element: <LoginPage /> },
-      { path: "register", element: <RegisterPage /> },
-      { path: "learn/lessons/:lessonId", element: <PublicLessonGateRedirect /> },
+      {
+        element: <PublicLayout />,
+        children: [
+          { path: "login", element: <LoginPage /> },
+          { path: "register", element: <RegisterPage /> },
+          { path: "learn/lessons/:lessonId", element: <PublicLessonGateRedirect /> }
+        ]
+      },
       {
         path: "student",
         element: (
           <RequireRole roles={["student"]}>
-            <StartRedirect />
+            <StudentLayout />
           </RequireRole>
-        )
-      },
-      {
-        path: "student/lessons",
-        element: (
-          <RequireRole roles={["student"]}>
-            <StudentLessonsPage />
-          </RequireRole>
-        )
-      },
-      {
-        path: "student/lessons/:lessonId",
-        element: (
-          <RequireRole roles={["student"]}>
-            <StudentLessonPage />
-          </RequireRole>
-        )
-      },
-      {
-        path: "student/progress",
-        element: (
-          <RequireRole roles={["student"]}>
-            <StudentProgressPage />
-          </RequireRole>
-        )
-      },
-      {
-        path: "student/payments",
-        element: (
-          <RequireRole roles={["student"]}>
-            <StudentPaymentsPage />
-          </RequireRole>
-        )
-      },
-      {
-        path: "student/support",
-        element: (
-          <RequireRole roles={["student"]}>
-            <StudentSupportPage />
-          </RequireRole>
-        )
+        ),
+        children: [
+          {
+            index: true,
+            element: <Navigate to="/" replace />
+          },
+          {
+            path: "lessons",
+            element: <StudentLessonsPage />
+          },
+          {
+            path: "lessons/:lessonId",
+            element: <StudentLessonPage />
+          },
+          {
+            path: "progress",
+            element: <StudentProgressPage />
+          },
+          {
+            path: "payments",
+            element: <StudentPaymentsPage />
+          },
+          {
+            path: "support",
+            element: <StudentSupportPage />
+          },
+          {
+            path: "sync",
+            element: <SyncPage />
+          },
+          {
+            path: "notifications",
+            element: <NotificationsPage />
+          },
+          {
+            path: "appearance",
+            element: <AppearanceSettingsPage />
+          }
+        ]
       },
       {
         path: "sync",
         element: (
           <RequireRole roles={["student", "teacher", "admin", "school_admin"]}>
-            <SyncPage />
+            <RoleScopedLayout>
+              <SyncPage />
+            </RoleScopedLayout>
           </RequireRole>
         )
       },
@@ -112,7 +121,9 @@ const router = createBrowserRouter([
         path: "notifications",
         element: (
           <RequireRole roles={["student", "teacher", "admin", "school_admin"]}>
-            <NotificationsPage />
+            <RoleScopedLayout>
+              <NotificationsPage />
+            </RoleScopedLayout>
           </RequireRole>
         )
       },
@@ -120,7 +131,9 @@ const router = createBrowserRouter([
         path: "settings/appearance",
         element: (
           <RequireRole roles={["student", "teacher", "admin", "school_admin"]}>
-            <AppearanceSettingsPage />
+            <RoleScopedLayout>
+              <AppearanceSettingsPage />
+            </RoleScopedLayout>
           </RequireRole>
         )
       },
@@ -168,33 +181,15 @@ const router = createBrowserRouter([
         path: "school",
         element: (
           <RequireRole roles={["school_admin"]}>
-            <SchoolDashboard />
+            <SchoolLayout />
           </RequireRole>
-        )
-      },
-      {
-        path: "school/users",
-        element: (
-          <RequireRole roles={["school_admin"]}>
-            <SchoolUsersPage />
-          </RequireRole>
-        )
-      },
-      {
-        path: "school/licenses",
-        element: (
-          <RequireRole roles={["school_admin"]}>
-            <SchoolLicensesPage />
-          </RequireRole>
-        )
-      },
-      {
-        path: "school/analytics",
-        element: (
-          <RequireRole roles={["school_admin"]}>
-            <SchoolAnalyticsPage />
-          </RequireRole>
-        )
+        ),
+        children: [
+          { index: true, element: <SchoolDashboard /> },
+          { path: "users", element: <SchoolUsersPage /> },
+          { path: "licenses", element: <SchoolLicensesPage /> },
+          { path: "analytics", element: <SchoolAnalyticsPage /> }
+        ]
       }
     ]
   }

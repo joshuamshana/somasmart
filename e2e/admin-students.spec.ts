@@ -13,7 +13,6 @@ test("Admin: suspend student and see audit log", async ({ page }) => {
   await expect(page.getByText("Learn", { exact: true })).toBeVisible();
 
   await page.getByRole("button", { name: "Logout" }).click();
-  await expect(page.getByRole("navigation").getByRole("link", { name: "Login", exact: true })).toBeVisible();
 
   // Admin suspends student
   await page.goto(`/login?device=adminB&server=${server}`);

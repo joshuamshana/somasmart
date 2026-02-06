@@ -36,7 +36,7 @@ test("Sync: teacher approval and lesson approval propagate across devices", asyn
   await expect(page.getByTestId("sync-failed")).toContainText("0");
   await expect(page.getByTestId("sync-queued")).toContainText("0");
 
-  await page.getByRole("button", { name: "Logout" }).click();
+  await page.getByTestId("school-sidebar-logout").click();
   await expect(page.getByRole("button", { name: "Login" })).toBeVisible();
 
   // Device B: admin pulls teacher registration, approves, and pushes approval
@@ -134,5 +134,5 @@ test("Sync: teacher approval and lesson approval propagate across devices", asyn
   await expect(page.getByTestId("sync-failed")).toContainText("0");
 
   await page.goto(`/teacher/lessons?device=${deviceTeacherA}&server=${server}`);
-  await expect(page.getByText("Synced Lesson 1")).toBeVisible();
+  await expect(page.getByRole("table").getByText("Synced Lesson 1")).toBeVisible();
 });

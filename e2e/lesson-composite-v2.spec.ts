@@ -53,7 +53,7 @@ test("Lesson creator v2: composite blocks + inline quiz gate + PDF pages", async
   await page.getByRole("button", { name: /4\. Submit/ }).click();
   await page.getByRole("button", { name: "Submit for approval" }).first().click();
   await expect(page).toHaveURL(/\/teacher\/lessons/);
-  await expect(page.getByText(title)).toBeVisible();
+  await expect(page.getByRole("table").getByText(title)).toBeVisible();
 
   // Admin approves
   await page.getByRole("button", { name: "Logout" }).click();
