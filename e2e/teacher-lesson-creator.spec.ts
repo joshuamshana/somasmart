@@ -28,5 +28,5 @@ test("Teacher lesson creator: metadata gating -> blocks -> submit", async ({ pag
 
   await page.getByRole("button", { name: "Submit for approval" }).click();
   await expect(page).toHaveURL(/\/teacher\/lessons/);
-  await expect(page.getByText(title)).toBeVisible();
+  await expect(page.getByRole("table").getByText(title)).toBeVisible();
 });

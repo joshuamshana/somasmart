@@ -86,6 +86,7 @@ describe("LessonStepperPlayer", () => {
 
     expect(screen.getByRole("button", { name: "Finish" })).toBeEnabled();
     await user.click(screen.getByRole("button", { name: "Finish" }));
+    expect(onMark).toHaveBeenCalledWith("blockv2:b2");
     expect(onFinish).toHaveBeenCalledTimes(1);
   });
 });

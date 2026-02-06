@@ -8,6 +8,7 @@ import { Select } from "@/shared/ui/Select";
 import { useAuth } from "@/features/auth/authContext";
 import { canAccessLesson } from "@/shared/access/accessEngine";
 import { getSubjectAccessDefaultsByCurriculumSubjectId } from "@/shared/db/accessDefaultsRepo";
+import { getLessonLearningState } from "@/features/student/lessonLearningState";
 
 export function StudentLessonsPage() {
   const location = useLocation();
@@ -24,6 +25,7 @@ export function StudentLessonsPage() {
   const [subjects, setSubjects] = useState<CurriculumSubject[]>([]);
   const [grants, setGrants] = useState<import("@/shared/types").LicenseGrant[]>([]);
   const [subjectDefaults, setSubjectDefaults] = useState<Record<string, import("@/shared/types").AccessPolicy>>({});
+  const [progressByLessonId, setProgressByLessonId] = useState<Record<string, import("@/shared/types").Progress>>({});
 
   useEffect(() => {
     let cancelled = false;
@@ -65,6 +67,24 @@ export function StudentLessonsPage() {
       cancelled = true;
     };
   }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      if (!user) return;
+      const progress = (await db.progress.toArray()).filter((p) => p.studentId === user.id);
+      const map: Record<string, import("@/shared/types").Progress> = {};
+      for (const row of progress) {
+        const prev = map[row.lessonId];
+        if (!prev || row.lastSeenAt > prev.lastSeenAt) map[row.lessonId] = row;
+      }
+      if (cancelled) return;
+      setProgressByLessonId(map);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [user]);
 
   useEffect(() => {
     let cancelled = false;
@@ -203,6 +223,10 @@ export function StudentLessonsPage() {
       <div className="grid gap-3">
         {filtered.map((l) => {
           const access = canAccessLesson({ lesson: l, grants, subjectDefaultsByCurriculumSubjectId: subjectDefaults });
+          const learningState = getLessonLearningState(progressByLessonId[l.id]);
+          const learningStateLabel =
+            learningState === "completed" ? "Completed" : learningState === "in_progress" ? "In progress" : "New";
+          const callToAction = learningState === "completed" ? "Replay" : learningState === "in_progress" ? "Continue" : "Start";
           return (
             <Link
               key={l.id}
@@ -214,6 +238,10 @@ export function StudentLessonsPage() {
                   <div className="text-sm font-semibold">{l.title}</div>
                   <div className="mt-1 text-xs text-slate-400">
                     {l.subject} • {l.level} • {l.language}
+                  </div>
+                  <div className="mt-2 flex flex-wrap items-center gap-2">
+                    <span className="rounded bg-slate-900 px-2 py-1 text-xs text-slate-300">{learningStateLabel}</span>
+                    <span className="text-xs text-sky-300">{callToAction}</span>
                   </div>
                   <div className="mt-2 text-sm text-slate-300">{l.description}</div>
                 </div>

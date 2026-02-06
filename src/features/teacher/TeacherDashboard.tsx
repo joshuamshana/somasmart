@@ -64,6 +64,31 @@ export function TeacherDashboard() {
     return buildNeedsAttentionLessons(lessons);
   }, [lessons]);
 
+  const suggestedAction = useMemo(() => {
+    if (needsAttention.length > 0) {
+      return {
+        title: "Review rejected lessons first",
+        detail: "Address admin feedback and resubmit to move lessons back into review.",
+        to: "/teacher/lessons",
+        cta: "Open lessons"
+      };
+    }
+    if (stats.draft > 0) {
+      return {
+        title: "Submit your draft lessons",
+        detail: "Drafts are not visible to learners until you submit for approval.",
+        to: "/teacher/lessons",
+        cta: "Review drafts"
+      };
+    }
+    return {
+      title: "Create your next lesson",
+      detail: "Use templates in the lesson creator to publish faster with consistent structure.",
+      to: "/teacher/lessons/new",
+      cta: "Start lesson"
+    };
+  }, [needsAttention.length, stats.draft]);
+
   return (
     <div className="space-y-4">
       <PageHeader
@@ -84,7 +109,19 @@ export function TeacherDashboard() {
         }
       />
 
-      <div className="grid gap-4 md:grid-cols-6">
+      <Card title="Suggested next step">
+        <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+          <div className="min-w-0">
+            <div className="text-sm font-semibold text-text">{suggestedAction.title}</div>
+            <div className="mt-1 text-sm text-muted">{suggestedAction.detail}</div>
+          </div>
+          <Link to={suggestedAction.to}>
+            <Button>{suggestedAction.cta}</Button>
+          </Link>
+        </div>
+      </Card>
+
+      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-6">
         <Card title="Total">
           <div className="text-2xl font-semibold">{stats.total}</div>
           <div className="mt-1 text-xs text-muted">{stats.recent7d.total} updated last 7d</div>
@@ -111,89 +148,95 @@ export function TeacherDashboard() {
         </Card>
       </div>
 
-      <div className="grid gap-4 lg:grid-cols-3">
-        <Card title="Needs attention">
-          {needsAttention.length === 0 ? (
-            <div className="text-sm text-muted">No rejected or unpublished lessons.</div>
-          ) : (
-            <div className="space-y-3">
-              {needsAttention.map((l) => (
-                <div key={l.id} className="rounded-lg border border-border bg-surface2 p-3">
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="min-w-0">
-                      <div className="truncate text-sm font-semibold text-text">{l.title}</div>
-                      <div className="mt-1 text-xs text-muted">
-                        <span className="font-mono">{l.level}</span> • {l.subject}
+      <div className="grid gap-4 xl:grid-cols-12">
+        <div className="xl:col-span-5">
+          <Card title="Needs attention">
+            {needsAttention.length === 0 ? (
+              <div className="text-sm text-muted">No rejected or unpublished lessons.</div>
+            ) : (
+              <div className="space-y-3">
+                {needsAttention.map((l) => (
+                  <div key={l.id} className="rounded-lg border border-border bg-surface2 p-3">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0">
+                        <div className="truncate text-sm font-semibold text-text">{l.title}</div>
+                        <div className="mt-1 text-xs text-muted">
+                          <span className="font-mono">{l.level}</span> • {l.subject}
+                        </div>
+                        {l.adminFeedback ? (
+                          <div className="mt-2 text-xs text-warning">Feedback: {l.adminFeedback}</div>
+                        ) : null}
                       </div>
-                      {l.adminFeedback ? (
-                        <div className="mt-2 text-xs text-warning">Feedback: {l.adminFeedback}</div>
-                      ) : null}
+                      <StatusPill value={l.status} />
                     </div>
-                    <StatusPill value={l.status} />
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      <Link to={`/teacher/lessons/${l.id}/edit`}>
+                        <Button variant="secondary">Open</Button>
+                      </Link>
+                      <Link to="/teacher/lessons">
+                        <Button variant="secondary">All lessons</Button>
+                      </Link>
+                    </div>
                   </div>
-                  <div className="mt-3 flex flex-wrap gap-2">
-                    <Link to={`/teacher/lessons/${l.id}/edit`}>
-                      <Button variant="secondary">Open</Button>
-                    </Link>
-                    <Link to="/teacher/lessons">
-                      <Button variant="secondary">All lessons</Button>
-                    </Link>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </Card>
+                ))}
+              </div>
+            )}
+          </Card>
+        </div>
 
-        <Card title="Engagement summary">
-          <div className="grid gap-3 text-sm">
-            <div className="flex items-center justify-between">
-              <div className="text-muted">Views</div>
-              <div className="font-semibold text-text">{metrics.views}</div>
-            </div>
-            <div className="flex items-center justify-between">
-              <div className="text-muted">Completions</div>
-              <div className="font-semibold text-text">{metrics.completions}</div>
-            </div>
-            <div className="flex items-center justify-between">
-              <div className="text-muted">Avg quiz score</div>
-              <div className="font-semibold text-text">
-                {metrics.avgScore === null ? "—" : `${Math.round(metrics.avgScore)}%`}
+        <div className="xl:col-span-3">
+          <Card title="Engagement summary">
+            <div className="grid gap-3 text-sm">
+              <div className="flex items-center justify-between">
+                <div className="text-muted">Views</div>
+                <div className="font-semibold text-text">{metrics.views}</div>
+              </div>
+              <div className="flex items-center justify-between">
+                <div className="text-muted">Completions</div>
+                <div className="font-semibold text-text">{metrics.completions}</div>
+              </div>
+              <div className="flex items-center justify-between">
+                <div className="text-muted">Avg quiz score</div>
+                <div className="font-semibold text-text">
+                  {metrics.avgScore === null ? "—" : `${Math.round(metrics.avgScore)}%`}
+                </div>
+              </div>
+              <div className="flex items-center justify-between">
+                <div className="text-muted">Last activity</div>
+                <div className="font-semibold text-text text-right">
+                  {metrics.lastActivityAt ? new Date(metrics.lastActivityAt).toLocaleString() : "—"}
+                </div>
               </div>
             </div>
-            <div className="flex items-center justify-between">
-              <div className="text-muted">Last activity</div>
-              <div className="font-semibold text-text">
-                {metrics.lastActivityAt ? new Date(metrics.lastActivityAt).toLocaleString() : "—"}
-              </div>
-            </div>
-          </div>
-        </Card>
+          </Card>
+        </div>
 
-        <Card title={`Notifications (${notifications.length})`}>
-          {notifications.length === 0 ? (
-            <div className="text-sm text-muted">No unread notifications.</div>
-          ) : (
-            <div className="space-y-3">
-              {notifications.map((n) => (
-                <div key={n.id} className="rounded-lg border border-border bg-surface2 p-3">
-                  <div className="text-sm font-semibold text-text">{n.title}</div>
-                  {n.body ? <div className="mt-1 text-sm text-muted">{n.body}</div> : null}
-                  <div className="mt-2 text-xs text-muted">{new Date(n.createdAt).toLocaleString()}</div>
-                </div>
-              ))}
+        <div className="xl:col-span-4">
+          <Card title={`Notifications (${notifications.length})`}>
+            {notifications.length === 0 ? (
+              <div className="text-sm text-muted">No unread notifications.</div>
+            ) : (
+              <div className="max-h-[360px] space-y-3 overflow-auto pr-1">
+                {notifications.map((n) => (
+                  <div key={n.id} className="rounded-lg border border-border bg-surface2 p-3">
+                    <div className="text-sm font-semibold text-text">{n.title}</div>
+                    {n.body ? <div className="mt-1 text-sm text-muted">{n.body}</div> : null}
+                    <div className="mt-2 text-xs text-muted">{new Date(n.createdAt).toLocaleString()}</div>
+                  </div>
+                ))}
+              </div>
+            )}
+            <div className="mt-3">
+              <Link to="/notifications">
+                <Button variant="secondary">Open notifications</Button>
+              </Link>
             </div>
-          )}
-          <div className="mt-3">
-            <Link to="/notifications">
-              <Button variant="secondary">Open notifications</Button>
-            </Link>
-          </div>
-        </Card>
+          </Card>
+        </div>
       </div>
 
       <Card title="Sync status">
-        <div className="grid gap-3 md:grid-cols-4 text-sm">
+        <div className="grid gap-3 text-sm sm:grid-cols-2 xl:grid-cols-4">
           <div>
             <div className="text-muted">Last sync</div>
             <div className="mt-1 font-semibold text-text">

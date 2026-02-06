@@ -104,6 +104,14 @@ Improve teacher day-to-day workflow and visibility (no backend required; offline
 - REQ-2011 Text blocks have variants (title/subtitle/heading/body) and render appropriately
 - REQ-2012 Sidebar nav highlights only best match (no multiple active items)
 
+## Milestone 14 — Teacher authoring UX polish (responsive + predictive)
+- REQ-2101 Teacher dashboard surfaces a clear primary next action (predictive guidance) based on current lesson state
+- REQ-2102 Teacher dashboard card layout remains readable on small/medium/large screens without cramped metrics
+- REQ-2103 Teacher lessons page supports responsive parity: mobile card list + desktop table with consistent actions
+- REQ-2104 Teacher lessons page exposes quick status filters and action-oriented hints to reduce navigation friction
+- REQ-2105 Lesson creator “Blocks” step uses template-first authoring UX with clear hierarchy and reduced action clutter
+- REQ-2106 Lesson creator “Blocks” step keeps gate editor visible and usable across narrow and wide breakpoints
+
 ## Milestone 19 — Full Admin Control (CRUD + confirmations)
 - REQ-1901 Confirmation dialogs required for destructive actions
 - REQ-1902 Admin CRUD: users (teacher/student/school_admin/admin)

@@ -26,9 +26,24 @@ test("Student lesson stepper: quiz gates progression and completes lesson", asyn
   await expect(finish).toBeEnabled();
 
   await finish.click();
+  await expect(page).toHaveURL(/\/student\/progress/);
 
-  // Verify completion is recorded in Progress.
-  await page.goto("/student/progress");
+  // Verify completion is recorded in Progress and listed as completed.
   await expect(page.getByText("Introduction to Numbers")).toBeVisible();
   await expect(page.getByText("Yes")).toBeVisible();
+
+  // Completed lessons should show replay affordance in catalog.
+  await page.goto("/student/lessons");
+  const completedCard = page.getByRole("link", { name: /Introduction to Numbers/i }).first();
+  await expect(completedCard.getByText("Completed")).toBeVisible();
+  await expect(completedCard.getByText("Replay")).toBeVisible();
+  await completedCard.click();
+
+  // First entry after completion shows replay mode gate before stepper.
+  await expect(page.getByText("Completed lesson")).toBeVisible();
+  await expect(page.getByRole("button", { name: "Replay lesson" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Finish" })).toHaveCount(0);
+
+  await page.getByRole("button", { name: "Replay lesson" }).click();
+  await expect(page.getByRole("button", { name: "Next" })).toBeVisible();
 });

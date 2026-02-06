@@ -614,38 +614,67 @@ export function TeacherLessonBuilderPage() {
           ) : null}
 
           {step === "blocks" ? (
-            <div className="grid gap-4 lg:grid-cols-[280px_1fr]">
-              <Card
-                title="Blocks"
-                actions={
-                  <div className="flex flex-wrap gap-2">
-                    <Button variant="secondary" onClick={() => addBlock("text")}>Add text</Button>
-                    <Button variant="secondary" onClick={() => addBlock("text")}>Text-only</Button>
-                    <Button variant="secondary" onClick={() => addBlock("text_image")}>Text + Image</Button>
-                    <Button variant="secondary" onClick={() => addBlock("text_video")}>Text + Video</Button>
-                    <Button variant="secondary" onClick={() => addBlock("pdf")}>PDF-only</Button>
-                    <Button variant="secondary" onClick={() => addBlock("upload_quiz")}>Upload + Quiz</Button>
+            <div className="grid gap-4 xl:grid-cols-[320px_1fr]">
+              <Card title="Blocks & templates">
+                <div className="space-y-4">
+                  <div>
+                    <div className="text-xs font-semibold uppercase tracking-wide text-muted">Quick templates</div>
+                    <div className="mt-2 grid gap-2 sm:grid-cols-2 xl:grid-cols-1">
+                      <Button variant="secondary" onClick={() => addBlock("text")}>
+                        Add text
+                      </Button>
+                      <Button variant="secondary" onClick={() => addBlock("text_image")}>
+                        Text + Image
+                      </Button>
+                      <Button variant="secondary" onClick={() => addBlock("text_video")}>
+                        Text + Video
+                      </Button>
+                      <Button variant="secondary" onClick={() => addBlock("pdf")}>
+                        PDF-only
+                      </Button>
+                      <Button variant="secondary" onClick={() => addBlock("upload_quiz")}>
+                        Upload + Quiz
+                      </Button>
+                    </div>
                   </div>
-                }
-              >
-                <div className="space-y-2">
-                  {blocksV2.map((block, index) => (
-                    <button
-                      key={block.id}
-                      type="button"
-                      onClick={() => setSelectedBlockId(block.id)}
-                      className={`w-full rounded-lg border px-3 py-2 text-left text-sm ${
-                        selectedBlockId === block.id ? "border-brand bg-surface2" : "border-border bg-surface hover:border-border/80"
-                      }`}
-                    >
-                      <div className="font-semibold text-text">{index + 1}. {block.title?.trim() || "Untitled block"}</div>
-                      <div className="mt-1 text-xs text-muted">
-                        {block.components.map((c) => (c.type === "text" ? "Text" : c.mediaType.toUpperCase())).join(" + ") || "Gate-only"}
-                      </div>
-                      {block.quizGate ? <div className="mt-1 text-xs text-amber-300">Quiz gate {block.quizGate.passScorePct}%</div> : null}
-                    </button>
-                  ))}
-                  {blocksV2.length === 0 ? <div className="text-sm text-muted">Create your first block.</div> : null}
+
+                  <div className="rounded-lg border border-border bg-surface2 p-3">
+                    <div className="text-xs font-semibold uppercase tracking-wide text-muted">Predictive hint</div>
+                    <div className="mt-1 text-sm text-text">
+                      {blocksV2.some((block) => block.quizGate)
+                        ? "You already have quiz-gated steps. Keep explanatory text before each gate."
+                        : "Add one quiz gate near the end to verify lesson understanding before finish."}
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <div className="text-xs font-semibold uppercase tracking-wide text-muted">Step list</div>
+                      <div className="text-xs text-muted">{blocksV2.length} blocks</div>
+                    </div>
+                    {blocksV2.map((block, index) => (
+                      <button
+                        key={block.id}
+                        type="button"
+                        onClick={() => setSelectedBlockId(block.id)}
+                        className={`w-full rounded-lg border px-3 py-2 text-left text-sm ${
+                          selectedBlockId === block.id
+                            ? "border-brand bg-surface2"
+                            : "border-border bg-surface hover:border-border/80"
+                        }`}
+                      >
+                        <div className="font-semibold text-text">{index + 1}. {block.title?.trim() || "Untitled block"}</div>
+                        <div className="mt-1 text-xs text-muted">
+                          {block.components.map((c) => (c.type === "text" ? "Text" : c.mediaType.toUpperCase())).join(" + ") ||
+                            "Gate-only"}
+                        </div>
+                        {block.quizGate ? (
+                          <div className="mt-1 text-xs text-amber-300">Quiz gate {block.quizGate.passScorePct}%</div>
+                        ) : null}
+                      </button>
+                    ))}
+                    {blocksV2.length === 0 ? <div className="text-sm text-muted">Create your first block.</div> : null}
+                  </div>
                 </div>
               </Card>
 
@@ -680,107 +709,113 @@ export function TeacherLessonBuilderPage() {
                       <Button variant="danger" onClick={removeSelectedBlock}>Remove</Button>
                     </div>
 
-                    <div className="space-y-3">
-                      {selectedBlock.components.map((component, idx) => (
-                        <div key={component.id} className="rounded-lg border border-border bg-surface p-3">
-                          {component.type === "text" ? (
-                            <div className="space-y-2">
-                              <div className="text-xs text-muted">Text component {idx + 1}</div>
-                              <Select
-                                label="Variant"
-                                value={component.variant}
-                                onChange={(e) =>
+                    <div className="grid gap-4 2xl:grid-cols-[1fr_320px]">
+                      <div className="space-y-3">
+                        {selectedBlock.components.map((component, idx) => (
+                          <div key={component.id} className="rounded-lg border border-border bg-surface p-3">
+                            {component.type === "text" ? (
+                              <div className="space-y-2">
+                                <div className="text-xs text-muted">Text component {idx + 1}</div>
+                                <Select
+                                  label="Variant"
+                                  value={component.variant}
+                                  onChange={(e) =>
+                                    updateSelectedBlock((block) => ({
+                                      ...block,
+                                      components: block.components.map((c) =>
+                                        c.id === component.id && c.type === "text"
+                                          ? { ...c, variant: e.target.value as typeof c.variant }
+                                          : c
+                                      )
+                                    }))
+                                  }
+                                >
+                                  <option value="title">Title</option>
+                                  <option value="subtitle">Subtitle</option>
+                                  <option value="heading">Heading</option>
+                                  <option value="body">Body</option>
+                                </Select>
+                                <textarea
+                                  className="w-full rounded-lg border border-border bg-surface px-3 py-2 text-sm text-text outline-none focus:border-brand"
+                                  rows={4}
+                                  aria-label={`Text block ${idx + 1}`}
+                                  value={component.text}
+                                  onChange={(e) =>
+                                    updateSelectedBlock((block) => ({
+                                      ...block,
+                                      components: block.components.map((c) =>
+                                        c.id === component.id && c.type === "text" ? { ...c, text: e.target.value } : c
+                                      )
+                                    }))
+                                  }
+                                />
+                              </div>
+                            ) : (
+                              <div className="space-y-2">
+                                <div className="text-xs text-muted">Media component</div>
+                                <div className="text-sm text-text">{component.name} ({component.mediaType.toUpperCase()})</div>
+                                {component.mediaType === "pdf" ? (
+                                  <div className="text-xs text-muted">PDF pages: {assetsById[component.assetId]?.pageCount ?? "unknown"}</div>
+                                ) : null}
+                              </div>
+                            )}
+                            <div className="mt-2">
+                              <Button
+                                variant="danger"
+                                onClick={() =>
                                   updateSelectedBlock((block) => ({
                                     ...block,
-                                    components: block.components.map((c) =>
-                                      c.id === component.id && c.type === "text"
-                                        ? { ...c, variant: e.target.value as typeof c.variant }
-                                        : c
-                                    )
+                                    components: block.components.filter((c) => c.id !== component.id)
                                   }))
                                 }
                               >
-                                <option value="title">Title</option>
-                                <option value="subtitle">Subtitle</option>
-                                <option value="heading">Heading</option>
-                                <option value="body">Body</option>
-                              </Select>
-                              <textarea
-                                className="w-full rounded-lg border border-border bg-surface px-3 py-2 text-sm text-text outline-none focus:border-brand"
-                                rows={4}
-                                aria-label={`Text block ${idx + 1}`}
-                                value={component.text}
-                                onChange={(e) =>
-                                  updateSelectedBlock((block) => ({
-                                    ...block,
-                                    components: block.components.map((c) =>
-                                      c.id === component.id && c.type === "text" ? { ...c, text: e.target.value } : c
-                                    )
-                                  }))
-                                }
-                              />
+                                Remove component
+                              </Button>
                             </div>
-                          ) : (
-                            <div className="space-y-2">
-                              <div className="text-xs text-muted">Media component</div>
-                              <div className="text-sm text-text">{component.name} ({component.mediaType.toUpperCase()})</div>
-                              {component.mediaType === "pdf" ? (
-                                <div className="text-xs text-muted">PDF pages: {assetsById[component.assetId]?.pageCount ?? "unknown"}</div>
-                              ) : null}
-                            </div>
-                          )}
-                          <div className="mt-2">
-                            <Button
-                              variant="danger"
-                              onClick={() =>
+                          </div>
+                        ))}
+                        {selectedBlock.components.length === 0 ? <div className="text-sm text-muted">No components yet.</div> : null}
+                      </div>
+
+                      <div className="rounded-lg border border-border bg-surface p-3 space-y-3">
+                        <label className="flex items-center gap-2 text-sm text-text">
+                          <input
+                            type="checkbox"
+                            checked={Boolean(selectedBlock.quizGate)}
+                            onChange={(e) => setQuizGate(e.target.checked)}
+                          />
+                          Require quiz to continue
+                        </label>
+                        {selectedBlock.quizGate ? (
+                          <>
+                            <Input
+                              label="Pass score (%)"
+                              value={String(selectedBlock.quizGate.passScorePct)}
+                              onChange={(e) => {
+                                const raw = Number(e.target.value);
                                 updateSelectedBlock((block) => ({
                                   ...block,
-                                  components: block.components.filter((c) => c.id !== component.id)
-                                }))
-                              }
-                            >
-                              Remove component
-                            </Button>
+                                  quizGate: block.quizGate
+                                    ? { ...block.quizGate, passScorePct: Number.isFinite(raw) ? Math.max(0, Math.min(100, Math.round(raw))) : 70 }
+                                    : undefined
+                                }));
+                              }}
+                            />
+                            <Button variant="secondary" onClick={addQuestion}>Add question</Button>
+                            <QuizEditor
+                              quiz={quizzesById[selectedBlock.quizGate.quizId]}
+                              onUpdate={(quiz) => {
+                                markDirty();
+                                setQuizzesById((all) => ({ ...all, [quiz.id]: quiz }));
+                              }}
+                            />
+                          </>
+                        ) : (
+                          <div className="text-sm text-muted">
+                            No gate enabled. Learners can proceed after reviewing this step.
                           </div>
-                        </div>
-                      ))}
-                      {selectedBlock.components.length === 0 ? <div className="text-sm text-muted">No components yet.</div> : null}
-                    </div>
-
-                    <div className="rounded-lg border border-border bg-surface p-3 space-y-3">
-                      <label className="flex items-center gap-2 text-sm text-text">
-                        <input
-                          type="checkbox"
-                          checked={Boolean(selectedBlock.quizGate)}
-                          onChange={(e) => setQuizGate(e.target.checked)}
-                        />
-                        Require quiz to continue
-                      </label>
-                      {selectedBlock.quizGate ? (
-                        <>
-                          <Input
-                            label="Pass score (%)"
-                            value={String(selectedBlock.quizGate.passScorePct)}
-                            onChange={(e) => {
-                              const raw = Number(e.target.value);
-                              updateSelectedBlock((block) => ({
-                                ...block,
-                                quizGate: block.quizGate
-                                  ? { ...block.quizGate, passScorePct: Number.isFinite(raw) ? Math.max(0, Math.min(100, Math.round(raw))) : 70 }
-                                  : undefined
-                              }));
-                            }}
-                          />
-                          <Button variant="secondary" onClick={addQuestion}>Add question</Button>
-                          <QuizEditor
-                            quiz={quizzesById[selectedBlock.quizGate.quizId]}
-                            onUpdate={(quiz) => {
-                              markDirty();
-                              setQuizzesById((all) => ({ ...all, [quiz.id]: quiz }));
-                            }}
-                          />
-                        </>
-                      ) : null}
+                        )}
+                      </div>
                     </div>
                   </div>
                 )}

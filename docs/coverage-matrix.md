@@ -86,3 +86,9 @@ Trace requirements to implementation and tests. Status meanings:
 | REQ-2010 | `src/shared/types.ts`, `src/shared/db/db.ts`, `src/shared/db/seed.ts`, `src/features/admin/AdminSettingsPage.tsx`, `src/features/teacher/TeacherLessonBuilderPage.tsx`, `src/shared/sync/*` | `e2e/admin-settings-backup.spec.ts`, `e2e/p0.spec.ts`, `e2e/sync.spec.ts`, `e2e/video.spec.ts`, `e2e/teacher-lesson-creator.spec.ts` | done |
 | REQ-2011 | `src/shared/types.ts`, `src/features/teacher/TeacherLessonBuilderPage.tsx`, `src/features/content/LessonPlayer.tsx` | `e2e/teacher-text-variants.spec.ts` | done |
 | REQ-2012 | `src/shared/ui/SidebarNav.tsx` | `e2e/teacher-nav-active.spec.ts` | done |
+| REQ-2101 | `src/features/teacher/TeacherDashboard.tsx` | `e2e/teacher-dashboard.spec.ts`, `e2e/teacher-upload-ux.spec.ts` | done |
+| REQ-2102 | `src/features/teacher/TeacherDashboard.tsx` | `e2e/teacher-dashboard.spec.ts`, `e2e/teacher-upload-ux.spec.ts` | done |
+| REQ-2103 | `src/features/teacher/TeacherLessonsPage.tsx` | `e2e/teacher-lessons-actions.spec.ts`, `e2e/teacher-upload-ux.spec.ts` | done |
+| REQ-2104 | `src/features/teacher/TeacherLessonsPage.tsx` | `e2e/teacher-upload-ux.spec.ts` | done |
+| REQ-2105 | `src/features/teacher/TeacherLessonBuilderPage.tsx` | `e2e/teacher-lesson-creator.spec.ts`, `e2e/teacher-upload-ux.spec.ts` | done |
+| REQ-2106 | `src/features/teacher/TeacherLessonBuilderPage.tsx` | `e2e/teacher-upload-ux.spec.ts` | done |

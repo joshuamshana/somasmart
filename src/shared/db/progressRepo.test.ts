@@ -82,4 +82,25 @@ describe("touchProgress", () => {
     });
     expect(awardBadgeMock).toHaveBeenCalledTimes(1);
   });
+
+  it("keeps existing completedAt on repeated markComplete calls", async () => {
+    rows.push({
+      id: "prog_2",
+      studentId: "student_1",
+      lessonId: "lesson_2",
+      timeSpentSec: 25,
+      lastSeenAt: "2026-02-06T10:00:00.000Z",
+      completedAt: "2026-02-06T10:05:00.000Z"
+    });
+
+    const result = await touchProgress({
+      studentId: "student_1",
+      lessonId: "lesson_2",
+      additionalTimeSec: 10,
+      markComplete: true
+    });
+
+    expect(result.completedAt).toBe("2026-02-06T10:05:00.000Z");
+    expect(awardBadgeMock).not.toHaveBeenCalled();
+  });
 });

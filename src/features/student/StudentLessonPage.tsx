@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { useParams, Link, useLocation } from "react-router-dom";
-import type { Lesson, LessonAsset, LessonBlockV2, Quiz, QuizAttempt } from "@/shared/types";
+import { useParams, Link, useLocation, useNavigate } from "react-router-dom";
+import type { Lesson, LessonAsset, LessonBlockV2, Progress, Quiz, QuizAttempt } from "@/shared/types";
 import { db } from "@/shared/db/db";
 import { Card } from "@/shared/ui/Card";
 import { useAuth } from "@/features/auth/authContext";
@@ -16,6 +16,7 @@ import { getLessonBlocksV2 } from "@/shared/content/lessonContent";
 
 export function StudentLessonPage() {
   const { lessonId } = useParams();
+  const nav = useNavigate();
   const location = useLocation();
   const search = location.search ?? "";
   const { user } = useAuth();
@@ -29,6 +30,8 @@ export function StudentLessonPage() {
   const [startedAt] = useState(() => Date.now());
   const [subjectDefaults, setSubjectDefaults] = useState<Record<string, import("@/shared/types").AccessPolicy>>({});
   const [unlockHint, setUnlockHint] = useState<string | null>(null);
+  const [progressRow, setProgressRow] = useState<Progress | null>(null);
+  const [isReplayMode, setIsReplayMode] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -115,6 +118,20 @@ export function StudentLessonPage() {
   useEffect(() => {
     let cancelled = false;
     (async () => {
+      if (!lessonId || !user) return;
+      const progress = (await db.progress.toArray()).find((p) => p.studentId === user.id && p.lessonId === lessonId) ?? null;
+      if (cancelled) return;
+      setProgressRow(progress);
+      setIsReplayMode(!progress?.completedAt);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [lessonId, user]);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
       const map = await getSubjectAccessDefaultsByCurriculumSubjectId();
       if (cancelled) return;
       setSubjectDefaults(map);
@@ -184,8 +201,9 @@ export function StudentLessonPage() {
 
   const initialStepIndex = useMemo(() => {
     if (!steps.length) return 0;
+    if (isReplayMode && progressRow?.completedAt) return 0;
     return nextIncompleteStepIndex(steps, { completedStepKeys, bestScoreByQuizId });
-  }, [bestScoreByQuizId, completedStepKeys, steps]);
+  }, [bestScoreByQuizId, completedStepKeys, isReplayMode, progressRow?.completedAt, steps]);
 
   useEffect(() => {
     if (!user || !lessonId || !lesson) return;
@@ -272,42 +290,63 @@ export function StudentLessonPage() {
         <div className="text-xs text-slate-400">
           {lesson.subject} • {lesson.level} • {lesson.language}
         </div>
+        {progressRow?.completedAt && !isReplayMode ? (
+          <div className="mt-3 rounded-lg border border-emerald-800 bg-emerald-950/40 p-3">
+            <div className="text-sm font-semibold text-emerald-200">Completed lesson</div>
+            <div className="mt-1 text-xs text-emerald-300">
+              Finished on {new Date(progressRow.completedAt).toLocaleString()}
+            </div>
+            <div className="mt-3 flex flex-wrap gap-2">
+              <Button onClick={() => setIsReplayMode(true)}>Replay lesson</Button>
+              <Link to={`/student/progress${search}`}>
+                <Button variant="secondary">View progress</Button>
+              </Link>
+            </div>
+          </div>
+        ) : null}
         <div className="mt-3">
-          <LessonStepperPlayer
-            key={lessonId}
-            steps={steps}
-            mode="student"
-            studentId={studentId}
-            completedStepKeys={completedStepKeys}
-            bestScoreByQuizId={bestScoreByQuizId}
-            quizzesById={quizzesById}
-            assetsById={assetsById}
-            initialStepIndex={initialStepIndex}
-            onPdfNumPages={async (assetId, n) => {
-              const existing = assetsById[assetId];
-              if (!existing) return;
-              if (existing.pageCount === n) return;
-              const nextAsset = { ...existing, pageCount: n };
-              await db.lessonAssets.put(nextAsset);
-              setAssetsById((m) => ({ ...m, [assetId]: nextAsset }));
-            }}
-            onMarkStepComplete={async (stepKey, extra) => {
-              await upsertLessonStepProgress({
-                studentId,
-                lessonId: stableLessonId,
-                stepKey,
-                quizAttemptId: extra?.quizAttemptId,
-                bestScore: extra?.bestScore
-              });
-              setCompletedStepKeys((prev) => new Set([...prev, stepKey]));
-            }}
-            onQuizAttempt={(attempt: QuizAttempt) => {
-              setBestScoreByQuizId((m) => ({
-                ...m,
-                [attempt.quizId]: Math.max(m[attempt.quizId] ?? -Infinity, attempt.score)
-              }));
-            }}
-          />
+          {progressRow?.completedAt && !isReplayMode ? null : (
+            <LessonStepperPlayer
+              key={`${lessonId}:${isReplayMode ? "replay" : "learn"}`}
+              steps={steps}
+              mode="student"
+              studentId={studentId}
+              completedStepKeys={completedStepKeys}
+              bestScoreByQuizId={bestScoreByQuizId}
+              quizzesById={quizzesById}
+              assetsById={assetsById}
+              initialStepIndex={initialStepIndex}
+              onPdfNumPages={async (assetId, n) => {
+                const existing = assetsById[assetId];
+                if (!existing) return;
+                if (existing.pageCount === n) return;
+                const nextAsset = { ...existing, pageCount: n };
+                await db.lessonAssets.put(nextAsset);
+                setAssetsById((m) => ({ ...m, [assetId]: nextAsset }));
+              }}
+              onMarkStepComplete={async (stepKey, extra) => {
+                await upsertLessonStepProgress({
+                  studentId,
+                  lessonId: stableLessonId,
+                  stepKey,
+                  quizAttemptId: extra?.quizAttemptId,
+                  bestScore: extra?.bestScore
+                });
+                setCompletedStepKeys((prev) => new Set([...prev, stepKey]));
+              }}
+              onQuizAttempt={(attempt: QuizAttempt) => {
+                setBestScoreByQuizId((m) => ({
+                  ...m,
+                  [attempt.quizId]: Math.max(m[attempt.quizId] ?? -Infinity, attempt.score)
+                }));
+              }}
+              onFinish={async () => {
+                const nextProgress = await touchProgress({ studentId, lessonId: stableLessonId, markComplete: true });
+                setProgressRow(nextProgress);
+                nav(`/student/progress${search}`);
+              }}
+            />
+          )}
         </div>
       </Card>
     </div>
