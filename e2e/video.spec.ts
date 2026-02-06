@@ -52,5 +52,24 @@ test("Video block: teacher uploads -> admin approves -> student plays offline", 
 
   await page.goto("/student/lessons");
   await page.getByText("Video Lesson 1").first().click();
-  await expect(page.locator("video")).toBeVisible();
+
+  const video = page.locator("video");
+  const submitQuiz = page.getByRole("button", { name: "Submit Quiz" });
+  for (let i = 0; i < 6; i++) {
+    if (await video.isVisible()) break;
+    // If a quiz step blocks progression, we should already be on the video step (no quiz in this lesson).
+    if (await submitQuiz.isVisible()) break;
+    const next = page.getByRole("button", { name: "Next" });
+    if (await next.isVisible()) {
+      const disabled = await next.evaluate((el) => (el as HTMLButtonElement).disabled);
+      if (!disabled) {
+        await next.evaluate((el) => (el as HTMLButtonElement).click());
+        await page.waitForTimeout(150);
+        continue;
+      }
+    }
+    await page.waitForTimeout(200);
+  }
+
+  await expect(video).toBeVisible();
 });

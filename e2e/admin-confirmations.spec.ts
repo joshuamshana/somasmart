@@ -7,6 +7,7 @@ test("Admin confirmations: cancel prevents change; typed confirm required for de
   await page.getByLabel("Username").fill("admin");
   await page.getByLabel("Password").fill("admin123");
   await page.getByRole("button", { name: "Login" }).click();
+  await expect(page.getByTestId("admin-layout")).toBeVisible({ timeout: 30_000 });
 
   await page.goto(`/admin/teachers?device=${device}`);
   const row = page.getByTestId("teacher-row-teacher1");
@@ -36,4 +37,3 @@ test("Admin confirmations: cancel prevents change; typed confirm required for de
   await deleteButton.click();
   await expect(page.getByTestId("teacher-row-teacher1")).toHaveCount(0);
 });
-

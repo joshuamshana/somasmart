@@ -10,10 +10,10 @@ test("Admin: suspend student and see audit log", async ({ page }) => {
   await page.getByLabel("Username").fill(studentUsername);
   await page.getByLabel("Password").fill("password123");
   await page.getByRole("button", { name: "Register" }).click();
-  await expect(page.getByText("Welcome")).toBeVisible();
+  await expect(page.getByText("Learn", { exact: true })).toBeVisible();
 
   await page.getByRole("button", { name: "Logout" }).click();
-  await expect(page.getByRole("button", { name: "Login" })).toBeVisible();
+  await expect(page.getByRole("navigation").getByRole("link", { name: "Login", exact: true })).toBeVisible();
 
   // Admin suspends student
   await page.goto(`/login?device=adminB&server=${server}`);

@@ -1,15 +1,17 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { useParams, Link, useLocation } from "react-router-dom";
-import type { Lesson, LessonBlock, Quiz } from "@/shared/types";
+import type { Lesson, LessonAsset, LessonBlock, Quiz, QuizAttempt } from "@/shared/types";
 import { db } from "@/shared/db/db";
 import { Card } from "@/shared/ui/Card";
-import { LessonPlayer } from "@/features/content/LessonPlayer";
 import { useAuth } from "@/features/auth/authContext";
 import { canAccessLesson } from "@/shared/access/accessEngine";
-import { QuizRunner } from "@/features/student/QuizRunner";
 import { touchProgress } from "@/shared/db/progressRepo";
 import { getSubjectAccessDefaultsByCurriculumSubjectId } from "@/shared/db/accessDefaultsRepo";
 import { Button } from "@/shared/ui/Button";
+import { buildLessonSteps } from "@/features/content/lessonSteps";
+import { LessonStepperPlayer } from "@/features/content/LessonStepperPlayer";
+import { getLessonStepProgressForLesson, upsertLessonStepProgress } from "@/shared/db/lessonStepProgressRepo";
+import { isLessonComplete, nextIncompleteStepIndex } from "@/features/student/lessonProgressEngine";
 
 export function StudentLessonPage() {
   const { lessonId } = useParams();
@@ -18,7 +20,10 @@ export function StudentLessonPage() {
   const { user } = useAuth();
   const [lesson, setLesson] = useState<Lesson | null>(null);
   const [blocks, setBlocks] = useState<LessonBlock[]>([]);
-  const [quiz, setQuiz] = useState<Quiz | null>(null);
+  const [assetsById, setAssetsById] = useState<Record<string, LessonAsset | undefined>>({});
+  const [quizzesById, setQuizzesById] = useState<Record<string, Quiz | undefined>>({});
+  const [completedStepKeys, setCompletedStepKeys] = useState<Set<string>>(new Set());
+  const [bestScoreByQuizId, setBestScoreByQuizId] = useState<Record<string, number | undefined>>({});
   const [grants, setGrants] = useState<import("@/shared/types").LicenseGrant[]>([]);
   const [startedAt] = useState(() => Date.now());
   const [subjectDefaults, setSubjectDefaults] = useState<Record<string, import("@/shared/types").AccessPolicy>>({});
@@ -30,16 +35,79 @@ export function StudentLessonPage() {
       if (!lessonId) return;
       const l = await db.lessons.get(lessonId);
       const content = await db.lessonContents.get(lessonId);
-      const q = (await db.quizzes.toArray()).find((qq) => qq.lessonId === lessonId) ?? null;
       if (cancelled) return;
       setLesson(l ?? null);
       setBlocks(content?.blocks ?? []);
-      setQuiz(q);
     })();
     return () => {
       cancelled = true;
     };
   }, [lessonId]);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      if (!lessonId) return;
+      const q = await db.quizzes.where("lessonId").equals(lessonId).toArray();
+      if (cancelled) return;
+      const map: Record<string, Quiz | undefined> = {};
+      for (const quiz of q) map[quiz.id] = quiz;
+      setQuizzesById(map);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [lessonId]);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const ids = Array.from(
+        new Set(
+          blocks
+            .filter((b): b is Extract<LessonBlock, { assetId: string }> => "assetId" in b)
+            .map((b) => b.assetId)
+        )
+      );
+      if (ids.length === 0) {
+        if (!cancelled) setAssetsById({});
+        return;
+      }
+      const assets = await Promise.all(ids.map((id) => db.lessonAssets.get(id)));
+      if (cancelled) return;
+      const map: Record<string, LessonAsset | undefined> = {};
+      for (let i = 0; i < ids.length; i++) map[ids[i]!] = (assets[i] ?? undefined) as LessonAsset | undefined;
+      setAssetsById(map);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [blocks]);
+
+  const steps = useMemo(() => buildLessonSteps({ blocks, assetsById, quizzesById }), [assetsById, blocks, quizzesById]);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      if (!lessonId || !user) return;
+
+      const rows = await getLessonStepProgressForLesson({ studentId: user.id, lessonId });
+      const completed = new Set(rows.map((r) => r.stepKey));
+
+      const quizIds = Object.keys(quizzesById);
+      const attemptsAll = await db.quizAttempts.where("studentId").equals(user.id).toArray();
+      const attempts = attemptsAll.filter((a) => quizIds.includes(a.quizId));
+      const best: Record<string, number | undefined> = {};
+      for (const a of attempts) best[a.quizId] = Math.max(best[a.quizId] ?? -Infinity, a.score);
+
+      if (cancelled) return;
+      setCompletedStepKeys(completed);
+      setBestScoreByQuizId(best);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [lessonId, quizzesById, user]);
 
   useEffect(() => {
     let cancelled = false;
@@ -111,9 +179,32 @@ export function StudentLessonPage() {
     return canAccessLesson({ lesson, grants, subjectDefaultsByCurriculumSubjectId: subjectDefaults });
   }, [lesson, grants, subjectDefaults]);
 
+  const initialStepIndex = useMemo(() => {
+    if (!steps.length) return 0;
+    return nextIncompleteStepIndex(steps, { completedStepKeys, bestScoreByQuizId });
+  }, [bestScoreByQuizId, completedStepKeys, steps]);
+
+  useEffect(() => {
+    if (!user || !lessonId || !lesson) return;
+
+    const now = new Date().toISOString();
+    const available = !lesson.deletedAt && lesson.status === "approved" && (!lesson.expiresAt || lesson.expiresAt > now);
+    if (!available) return;
+
+    if (access && !access.allowed) return;
+    if (!steps.length) return;
+
+    const complete = isLessonComplete(steps, { completedStepKeys, bestScoreByQuizId });
+    if (!complete) return;
+
+    void touchProgress({ studentId: user.id, lessonId, markComplete: true });
+  }, [access, bestScoreByQuizId, completedStepKeys, lesson, lessonId, steps, user]);
+
   if (!lessonId) return <div>Missing lesson id.</div>;
   if (!lesson) return <div>Loading…</div>;
   if (!user) return null;
+  const studentId = user.id;
+  const stableLessonId = lessonId as string;
   const now = new Date().toISOString();
   if (lesson.deletedAt || lesson.status !== "approved" || (lesson.expiresAt && lesson.expiresAt <= now)) {
     return (
@@ -179,22 +270,43 @@ export function StudentLessonPage() {
           {lesson.subject} • {lesson.level} • {lesson.language}
         </div>
         <div className="mt-3">
-          <LessonPlayer blocks={blocks} />
+          <LessonStepperPlayer
+            key={lessonId}
+            steps={steps}
+            mode="student"
+            studentId={studentId}
+            completedStepKeys={completedStepKeys}
+            bestScoreByQuizId={bestScoreByQuizId}
+            quizzesById={quizzesById}
+            assetsById={assetsById}
+            initialStepIndex={initialStepIndex}
+            onPdfNumPages={async (assetId, n) => {
+              const existing = assetsById[assetId];
+              if (!existing) return;
+              if (existing.pageCount === n) return;
+              const nextAsset = { ...existing, pageCount: n };
+              await db.lessonAssets.put(nextAsset);
+              setAssetsById((m) => ({ ...m, [assetId]: nextAsset }));
+            }}
+            onMarkStepComplete={async (stepKey, extra) => {
+              await upsertLessonStepProgress({
+                studentId,
+                lessonId: stableLessonId,
+                stepKey,
+                quizAttemptId: extra?.quizAttemptId,
+                bestScore: extra?.bestScore
+              });
+              setCompletedStepKeys((prev) => new Set([...prev, stepKey]));
+            }}
+            onQuizAttempt={(attempt: QuizAttempt) => {
+              setBestScoreByQuizId((m) => ({
+                ...m,
+                [attempt.quizId]: Math.max(m[attempt.quizId] ?? -Infinity, attempt.score)
+              }));
+            }}
+          />
         </div>
       </Card>
-      {quiz ? (
-        <Card title="Self Test Quiz">
-          <QuizRunner
-            quiz={quiz}
-            studentId={user.id}
-            onComplete={() => void touchProgress({ studentId: user.id, lessonId, markComplete: true })}
-          />
-        </Card>
-      ) : (
-        <Card title="Self Test Quiz">
-          <div className="text-sm text-slate-300">No quiz for this lesson yet.</div>
-        </Card>
-      )}
     </div>
   );
 }

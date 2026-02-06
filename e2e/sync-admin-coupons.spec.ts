@@ -21,6 +21,8 @@ test("Sync: admin coupon CRUD propagates to student device", async ({ page }) =>
 
   await page.goto(`/sync?device=${deviceAdminA}&server=${server}`);
   await page.getByRole("button", { name: "Sync now" }).click();
+  await expect(page.getByTestId("sync-last-sync")).not.toContainText("Never", { timeout: 30_000 });
+  await expect(page.getByTestId("sync-status")).toHaveAttribute("data-status", "idle");
   await expect(page.getByTestId("sync-failed")).toContainText("0");
 
   // Device B: student registers and pulls coupon
@@ -29,15 +31,19 @@ test("Sync: admin coupon CRUD propagates to student device", async ({ page }) =>
   await page.getByLabel("Username").fill(studentUsername);
   await page.getByLabel("Password").fill("password123");
   await page.getByRole("button", { name: "Register" }).click();
-  await expect(page.getByRole("link", { name: "Payments" })).toBeVisible({ timeout: 30_000 });
+  await expect(page.getByRole("link", { name: "Payments", exact: true })).toBeVisible({ timeout: 30_000 });
 
   await page.goto(`/sync?device=${deviceStudentB}&server=${server}`);
   await page.getByRole("button", { name: "Sync now" }).click();
+  await expect(page.getByTestId("sync-last-sync")).not.toContainText("Never", { timeout: 30_000 });
+  await expect(page.getByTestId("sync-status")).toHaveAttribute("data-status", "idle");
   await expect(page.getByTestId("sync-failed")).toContainText("0");
 
   for (let i = 0; i < 10; i++) {
     await page.goto(`/sync?device=${deviceStudentB}&server=${server}`);
     await page.getByRole("button", { name: "Sync now" }).click();
+    await expect(page.getByTestId("sync-last-sync")).not.toContainText("Never", { timeout: 30_000 });
+    await expect(page.getByTestId("sync-status")).toHaveAttribute("data-status", "idle");
     await expect(page.getByTestId("sync-failed")).toContainText("0");
 
     await page.goto(`/student/payments?device=${deviceStudentB}&server=${server}`);

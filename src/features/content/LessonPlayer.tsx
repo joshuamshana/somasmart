@@ -61,6 +61,22 @@ export function LessonPlayer({ blocks }: { blocks: LessonBlock[] }) {
   return (
     <div className="space-y-6">
       {blocks.map((b) => {
+        if (b.type === "step_break") {
+          const title = (b.title ?? "").trim();
+          return (
+            <div key={b.id} className="rounded-lg border border-border bg-surface2 px-3 py-2">
+              <div className="text-xs font-semibold text-muted">{title || "Section"}</div>
+            </div>
+          );
+        }
+        if (b.type === "quiz") {
+          return (
+            <div key={b.id} className="rounded-lg border border-border bg-surface p-3">
+              <div className="text-sm font-semibold text-text">{(b.title ?? "").trim() || "Quiz"}</div>
+              <div className="mt-1 text-xs text-muted">Quiz step (student must pass to continue)</div>
+            </div>
+          );
+        }
         if (b.type === "text") {
           const base = "whitespace-pre-wrap";
           if (b.variant === "title") {
@@ -93,12 +109,15 @@ export function LessonPlayer({ blocks }: { blocks: LessonBlock[] }) {
             </div>
           );
         }
-        return (
-          <div key={b.id} className="space-y-2">
-            <div className="text-xs text-muted">{b.name}</div>
-            <AssetBlock block={b} />
-          </div>
-        );
+        if ("assetId" in b) {
+          return (
+            <div key={b.id} className="space-y-2">
+              <div className="text-xs text-muted">{"name" in b ? b.name : ""}</div>
+              <AssetBlock block={b} />
+            </div>
+          );
+        }
+        return null;
       })}
     </div>
   );

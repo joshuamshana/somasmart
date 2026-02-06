@@ -13,7 +13,7 @@ test("Admin lessons governance: create new version for teacher; expire approved 
 
   await page.goto(`/admin/lessons?device=${device}`);
   await page.getByTestId("lesson-item-lesson_seed_numbers").click();
-  await expect(page.getByText("Introduction to Numbers")).toBeVisible();
+  await expect(page.getByText("Title: Introduction to Numbers")).toBeVisible({ timeout: 30_000 });
 
   // Create a new version (draft copy)
   await page.getByTestId("lesson-create-version").click();

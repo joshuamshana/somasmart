@@ -59,7 +59,9 @@ export type LessonBlock =
   | { id: string; type: "audio"; assetId: string; mime: string; name: string }
   | { id: string; type: "video"; assetId: string; mime: string; name: string }
   | { id: string; type: "pdf"; assetId: string; mime: string; name: string }
-  | { id: string; type: "pptx"; assetId: string; mime: string; name: string };
+  | { id: string; type: "pptx"; assetId: string; mime: string; name: string }
+  | { id: string; type: "step_break"; title?: string }
+  | { id: string; type: "quiz"; quizId: string; title?: string; requiredToContinue: true; passScorePct?: number };
 
 export type LessonAsset = {
   id: string;
@@ -68,6 +70,7 @@ export type LessonAsset = {
   name: string;
   mime: string;
   blob: Blob;
+  pageCount?: number;
   createdAt: string;
 };
 
@@ -103,6 +106,16 @@ export type Progress = {
   completedAt?: string;
   timeSpentSec: number;
   lastSeenAt: string;
+};
+
+export type LessonStepProgress = {
+  id: string;
+  studentId: string;
+  lessonId: string;
+  stepKey: string;
+  completedAt: string;
+  quizAttemptId?: string;
+  bestScore?: number;
 };
 
 export type PaymentMethod = "mobile_money" | "coupon" | "voucher" | "sponsored";

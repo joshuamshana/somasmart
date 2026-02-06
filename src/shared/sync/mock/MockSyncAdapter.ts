@@ -1,5 +1,5 @@
 import type { SyncAdapter, PushResult, PullBundle } from "@/shared/sync/SyncAdapter";
-import { serverDb, type ServerChange } from "@/shared/sync/mock/serverDb";
+import { getServerDb, type ServerChange } from "@/shared/sync/mock/serverDb";
 import type {
   AppSetting,
   Coupon,
@@ -27,10 +27,12 @@ function newId(prefix: string) {
 }
 
 async function recordChange(change: Omit<ServerChange, "id" | "createdAt">) {
+  const serverDb = getServerDb();
   await serverDb.changes.add({ id: newId("chg"), createdAt: nowIso(), ...change });
 }
 
 async function addNotification(n: Omit<Notification, "id" | "createdAt">) {
+  const serverDb = getServerDb();
   const row: Notification = { id: newId("notif"), createdAt: nowIso(), ...n };
   await serverDb.notifications.add(row);
   await recordChange({ entityType: "notification", entityId: row.id });
@@ -41,6 +43,7 @@ export class MockSyncAdapter implements SyncAdapter {
   async pushEvents(events: OutboxEvent[]): Promise<PushResult> {
     const errorsByEventId: Record<string, string> = {};
     let pushedCount = 0;
+    const serverDb = getServerDb();
 
     for (const evt of events) {
       try {
@@ -322,49 +325,35 @@ export class MockSyncAdapter implements SyncAdapter {
   }
 
   async pullChanges(since?: string): Promise<PullBundle> {
-    const sinceIso = since ?? "";
-    const changes = since ? await serverDb.changes.where("createdAt").aboveOrEqual(sinceIso).toArray() : null;
+    const serverDb = getServerDb();
     const lastChange = await serverDb.changes.orderBy("createdAt").last();
-    const serverTime =
-      changes && changes.length > 0
-        ? changes.reduce((max, c) => (c.createdAt.localeCompare(max) > 0 ? c.createdAt : max), sinceIso)
-        : lastChange?.createdAt ?? nowIso();
+    const serverTime = lastChange?.createdAt ?? nowIso();
 
-    const wantAll = !since;
-    const changedTypes = new Set<string>();
-    if (!wantAll && changes) for (const c of changes) changedTypes.add(c.entityType);
-
-    async function maybe<T>(type: string, fn: () => Promise<T[]>) {
-      if (wantAll) return fn();
-      return changedTypes.has(type) ? fn() : undefined;
-    }
-
-    const notifications = await maybe("notification", async () => {
-      const all = await serverDb.notifications.toArray();
-      return all;
-    });
+    // For the mock server, return the full world state on every pull.
+    // This keeps the MVP stable and avoids subtle delta-tracking issues in tests.
+    const notifications = await serverDb.notifications.toArray();
 
     return {
       serverTime,
-      users: await maybe("user", () => serverDb.users.toArray()),
-      schools: await maybe("school", () => serverDb.schools.toArray()),
-      settings: await maybe("setting", () => serverDb.settings.toArray()),
-      curriculumCategories: await maybe("curriculumCategory", () => serverDb.curriculumCategories.toArray()),
-      curriculumLevels: await maybe("curriculumLevel", () => serverDb.curriculumLevels.toArray()),
-      curriculumClasses: await maybe("curriculumClass", () => serverDb.curriculumClasses.toArray()),
-      curriculumSubjects: await maybe("curriculumSubject", () => serverDb.curriculumSubjects.toArray()),
-      lessons: await maybe("lesson", () => serverDb.lessons.toArray()),
-      lessonContents: await maybe("lessonContent", () => serverDb.lessonContents.toArray()),
-      lessonAssets: await maybe("lessonAsset", () => serverDb.lessonAssets.toArray()),
-      quizzes: await maybe("quiz", () => serverDb.quizzes.toArray()),
-      progress: await maybe("progress", () => serverDb.progress.toArray()),
-      quizAttempts: await maybe("quizAttempt", () => serverDb.quizAttempts.toArray()),
-      payments: await maybe("payment", () => serverDb.payments.toArray()),
-      licenseGrants: await maybe("licenseGrant", () => serverDb.licenseGrants.toArray()),
-      coupons: await maybe("coupon", () => serverDb.coupons.toArray()),
-      messages: await maybe("message", () => serverDb.messages.toArray()),
+      users: await serverDb.users.toArray(),
+      schools: await serverDb.schools.toArray(),
+      settings: await serverDb.settings.toArray(),
+      curriculumCategories: await serverDb.curriculumCategories.toArray(),
+      curriculumLevels: await serverDb.curriculumLevels.toArray(),
+      curriculumClasses: await serverDb.curriculumClasses.toArray(),
+      curriculumSubjects: await serverDb.curriculumSubjects.toArray(),
+      lessons: await serverDb.lessons.toArray(),
+      lessonContents: await serverDb.lessonContents.toArray(),
+      lessonAssets: await serverDb.lessonAssets.toArray(),
+      quizzes: await serverDb.quizzes.toArray(),
+      progress: await serverDb.progress.toArray(),
+      quizAttempts: await serverDb.quizAttempts.toArray(),
+      payments: await serverDb.payments.toArray(),
+      licenseGrants: await serverDb.licenseGrants.toArray(),
+      coupons: await serverDb.coupons.toArray(),
+      messages: await serverDb.messages.toArray(),
       notifications,
-      auditLogs: await maybe("auditLog", () => serverDb.auditLogs.toArray())
+      auditLogs: await serverDb.auditLogs.toArray()
     };
   }
 }

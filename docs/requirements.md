@@ -17,9 +17,16 @@ This file is the requirements backlog for SomaSmart (offline-first PWA). IDs are
 - REQ-0104 Role-gated routes and logout
 - REQ-0105 Teacher access blocked until admin approval
 
+## Milestone 1.5 — Public learn landing (lesson-first)
+- REQ-0150 Public learn landing page at `/` (logged out and student)
+- REQ-0151 Login-to-view lessons: logged-out users can browse but must sign in to open lesson content
+- REQ-0152 Student stays on `/` after login; other roles redirect to their dashboards
+- REQ-0153 Safe `next=` return path on login/register for students
+
 ## Milestone 2 — Student lessons + offline player
 - REQ-0201 Student sees approved lessons
 - REQ-0202 Filter/search lessons by level/class/subject/language
+- REQ-0205 Public learn dashboard filters by level → class → subject (curriculum hierarchy) + language + search
 - REQ-0203 Lesson player supports text, images, audio, PDF, PPTX (best-effort)
 - REQ-0204 Locked lessons show unlock guidance
 
@@ -37,6 +44,8 @@ This file is the requirements backlog for SomaSmart (offline-first PWA). IDs are
 - REQ-0504 Admin views/suspends/deletes students
 - REQ-0502 Admin reviews pending lessons and approves/rejects with feedback
 - REQ-0503 Approved lessons appear in student catalog; rejected feedback visible to teacher
+- REQ-0505 Admin can preview any lesson “as student” (pending + approved), including locked/unlocked simulation, without editing lesson data
+- REQ-0506 Admin lesson review is read-only (except approve/reject/unpublish/version + feedback)
 
 ## Milestone 6 — Progress tracking + reports + analytics
 - REQ-0601 Record lesson completion/time and quiz attempts
@@ -47,6 +56,9 @@ This file is the requirements backlog for SomaSmart (offline-first PWA). IDs are
 - REQ-0701 Access control via license grants (full/level/subject)
 - REQ-0702 Offline coupon/voucher redemption creates license grant
 - REQ-0703 Mobile money reference capture creates pending payment (no unlock in MVP)
+- REQ-0704 Lesson access policy: free vs coupon (teacher sets; admin can override)
+- REQ-0705 Subject default access policy via settings (`access.subjectDefault.<curriculumSubjectId>`)
+- REQ-0706 Coupon/license scope supports curriculum-subject (`curriculum_subject`) in addition to legacy subject string
 
 ## Milestone 8 — School admin
 - REQ-0801 School admin dashboard (school code + counts)
@@ -102,3 +114,9 @@ Improve teacher day-to-day workflow and visibility (no backend required; offline
 - REQ-1907 Admin settings: curriculum CRUD + device backup/import/reset
 - REQ-1908 Admin support desk inbox + triage
 - REQ-1909 Sync: student registrations + admin CRUD propagate across devices
+
+## Remaining work / next move
+
+As of **2026-02-06**, `npm test` and `npm run test:e2e` are green, and all requirements in `docs/coverage-matrix.md` are marked `done`.
+
+Next work should be treated as enhancement scope (new requirements), not backlog recovery.

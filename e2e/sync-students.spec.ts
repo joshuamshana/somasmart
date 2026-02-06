@@ -12,7 +12,7 @@ test("Sync: student registration + suspension propagate across devices", async (
   await page.getByLabel("Username").fill(studentUsername);
   await page.getByLabel("Password").fill("password123");
   await page.getByRole("button", { name: "Register" }).click();
-  await expect(page.getByText("Welcome")).toBeVisible();
+  await expect(page.getByText("Learn", { exact: true })).toBeVisible();
 
   await page.goto(`/sync?device=${deviceStudentA}&server=${server}`);
   await page.getByRole("button", { name: "Sync now" }).click();

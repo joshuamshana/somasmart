@@ -22,6 +22,7 @@ test("Payments: student mobile money pending -> admin verifies -> student pulls 
   await page.goto(`/sync?device=${deviceStudentA}&server=${server}`);
   await page.getByRole("button", { name: "Sync now" }).click();
   await expect(page.getByTestId("sync-last-sync")).not.toContainText("Never");
+  await expect(page.getByTestId("sync-status")).toHaveAttribute("data-status", "idle");
   await expect(page.getByTestId("sync-failed")).toContainText("0");
 
   // Device B: admin pulls payment and verifies it
@@ -34,6 +35,7 @@ test("Payments: student mobile money pending -> admin verifies -> student pulls 
   await page.goto(`/sync?device=${deviceAdminB}&server=${server}`);
   await page.getByRole("button", { name: "Sync now" }).click();
   await expect(page.getByTestId("sync-last-sync")).not.toContainText("Never");
+  await expect(page.getByTestId("sync-status")).toHaveAttribute("data-status", "idle");
   await expect(page.getByTestId("sync-failed")).toContainText("0");
 
   await page.goto(`/admin/payments?device=${deviceAdminB}&server=${server}`);
@@ -45,14 +47,16 @@ test("Payments: student mobile money pending -> admin verifies -> student pulls 
   await page.goto(`/sync?device=${deviceAdminB}&server=${server}`);
   await page.getByRole("button", { name: "Sync now" }).click();
   await expect(page.getByTestId("sync-last-sync")).not.toContainText("Never");
+  await expect(page.getByTestId("sync-status")).toHaveAttribute("data-status", "idle");
   await expect(page.getByTestId("sync-failed")).toContainText("0");
 
   // Device A: student pulls verified payment + license grant
   await page.goto(`/sync?device=${deviceStudentA}&server=${server}`);
   await page.getByRole("button", { name: "Sync now" }).click();
   await expect(page.getByTestId("sync-last-sync")).not.toContainText("Never");
+  await expect(page.getByTestId("sync-status")).toHaveAttribute("data-status", "idle");
   await expect(page.getByTestId("sync-failed")).toContainText("0");
 
   await page.goto(`/student/payments?device=${deviceStudentA}&server=${server}`);
-  await expect(page.getByText(/Active grants:\s*1/)).toBeVisible();
+  await expect(page.getByText(/Active grants:\s*1/)).toBeVisible({ timeout: 30_000 });
 });

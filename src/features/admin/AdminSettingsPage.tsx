@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { db } from "@/shared/db/db";
 import type {
   AppSetting,
@@ -205,6 +205,7 @@ export function AdminSettingsPage() {
   }>(null);
   const [msg, setMsg] = useState<string | null>(null);
 
+  const systemDraftTouchedRef = useRef(false);
   const [autoSyncMinutes, setAutoSyncMinutes] = useState("0");
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
   const [maxImageMb, setMaxImageMb] = useState("10");
@@ -228,13 +229,18 @@ export function AdminSettingsPage() {
 
   const [selectedLevelId, setSelectedLevelId] = useState<string>("");
   const [selectedClassId, setSelectedClassId] = useState<string>("");
+
+  // Access defaults selection is separate from curriculum CRUD selection.
+  const [accessLevelId, setAccessLevelId] = useState<string>("");
+  const [accessClassId, setAccessClassId] = useState<string>("");
   const [selectedAccessSubjectId, setSelectedAccessSubjectId] = useState<string>("");
   const [selectedAccessPolicy, setSelectedAccessPolicy] = useState<AccessPolicy>("coupon");
   const [accessMsg, setAccessMsg] = useState<string | null>(null);
 
-  async function refreshSystem() {
+  async function refreshSystem(opts?: { force?: boolean }) {
     const settings = await db.settings.toArray();
     const get = (k: string) => settings.find((s) => s.key === k)?.value;
+    if (!opts?.force && systemDraftTouchedRef.current) return;
     setAutoSyncMinutes(String(get("sync.autoIntervalMinutes") ?? "0"));
     setNotificationsEnabled(Boolean(get("notifications.enabled") ?? true));
     setMaxImageMb(String(get("media.maxUploadMb.image") ?? "10"));
@@ -270,11 +276,27 @@ export function AdminSettingsPage() {
     [subjects, selectedClassId]
   );
 
+  const classesForAccessLevel = useMemo(
+    () => classes.filter((c) => c.levelId === accessLevelId && !c.deletedAt),
+    [classes, accessLevelId]
+  );
+
+  const subjectsForAccessClass = useMemo(
+    () => subjects.filter((s) => s.classId === accessClassId && !s.deletedAt),
+    [subjects, accessClassId]
+  );
+
   useEffect(() => {
     if (levels.length === 0) return;
     if (selectedLevelId && levels.some((l) => l.id === selectedLevelId)) return;
     setSelectedLevelId(levels[0].id);
   }, [levels, selectedLevelId]);
+
+  useEffect(() => {
+    if (levels.length === 0) return;
+    if (accessLevelId && levels.some((l) => l.id === accessLevelId)) return;
+    setAccessLevelId(levels[0].id);
+  }, [levels, accessLevelId]);
 
   useEffect(() => {
     if (!selectedLevelId) {
@@ -288,6 +310,19 @@ export function AdminSettingsPage() {
     if (selectedClassId && classesForSelectedLevel.some((c) => c.id === selectedClassId)) return;
     setSelectedClassId(classesForSelectedLevel[0].id);
   }, [classesForSelectedLevel, selectedClassId, selectedLevelId]);
+
+  useEffect(() => {
+    if (!accessLevelId) {
+      if (accessClassId) setAccessClassId("");
+      return;
+    }
+    if (classesForAccessLevel.length === 0) {
+      if (accessClassId) setAccessClassId("");
+      return;
+    }
+    if (accessClassId && classesForAccessLevel.some((c) => c.id === accessClassId)) return;
+    setAccessClassId(classesForAccessLevel[0].id);
+  }, [classesForAccessLevel, accessClassId, accessLevelId]);
 
   useEffect(() => {
     let cancelled = false;
@@ -338,14 +373,20 @@ export function AdminSettingsPage() {
           <Input
             label="Auto sync interval minutes (0 = off)"
             value={autoSyncMinutes}
-            onChange={(e) => setAutoSyncMinutes(e.target.value)}
+            onChange={(e) => {
+              systemDraftTouchedRef.current = true;
+              setAutoSyncMinutes(e.target.value);
+            }}
           />
           <label className="flex items-center gap-2 text-sm text-muted self-end">
             <input
               type="checkbox"
               className="h-4 w-4"
               checked={notificationsEnabled}
-              onChange={(e) => setNotificationsEnabled(e.target.checked)}
+              onChange={(e) => {
+                systemDraftTouchedRef.current = true;
+                setNotificationsEnabled(e.target.checked);
+              }}
             />
             Notifications enabled
           </label>
@@ -366,9 +407,9 @@ export function AdminSettingsPage() {
                     await upsertSetting("media.maxUploadMb.video", Number(maxVideoMb || "50"), user?.id);
                     await upsertSetting("media.maxUploadMb.pdf", Number(maxPdfMb || "20"), user?.id);
                     await upsertSetting("media.maxUploadMb.pptx", Number(maxPptxMb || "20"), user?.id);
-                    await enqueueOutboxEvent({ type: "settings_push", payload: {} });
-                    setMsg("Settings saved.");
-                    if (user) {
+                      await enqueueOutboxEvent({ type: "settings_push", payload: {} });
+                      setMsg("Settings saved.");
+                      if (user) {
                       await logAudit({
                         actorUserId: user.id,
                         action: "settings_update",
@@ -377,7 +418,8 @@ export function AdminSettingsPage() {
                         details: { autoSyncMinutes, notificationsEnabled }
                       });
                     }
-                    await refreshSystem();
+                    systemDraftTouchedRef.current = false;
+                    await refreshSystem({ force: true });
                   }
                 })
               }
@@ -388,11 +430,46 @@ export function AdminSettingsPage() {
         </div>
 
         <div className="mt-4 grid gap-3 md:grid-cols-5">
-          <Input label="Max image MB" value={maxImageMb} onChange={(e) => setMaxImageMb(e.target.value)} />
-          <Input label="Max audio MB" value={maxAudioMb} onChange={(e) => setMaxAudioMb(e.target.value)} />
-          <Input label="Max video MB" value={maxVideoMb} onChange={(e) => setMaxVideoMb(e.target.value)} />
-          <Input label="Max PDF MB" value={maxPdfMb} onChange={(e) => setMaxPdfMb(e.target.value)} />
-          <Input label="Max PPTX MB" value={maxPptxMb} onChange={(e) => setMaxPptxMb(e.target.value)} />
+          <Input
+            label="Max image MB"
+            value={maxImageMb}
+            onChange={(e) => {
+              systemDraftTouchedRef.current = true;
+              setMaxImageMb(e.target.value);
+            }}
+          />
+          <Input
+            label="Max audio MB"
+            value={maxAudioMb}
+            onChange={(e) => {
+              systemDraftTouchedRef.current = true;
+              setMaxAudioMb(e.target.value);
+            }}
+          />
+          <Input
+            label="Max video MB"
+            value={maxVideoMb}
+            onChange={(e) => {
+              systemDraftTouchedRef.current = true;
+              setMaxVideoMb(e.target.value);
+            }}
+          />
+          <Input
+            label="Max PDF MB"
+            value={maxPdfMb}
+            onChange={(e) => {
+              systemDraftTouchedRef.current = true;
+              setMaxPdfMb(e.target.value);
+            }}
+          />
+          <Input
+            label="Max PPTX MB"
+            value={maxPptxMb}
+            onChange={(e) => {
+              systemDraftTouchedRef.current = true;
+              setMaxPptxMb(e.target.value);
+            }}
+          />
         </div>
         {msg ? <div className="mt-3 text-sm text-text">{msg}</div> : null}
       </Card>
@@ -830,11 +907,11 @@ export function AdminSettingsPage() {
 
         <div className="mt-4 grid gap-3 md:grid-cols-4">
           <Select
-            label="Level"
-            value={selectedLevelId}
+            label="Level (access defaults)"
+            value={accessLevelId}
             onChange={(e) => {
-              setSelectedLevelId(e.target.value);
-              setSelectedClassId("");
+              setAccessLevelId(e.target.value);
+              setAccessClassId("");
               setSelectedAccessSubjectId("");
               setAccessMsg(null);
             }}
@@ -848,17 +925,17 @@ export function AdminSettingsPage() {
           </Select>
 
           <Select
-            label="Class"
-            value={selectedClassId}
+            label="Class (access defaults)"
+            value={accessClassId}
             onChange={(e) => {
-              setSelectedClassId(e.target.value);
+              setAccessClassId(e.target.value);
               setSelectedAccessSubjectId("");
               setAccessMsg(null);
             }}
-            disabled={!selectedLevelId}
+            disabled={!accessLevelId}
           >
             <option value="">Select class…</option>
-            {classesForSelectedLevel.map((c) => (
+            {classesForAccessLevel.map((c) => (
               <option key={c.id} value={c.id}>
                 {c.name}
               </option>
@@ -866,13 +943,13 @@ export function AdminSettingsPage() {
           </Select>
 
           <Select
-            label="Subject"
+            label="Subject (access defaults)"
             value={selectedAccessSubjectId}
             onChange={(e) => setSelectedAccessSubjectId(e.target.value)}
-            disabled={!selectedClassId}
+            disabled={!accessClassId}
           >
             <option value="">Select subject…</option>
-            {subjectsForSelectedClass.map((s) => (
+            {subjectsForAccessClass.map((s) => (
               <option key={s.id} value={s.id}>
                 {s.name}
               </option>
@@ -1002,6 +1079,8 @@ export function AdminSettingsPage() {
                           details: { importedAt: nowIso() }
                         });
                       }
+                      // Import overwrites local IndexedDB; require re-auth to avoid confusing state.
+                      localStorage.clear();
                       window.location.href = `/login${window.location.search}`;
                     }
                   });

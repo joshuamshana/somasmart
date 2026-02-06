@@ -4,6 +4,7 @@ import type {
   CurriculumClass,
   CurriculumLevel,
   CurriculumSubject,
+  Badge,
   Lesson,
   Progress,
   QuizAttempt
@@ -40,6 +41,8 @@ export function LearnLandingPage() {
   // Student-only personalization
   const [progress, setProgress] = useState<Progress[]>([]);
   const [attempts, setAttempts] = useState<QuizAttempt[]>([]);
+  const [streakDays, setStreakDays] = useState(0);
+  const [badges, setBadges] = useState<Badge[]>([]);
 
   // Redirect non-students away from public/student landing.
   if (!loading && user && user.role !== "student") {
@@ -97,14 +100,20 @@ export function LearnLandingPage() {
         if (!cancelled) {
           setProgress([]);
           setAttempts([]);
+          setStreakDays(0);
+          setBadges([]);
         }
         return;
       }
       const p = (await db.progress.toArray()).filter((x) => x.studentId === user.id);
       const a = (await db.quizAttempts.toArray()).filter((x) => x.studentId === user.id);
+      const streak = await db.streaks.get(user.id);
+      const earned = (await db.badges.toArray()).filter((b) => b.studentId === user.id);
       if (cancelled) return;
       setProgress(p);
       setAttempts(a);
+      setStreakDays(streak?.currentStreakDays ?? 0);
+      setBadges(earned.sort((x, y) => y.earnedAt.localeCompare(x.earnedAt)));
     })();
     return () => {
       cancelled = true;
@@ -207,7 +216,7 @@ export function LearnLandingPage() {
       </Card>
 
       {isStudent ? (
-        <div className="grid gap-4 md:grid-cols-3">
+        <div className="grid gap-4 md:grid-cols-4">
           <Card title="Continue learning">
             {continueLessons.length === 0 ? (
               <div className="text-sm text-slate-400">Start a lesson to see it here.</div>
@@ -238,7 +247,26 @@ export function LearnLandingPage() {
             <div className="text-2xl font-semibold">{attempts.length}</div>
             <div className="text-xs text-slate-400">Self tests taken.</div>
           </Card>
+          <Card title="Streak">
+            <div className="text-2xl font-semibold">{streakDays}</div>
+            <div className="text-xs text-slate-400">Days active in a row</div>
+            <div className="mt-2 text-xs text-slate-500">Complete lessons or quizzes to keep it going.</div>
+          </Card>
         </div>
+      ) : null}
+
+      {isStudent ? (
+        <Card title="Badges">
+          <div className="text-sm text-slate-300">{badges.length} earned</div>
+          <div className="mt-2 flex flex-wrap gap-2">
+            {badges.slice(0, 10).map((b) => (
+              <span key={b.id} className="rounded bg-slate-800 px-2 py-1 text-xs text-slate-200">
+                {b.badgeId}
+              </span>
+            ))}
+          </div>
+          {badges.length === 0 ? <div className="mt-2 text-xs text-slate-500">No badges yet.</div> : null}
+        </Card>
       ) : null}
 
       <div className="grid gap-4 lg:grid-cols-[320px,1fr]">

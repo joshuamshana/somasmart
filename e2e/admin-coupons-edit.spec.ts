@@ -36,7 +36,7 @@ test("Admin coupons: edit scope/limits and deactivate; student redemption shows 
   await page.getByLabel("Username").fill(`s_${Date.now()}`);
   await page.getByLabel("Password").fill("pass123");
   await page.getByRole("button", { name: "Register" }).click();
-  await expect(page.getByRole("link", { name: "Payments" })).toBeVisible({ timeout: 30_000 });
+  await expect(page.getByRole("link", { name: "Payments", exact: true })).toBeVisible({ timeout: 30_000 });
 
   await page.goto(`/student/payments?device=${device}`);
   await page.getByLabel("Code", { exact: true }).fill(code);

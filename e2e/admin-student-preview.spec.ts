@@ -36,7 +36,7 @@ test("Admin can preview lesson as student for pending + approved content", async
   await page.locator("button").filter({ hasText: title }).first().click();
   await page.getByRole("button", { name: "Preview as student" }).click();
   await expect(page.getByRole("heading", { name: "Student preview" })).toBeVisible({ timeout: 30_000 });
-  await expect(page.getByText("Preview content block.")).toBeVisible();
+  await expect(page.getByText("Preview content block.", { exact: true })).toBeVisible();
 
   // Locked mode shows the lock screen text.
   await page.getByLabel("Preview mode").selectOption({ label: "Locked (no coupon)" });
@@ -51,5 +51,5 @@ test("Admin can preview lesson as student for pending + approved content", async
   await expect(page.getByRole("button", { name: "Create new version" })).toBeVisible({ timeout: 30_000 });
 
   await page.getByRole("button", { name: "Preview as student" }).click();
-  await expect(page.getByText("Preview content block.")).toBeVisible();
+  await expect(page.getByText("Preview content block.", { exact: true })).toBeVisible();
 });

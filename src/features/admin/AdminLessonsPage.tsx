@@ -1,15 +1,16 @@
 import React, { useEffect, useMemo, useState } from "react";
-import type { Lesson, LessonBlock, User } from "@/shared/types";
+import type { Lesson, LessonAsset, LessonBlock, Quiz, User } from "@/shared/types";
 import { db } from "@/shared/db/db";
 import { Card } from "@/shared/ui/Card";
 import { Button } from "@/shared/ui/Button";
-import { LessonPlayer } from "@/features/content/LessonPlayer";
 import { enqueueOutboxEvent } from "@/shared/offline/outbox";
 import { useAuth } from "@/features/auth/authContext";
 import { logAudit } from "@/shared/audit/audit";
 import { ConfirmDialog } from "@/shared/ui/ConfirmDialog";
 import { PageHeader } from "@/shared/ui/PageHeader";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import { buildLessonSteps } from "@/features/content/lessonSteps";
+import { LessonStepperPlayer } from "@/features/content/LessonStepperPlayer";
 
 function nowIso() {
   return new Date().toISOString();
@@ -31,11 +32,14 @@ function bumpTitle(title: string) {
 export function AdminLessonsPage() {
   const location = useLocation();
   const search = location.search ?? "";
+  const nav = useNavigate();
   const { user } = useAuth();
   const [lessons, setLessons] = useState<Lesson[]>([]);
   const [teachersById, setTeachersById] = useState<Record<string, User>>({});
   const [selectedLessonId, setSelectedLessonId] = useState<string | null>(null);
   const [blocks, setBlocks] = useState<LessonBlock[]>([]);
+  const [assetsById, setAssetsById] = useState<Record<string, LessonAsset | undefined>>({});
+  const [quizzesById, setQuizzesById] = useState<Record<string, Quiz | undefined>>({});
   const [feedback, setFeedback] = useState("");
   const [selectedLesson, setSelectedLesson] = useState<Lesson | null>(null);
   const [confirm, setConfirm] = useState<null | {
@@ -65,14 +69,33 @@ export function AdminLessonsPage() {
     (async () => {
       if (!selectedLessonId) {
         setBlocks([]);
+        setAssetsById({});
+        setQuizzesById({});
         setFeedback("");
         setSelectedLesson(null);
         return;
       }
       const content = await db.lessonContents.get(selectedLessonId);
       const lesson = await db.lessons.get(selectedLessonId);
+      const quizzes = await db.quizzes.where("lessonId").equals(selectedLessonId).toArray();
+      const quizMap: Record<string, Quiz | undefined> = {};
+      for (const q of quizzes) quizMap[q.id] = q;
+
+      const nextBlocks = (content?.blocks ?? []) as LessonBlock[];
+      const ids = Array.from(
+        new Set(
+          nextBlocks
+            .filter((b): b is Extract<LessonBlock, { assetId: string }> => "assetId" in b)
+            .map((b) => b.assetId)
+        )
+      );
+      const assets = await Promise.all(ids.map((id) => db.lessonAssets.get(id)));
+      const assetMap: Record<string, LessonAsset | undefined> = {};
+      for (let i = 0; i < ids.length; i++) assetMap[ids[i]!] = (assets[i] ?? undefined) as LessonAsset | undefined;
       if (cancelled) return;
-      setBlocks(content?.blocks ?? []);
+      setBlocks(nextBlocks);
+      setAssetsById(assetMap);
+      setQuizzesById(quizMap);
       setFeedback(lesson?.adminFeedback ?? "");
       setSelectedLesson(lesson ?? null);
     })();
@@ -84,6 +107,7 @@ export function AdminLessonsPage() {
   const pending = useMemo(() => lessons.filter((l) => l.status === "pending_approval"), [lessons]);
   const approved = useMemo(() => lessons.filter((l) => l.status === "approved"), [lessons]);
   const rejected = useMemo(() => lessons.filter((l) => l.status === "rejected" || l.status === "unpublished"), [lessons]);
+  const steps = useMemo(() => buildLessonSteps({ blocks, assetsById, quizzesById }), [assetsById, blocks, quizzesById]);
 
   async function approve(lessonId: string) {
     const l = await db.lessons.get(lessonId);
@@ -177,17 +201,24 @@ export function AdminLessonsPage() {
     if (!l || !content) return;
 
     const assets = await db.lessonAssets.where("lessonId").equals(lessonId).toArray();
-    const quiz = await db.quizzes.where("lessonId").equals(lessonId).first();
+    const quizzes = await db.quizzes.where("lessonId").equals(lessonId).toArray();
 
     const nextLessonId = newId("lesson");
     const assetIdMap: Record<string, string> = {};
     for (const a of assets) assetIdMap[a.id] = newId("asset");
+    const quizIdMap: Record<string, string> = {};
+    for (const q of quizzes) quizIdMap[q.id] = newId("quiz");
 
     const nextBlocks: LessonBlock[] = (content.blocks ?? []).map((b: any) => {
       const id = newId("block");
       if (b.type === "text") return { ...b, id };
-      const nextAssetId = assetIdMap[b.assetId] ?? b.assetId;
-      return { ...b, id, assetId: nextAssetId };
+      if (b.type === "step_break") return { ...b, id };
+      if (b.type === "quiz") return { ...b, id, quizId: quizIdMap[b.quizId] ?? b.quizId };
+      if ("assetId" in b) {
+        const nextAssetId = assetIdMap[b.assetId] ?? b.assetId;
+        return { ...b, id, assetId: nextAssetId };
+      }
+      return { ...b, id };
     });
 
     const nextLesson: Lesson = {
@@ -209,20 +240,18 @@ export function AdminLessonsPage() {
       createdAt: nowIso()
     }));
 
-    const nextQuiz = quiz
-      ? {
-          ...quiz,
-          id: newId("quiz"),
-          lessonId: nextLessonId,
-          questions: quiz.questions.map((q: any) => ({ ...q, id: newId("q") }))
-        }
-      : null;
+    const nextQuizzes = quizzes.map((quiz) => ({
+      ...quiz,
+      id: quizIdMap[quiz.id] ?? newId("quiz"),
+      lessonId: nextLessonId,
+      questions: quiz.questions.map((q: any) => ({ ...q, id: newId("q") }))
+    }));
 
     await db.transaction("rw", [db.lessons, db.lessonContents, db.lessonAssets, db.quizzes], async () => {
       await db.lessons.put(nextLesson);
       await db.lessonContents.put({ lessonId: nextLessonId, blocks: nextBlocks });
       if (nextAssets.length) await db.lessonAssets.bulkPut(nextAssets as any);
-      if (nextQuiz) await db.quizzes.put(nextQuiz as any);
+      if (nextQuizzes.length) await db.quizzes.bulkPut(nextQuizzes as any);
     });
     await enqueueOutboxEvent({ type: "lesson_upsert_full", payload: { lessonId: nextLessonId } });
 
@@ -269,9 +298,12 @@ export function AdminLessonsPage() {
               <Button variant="secondary">Sync</Button>
             </Link>
             {selectedLessonId ? (
-              <Link to={`/admin/lessons/${selectedLessonId}/preview${search}`}>
-                <Button variant="secondary">Preview as student</Button>
-              </Link>
+              <Button
+                variant="secondary"
+                onClick={() => nav(`/admin/lessons/${selectedLessonId}/preview${search}`)}
+              >
+                Preview as student
+              </Button>
             ) : null}
           </div>
         }
@@ -339,7 +371,22 @@ export function AdminLessonsPage() {
             <div className="text-sm text-muted">Select a pending lesson to preview and approve/reject.</div>
           ) : (
             <>
-              <LessonPlayer blocks={blocks} />
+              <LessonStepperPlayer
+                steps={steps}
+                mode="preview"
+                completedStepKeys={new Set()}
+                bestScoreByQuizId={{}}
+                quizzesById={quizzesById}
+                assetsById={assetsById}
+                onPdfNumPages={async (assetId, n) => {
+                  const existing = assetsById[assetId];
+                  if (!existing) return;
+                  if (existing.pageCount === n) return;
+                  const nextAsset = { ...existing, pageCount: n };
+                  await db.lessonAssets.put(nextAsset);
+                  setAssetsById((m) => ({ ...m, [assetId]: nextAsset }));
+                }}
+              />
               {selectedLesson ? (
                 <div className="mt-4 grid gap-2 text-sm text-text">
                   <div>

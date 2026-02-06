@@ -42,6 +42,11 @@ export function QuizRunner({
     onComplete?.(attempt);
   }
 
+  function retry() {
+    setAnswers({});
+    setSubmitted(false);
+  }
+
   if (quiz.questions.length === 0) return <div className="text-sm text-slate-300">No quiz questions.</div>;
 
   return (
@@ -87,9 +92,16 @@ export function QuizRunner({
         <div className="text-sm text-slate-300">
           Score (preview): <span className="font-semibold">{summary.score}%</span>
         </div>
-        <Button onClick={submit} disabled={submitted}>
-          {submitted ? "Submitted" : "Submit Quiz"}
-        </Button>
+        <div className="flex items-center gap-2">
+          {submitted ? (
+            <Button variant="secondary" onClick={retry}>
+              Retry quiz
+            </Button>
+          ) : null}
+          <Button onClick={submit} disabled={submitted}>
+            {submitted ? "Submitted" : "Submit Quiz"}
+          </Button>
+        </div>
       </div>
 
       {submitted ? (

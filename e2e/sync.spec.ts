@@ -31,6 +31,8 @@ test("Sync: teacher approval and lesson approval propagate across devices", asyn
   await expect(page.getByText(/You are offline/i)).toBeVisible();
   await context.setOffline(false);
   await page.getByRole("button", { name: "Sync now" }).click();
+  await expect(page.getByTestId("sync-last-sync")).not.toContainText("Never", { timeout: 30_000 });
+  await expect(page.getByTestId("sync-status")).toHaveAttribute("data-status", "idle");
   await expect(page.getByTestId("sync-failed")).toContainText("0");
   await expect(page.getByTestId("sync-queued")).toContainText("0");
 
@@ -46,6 +48,7 @@ test("Sync: teacher approval and lesson approval propagate across devices", asyn
 
   await adminPage.goto(`/sync?device=${deviceAdminB}&server=${server}`);
   await adminPage.getByRole("button", { name: "Sync now" }).click();
+  await expect(adminPage.getByTestId("sync-status")).toHaveAttribute("data-status", "idle");
   await expect(adminPage.getByTestId("sync-last-sync")).not.toContainText("Never");
   await expect(adminPage.getByTestId("sync-failed")).toContainText("0");
 
@@ -58,6 +61,7 @@ test("Sync: teacher approval and lesson approval propagate across devices", asyn
 
   await adminPage.goto(`/sync?device=${deviceAdminB}&server=${server}`);
   await adminPage.getByRole("button", { name: "Sync now" }).click();
+  await expect(adminPage.getByTestId("sync-status")).toHaveAttribute("data-status", "idle");
   await expect(adminPage.getByTestId("sync-failed")).toContainText("0");
   await expect(adminPage.getByTestId("sync-queued")).toContainText("0");
 
@@ -71,6 +75,7 @@ test("Sync: teacher approval and lesson approval propagate across devices", asyn
   for (let i = 0; i < 10; i++) {
     await page.goto(`/sync?device=${deviceTeacherA}&server=${server}`);
     await page.getByRole("button", { name: "Sync now" }).click();
+    await expect(page.getByTestId("sync-status")).toHaveAttribute("data-status", "idle");
     await expect(page.getByTestId("sync-failed")).toContainText("0");
     await page.goto(`/teacher?device=${deviceTeacherA}&server=${server}`);
     const visible = (await page.getByRole("heading", { name: "Teacher dashboard" }).count()) > 0;
@@ -90,18 +95,23 @@ test("Sync: teacher approval and lesson approval propagate across devices", asyn
   await page.getByRole("button", { name: "Add text" }).click();
   await page.getByLabel("Text block 1").fill("Hello sync world");
   await page.getByRole("button", { name: "Submit for approval" }).click();
+  await expect(page.getByText("Lesson submitted.")).toBeVisible({ timeout: 30_000 });
   await expect(page).toHaveURL(/\/teacher\/lessons/);
 
   await page.goto(`/sync?device=${deviceTeacherA}&server=${server}`);
+  await expect(page.getByRole("row", { name: /lesson_submit/i })).toBeVisible({ timeout: 30_000 });
   await page.getByRole("button", { name: "Sync now" }).click();
+  await expect(page.getByTestId("sync-status")).toHaveAttribute("data-status", "idle");
   await expect(page.getByTestId("sync-failed")).toContainText("0");
   await expect(page.getByTestId("sync-queued")).toContainText("0");
+  await expect(page.getByRole("row", { name: /lesson_submit.*synced/i })).toBeVisible({ timeout: 30_000 });
 
   // Device B: admin pulls lesson and approves it
   const syncedLessonButton = adminPage.getByRole("button", { name: /Synced Lesson 1/i }).first();
   for (let i = 0; i < 20; i++) {
     await adminPage.goto(`/sync?device=${deviceAdminB}&server=${server}`);
     await adminPage.getByRole("button", { name: "Sync now" }).click();
+    await expect(adminPage.getByTestId("sync-status")).toHaveAttribute("data-status", "idle");
     await expect(adminPage.getByTestId("sync-failed")).toContainText("0");
     await adminPage.goto(`/admin/lessons?device=${deviceAdminB}&server=${server}`);
     await expect(adminPage.getByRole("heading", { name: "Lessons" })).toBeVisible();
@@ -114,11 +124,13 @@ test("Sync: teacher approval and lesson approval propagate across devices", asyn
 
   await adminPage.goto(`/sync?device=${deviceAdminB}&server=${server}`);
   await adminPage.getByRole("button", { name: "Sync now" }).click();
+  await expect(adminPage.getByTestId("sync-status")).toHaveAttribute("data-status", "idle");
   await expect(adminPage.getByTestId("sync-failed")).toContainText("0");
 
   // Device A: teacher pulls lesson approval update
   await page.goto(`/sync?device=${deviceTeacherA}&server=${server}`);
   await page.getByRole("button", { name: "Sync now" }).click();
+  await expect(page.getByTestId("sync-status")).toHaveAttribute("data-status", "idle");
   await expect(page.getByTestId("sync-failed")).toContainText("0");
 
   await page.goto(`/teacher/lessons?device=${deviceTeacherA}&server=${server}`);

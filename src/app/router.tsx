@@ -39,11 +39,13 @@ import { TeacherSupportPage } from "@/features/messaging/TeacherSupportPage";
 import { SyncPage } from "@/features/sync/SyncPage";
 import { NotificationsPage } from "@/features/notifications/NotificationsPage";
 import { PublicLessonGateRedirect } from "@/features/content/PublicLessonGateRedirect";
+import { RouteErrorPage } from "@/app/RouteErrorPage";
 
 const router = createBrowserRouter([
   {
     path: "/",
     element: <AppShell />,
+    errorElement: <RouteErrorPage />,
     children: [
       { index: true, element: <StartRedirect /> },
       { path: "login", element: <LoginPage /> },

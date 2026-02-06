@@ -160,4 +160,13 @@ function getServerDbName() {
   return server ? `somasmart_server_mock_${server}` : "somasmart_server_mock";
 }
 
-export const serverDb = new SomaSmartMockServerDB(getServerDbName());
+const cache = new Map<string, SomaSmartMockServerDB>();
+
+export function getServerDb() {
+  const name = getServerDbName();
+  const existing = cache.get(name);
+  if (existing) return existing;
+  const created = new SomaSmartMockServerDB(name);
+  cache.set(name, created);
+  return created;
+}

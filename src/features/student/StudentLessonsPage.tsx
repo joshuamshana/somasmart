@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
-import type { Lesson } from "@/shared/types";
+import type { CurriculumClass, CurriculumLevel, CurriculumSubject, Lesson } from "@/shared/types";
 import { db } from "@/shared/db/db";
 import { Card } from "@/shared/ui/Card";
 import { Input } from "@/shared/ui/Input";
@@ -14,10 +14,14 @@ export function StudentLessonsPage() {
   const search = location.search ?? "";
   const { user } = useAuth();
   const [lessons, setLessons] = useState<Lesson[]>([]);
-  const [subject, setSubject] = useState("");
-  const [level, setLevel] = useState("");
+  const [levelId, setLevelId] = useState("");
+  const [classId, setClassId] = useState("");
+  const [subjectId, setSubjectId] = useState("");
   const [language, setLanguage] = useState("");
   const [q, setQ] = useState("");
+  const [levels, setLevels] = useState<CurriculumLevel[]>([]);
+  const [classes, setClasses] = useState<CurriculumClass[]>([]);
+  const [subjects, setSubjects] = useState<CurriculumSubject[]>([]);
   const [grants, setGrants] = useState<import("@/shared/types").LicenseGrant[]>([]);
   const [subjectDefaults, setSubjectDefaults] = useState<Record<string, import("@/shared/types").AccessPolicy>>({});
 
@@ -28,6 +32,22 @@ export function StudentLessonsPage() {
       if (cancelled) return;
       const now = new Date().toISOString();
       setLessons(rows.filter((l) => !l.deletedAt && (!l.expiresAt || l.expiresAt > now)));
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const lvls = (await db.curriculumLevels.toArray()).filter((l) => !l.deletedAt);
+      const cls = (await db.curriculumClasses.toArray()).filter((c) => !c.deletedAt);
+      const subs = (await db.curriculumSubjects.toArray()).filter((s) => !s.deletedAt);
+      if (cancelled) return;
+      setLevels(lvls.sort((a, b) => a.sortOrder - b.sortOrder || a.name.localeCompare(b.name)));
+      setClasses(cls.sort((a, b) => a.sortOrder - b.sortOrder || a.name.localeCompare(b.name)));
+      setSubjects(subs.sort((a, b) => a.name.localeCompare(b.name)));
     })();
     return () => {
       cancelled = true;
@@ -62,19 +82,53 @@ export function StudentLessonsPage() {
     };
   }, [user]);
 
-  const subjects = useMemo(
-    () => Array.from(new Set(lessons.map((l) => l.subject))).sort(),
-    [lessons]
+  const classesForLevel = useMemo(() => classes.filter((c) => c.levelId === levelId), [classes, levelId]);
+  const subjectsForClass = useMemo(() => subjects.filter((s) => s.classId === classId), [classId, subjects]);
+
+  useEffect(() => {
+    if (levelId && classId && !classesForLevel.some((c) => c.id === classId)) {
+      setClassId("");
+      setSubjectId("");
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [classesForLevel.length, levelId]);
+
+  useEffect(() => {
+    if (classId && subjectId && !subjectsForClass.some((s) => s.id === subjectId)) {
+      setSubjectId("");
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [subjectsForClass.length, classId]);
+
+  const selectedLevelName = useMemo(() => levels.find((l) => l.id === levelId)?.name ?? null, [levelId, levels]);
+  const selectedClassName = useMemo(() => classes.find((c) => c.id === classId)?.name ?? null, [classId, classes]);
+  const selectedSubjectName = useMemo(
+    () => subjects.find((s) => s.id === subjectId)?.name ?? null,
+    [subjectId, subjects]
   );
-  const levels = useMemo(() => Array.from(new Set(lessons.map((l) => l.level))).sort(), [lessons]);
+
   const languages = useMemo(
     () => Array.from(new Set(lessons.map((l) => String(l.language ?? "")))).filter(Boolean).sort(),
     [lessons]
   );
 
   const filtered = lessons.filter((l) => {
-    if (subject && l.subject !== subject) return false;
-    if (level && l.level !== level) return false;
+    if (levelId) {
+      const match = (l.curriculumLevelId && l.curriculumLevelId === levelId) || (selectedLevelName && l.level === selectedLevelName);
+      if (!match) return false;
+    }
+    if (classId) {
+      const match =
+        (l.curriculumClassId && l.curriculumClassId === classId) ||
+        (selectedClassName && (l.className ?? "") === selectedClassName);
+      if (!match) return false;
+    }
+    if (subjectId) {
+      const match =
+        (l.curriculumSubjectId && l.curriculumSubjectId === subjectId) ||
+        (selectedSubjectName && l.subject === selectedSubjectName);
+      if (!match) return false;
+    }
     if (language && String(l.language ?? "") !== language) return false;
     if (q) {
       const qq = q.toLowerCase();
@@ -88,21 +142,50 @@ export function StudentLessonsPage() {
   return (
     <div className="space-y-4">
       <Card title="Lessons">
-        <div className="grid gap-3 md:grid-cols-4">
+        <div className="grid gap-3 md:grid-cols-5">
           <Input label="Search" value={q} onChange={(e) => setQ(e.target.value)} />
-          <Select label="Subject" value={subject} onChange={(e) => setSubject(e.target.value)}>
+          <Select
+            label="Level"
+            value={levelId}
+            onChange={(e) => {
+              setLevelId(e.target.value);
+              setClassId("");
+              setSubjectId("");
+            }}
+          >
             <option value="">All</option>
-            {subjects.map((s) => (
-              <option key={s} value={s}>
-                {s}
+            {levels.map((l) => (
+              <option key={l.id} value={l.id}>
+                {l.name}
               </option>
             ))}
           </Select>
-          <Select label="Level" value={level} onChange={(e) => setLevel(e.target.value)}>
+          <Select
+            label="Class"
+            value={classId}
+            onChange={(e) => {
+              setClassId(e.target.value);
+              setSubjectId("");
+            }}
+            disabled={!levelId}
+          >
             <option value="">All</option>
-            {levels.map((s) => (
-              <option key={s} value={s}>
-                {s}
+            {classesForLevel.map((c) => (
+              <option key={c.id} value={c.id}>
+                {c.name}
+              </option>
+            ))}
+          </Select>
+          <Select
+            label="Subject"
+            value={subjectId}
+            onChange={(e) => setSubjectId(e.target.value)}
+            disabled={!classId}
+          >
+            <option value="">All</option>
+            {subjectsForClass.map((s) => (
+              <option key={s.id} value={s.id}>
+                {s.name}
               </option>
             ))}
           </Select>

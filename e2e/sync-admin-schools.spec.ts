@@ -20,6 +20,8 @@ test("Sync: admin school CRUD propagates across devices", async ({ page }) => {
 
   await page.goto(`/sync?device=${deviceA}&server=${server}`);
   await page.getByRole("button", { name: "Sync now" }).click();
+  await expect(page.getByTestId("sync-last-sync")).not.toContainText("Never", { timeout: 30_000 });
+  await expect(page.getByTestId("sync-status")).toHaveAttribute("data-status", "idle");
   await expect(page.getByTestId("sync-failed")).toContainText("0");
 
   // Device B: admin pulls and sees school
@@ -30,12 +32,16 @@ test("Sync: admin school CRUD propagates across devices", async ({ page }) => {
   await expect(page.getByRole("link", { name: "Schools", exact: true })).toBeVisible({ timeout: 30_000 });
   await page.goto(`/sync?device=${deviceB}&server=${server}`);
   await page.getByRole("button", { name: "Sync now" }).click();
+  await expect(page.getByTestId("sync-last-sync")).not.toContainText("Never", { timeout: 30_000 });
+  await expect(page.getByTestId("sync-status")).toHaveAttribute("data-status", "idle");
   await expect(page.getByTestId("sync-failed")).toContainText("0");
 
   const schoolButton = page.getByRole("button", { name: new RegExp(schoolName) }).first();
   for (let i = 0; i < 10; i++) {
     await page.goto(`/sync?device=${deviceB}&server=${server}`);
     await page.getByRole("button", { name: "Sync now" }).click();
+    await expect(page.getByTestId("sync-last-sync")).not.toContainText("Never", { timeout: 30_000 });
+    await expect(page.getByTestId("sync-status")).toHaveAttribute("data-status", "idle");
     await expect(page.getByTestId("sync-failed")).toContainText("0");
     await page.goto(`/admin/schools?device=${deviceB}&server=${server}`);
     const count = await schoolButton.count();

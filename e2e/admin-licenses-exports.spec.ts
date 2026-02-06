@@ -13,7 +13,7 @@ test("Admin licenses: extend/revoke grant and export payments CSV", async ({ pag
   await page.getByLabel("Password").fill("pass123");
   await page.getByLabel("School code (optional)").fill("SOMA001");
   await page.getByRole("button", { name: "Register" }).click();
-  await expect(page.getByRole("link", { name: "Payments" })).toBeVisible({ timeout: 30_000 });
+  await expect(page.getByRole("link", { name: "Payments", exact: true })).toBeVisible({ timeout: 30_000 });
 
   // School admin grants sponsored access
   await page.getByRole("button", { name: "Logout" }).click();

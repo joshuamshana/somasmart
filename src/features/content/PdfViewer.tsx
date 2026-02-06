@@ -4,23 +4,46 @@ import pdfWorker from "pdfjs-dist/build/pdf.worker.min?url";
 
 pdfjs.GlobalWorkerOptions.workerSrc = pdfWorker as string;
 
-export function PdfViewer({ blob }: { blob: Blob }) {
+export function PdfViewer({
+  blob,
+  page: controlledPage,
+  onNumPages,
+  scale = 1.25
+}: {
+  blob: Blob;
+  page?: number;
+  onNumPages?: (n: number) => void;
+  scale?: number;
+}) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
-  const [page, setPage] = useState(1);
+  const [internalPage, setInternalPage] = useState(1);
+  const page = controlledPage ?? internalPage;
   const [numPages, setNumPages] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const docRef = useRef<pdfjs.PDFDocumentProxy | null>(null);
+  const blobRef = useRef<Blob | null>(null);
 
   useEffect(() => {
     let cancelled = false;
     setError(null);
     (async () => {
-      const ab = await blob.arrayBuffer();
-      const doc = await pdfjs.getDocument({ data: ab }).promise;
+      if (blobRef.current !== blob) {
+        blobRef.current = blob;
+        docRef.current = null;
+        setNumPages(null);
+      }
+
+      if (!docRef.current) {
+        const ab = await blob.arrayBuffer();
+        docRef.current = await pdfjs.getDocument({ data: ab }).promise;
+      }
+      const doc = docRef.current;
       if (cancelled) return;
       setNumPages(doc.numPages);
+      onNumPages?.(doc.numPages);
       const pg = await doc.getPage(page);
       if (cancelled) return;
-      const viewport = pg.getViewport({ scale: 1.25 });
+      const viewport = pg.getViewport({ scale });
       const canvas = canvasRef.current;
       if (!canvas) return;
       const ctx = canvas.getContext("2d");
@@ -32,31 +55,33 @@ export function PdfViewer({ blob }: { blob: Blob }) {
     return () => {
       cancelled = true;
     };
-  }, [blob, page]);
+  }, [blob, page, onNumPages, scale]);
 
   return (
     <div className="space-y-2">
-      <div className="flex items-center justify-between gap-2">
-        <div className="text-xs text-slate-400">
-          PDF {numPages ? `${page} / ${numPages}` : ""}
+      {controlledPage == null ? (
+        <div className="flex items-center justify-between gap-2">
+          <div className="text-xs text-slate-400">PDF {numPages ? `${page} / ${numPages}` : ""}</div>
+          <div className="flex gap-2">
+            <button
+              className="rounded bg-slate-800 px-2 py-1 text-xs hover:bg-slate-700 disabled:opacity-50"
+              disabled={page <= 1}
+              onClick={() => setInternalPage((p) => Math.max(1, p - 1))}
+            >
+              Prev
+            </button>
+            <button
+              className="rounded bg-slate-800 px-2 py-1 text-xs hover:bg-slate-700 disabled:opacity-50"
+              disabled={numPages ? page >= numPages : true}
+              onClick={() => setInternalPage((p) => (numPages ? Math.min(numPages, p + 1) : p))}
+            >
+              Next
+            </button>
+          </div>
         </div>
-        <div className="flex gap-2">
-          <button
-            className="rounded bg-slate-800 px-2 py-1 text-xs hover:bg-slate-700 disabled:opacity-50"
-            disabled={page <= 1}
-            onClick={() => setPage((p) => Math.max(1, p - 1))}
-          >
-            Prev
-          </button>
-          <button
-            className="rounded bg-slate-800 px-2 py-1 text-xs hover:bg-slate-700 disabled:opacity-50"
-            disabled={numPages ? page >= numPages : true}
-            onClick={() => setPage((p) => (numPages ? Math.min(numPages, p + 1) : p))}
-          >
-            Next
-          </button>
-        </div>
-      </div>
+      ) : (
+        <div className="text-xs text-slate-400">PDF {numPages ? `${page} / ${numPages}` : ""}</div>
+      )}
       {error ? <div className="text-sm text-rose-400">{error}</div> : null}
       <canvas ref={canvasRef} className="max-w-full rounded border border-slate-800" />
     </div>

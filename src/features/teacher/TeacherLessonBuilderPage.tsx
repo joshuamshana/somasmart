@@ -21,8 +21,12 @@ import { Button } from "@/shared/ui/Button";
 import { enqueueOutboxEvent } from "@/shared/offline/outbox";
 import { PageHeader } from "@/shared/ui/PageHeader";
 import { toast } from "@/shared/ui/toastStore";
-import { LessonPlayer } from "@/features/content/LessonPlayer";
-import { QuizPreview } from "@/features/teacher/QuizPreview";
+import { buildLessonSteps } from "@/features/content/lessonSteps";
+import { LessonStepperPlayer } from "@/features/content/LessonStepperPlayer";
+import * as pdfjs from "pdfjs-dist";
+import pdfWorker from "pdfjs-dist/build/pdf.worker.min?url";
+
+pdfjs.GlobalWorkerOptions.workerSrc = pdfWorker as string;
 
 function nowIso() {
   return new Date().toISOString();
@@ -67,10 +71,11 @@ export function TeacherLessonBuilderPage() {
   const [createdAt, setCreatedAt] = useState(() => nowIso());
 
   const [blocks, setBlocks] = useState<LessonBlock[]>([]);
-  const [questions, setQuestions] = useState<QuizQuestion[]>([]);
+  const [assetsById, setAssetsById] = useState<Record<string, LessonAsset | undefined>>({});
+  const [quizzesById, setQuizzesById] = useState<Record<string, Quiz>>({});
+  const [selectedQuizId, setSelectedQuizId] = useState<string | null>(null);
 
   const [lessonId] = useState(() => editLessonId ?? newId("lesson"));
-  const [quizId, setQuizId] = useState(() => newId("quiz"));
   const [levels, setLevels] = useState<CurriculumLevel[]>([]);
   const [classes, setClasses] = useState<CurriculumClass[]>([]);
   const [subjects, setSubjects] = useState<CurriculumSubject[]>([]);
@@ -127,7 +132,7 @@ export function TeacherLessonBuilderPage() {
       if (!editLessonId) return;
       const l = await db.lessons.get(editLessonId);
       const content = await db.lessonContents.get(editLessonId);
-      const quiz = (await db.quizzes.where("lessonId").equals(editLessonId).first()) ?? null;
+      const quizzes = await db.quizzes.where("lessonId").equals(editLessonId).toArray();
       if (!l || !content) return;
       if (l.createdByUserId !== userId) {
         setStatusMessage("You can’t edit this lesson.");
@@ -143,9 +148,23 @@ export function TeacherLessonBuilderPage() {
       setCurriculumLevelId(l.curriculumLevelId ?? "");
       setCurriculumClassId(l.curriculumClassId ?? "");
       setCreatedAt(l.createdAt);
-      setBlocks(content.blocks ?? []);
-      setQuestions(quiz?.questions ?? []);
-      if (quiz?.id) setQuizId(quiz.id);
+      const nextBlocks = (content.blocks ?? []) as LessonBlock[];
+      setBlocks(nextBlocks);
+      const assetIds = Array.from(
+        new Set(
+          nextBlocks
+            .filter((b): b is Extract<LessonBlock, { assetId: string }> => "assetId" in b)
+            .map((b) => b.assetId)
+        )
+      );
+      const assets = await Promise.all(assetIds.map((id) => db.lessonAssets.get(id)));
+      const assetMap: Record<string, LessonAsset | undefined> = {};
+      for (let i = 0; i < assetIds.length; i++) assetMap[assetIds[i]!] = (assets[i] ?? undefined) as LessonAsset | undefined;
+      setAssetsById(assetMap);
+      const quizMap: Record<string, Quiz> = {};
+      for (const q of quizzes) quizMap[q.id] = q;
+      setQuizzesById(quizMap);
+      setSelectedQuizId(quizzes[0]?.id ?? null);
       setDirty(false);
       setLastSavedAt(l.updatedAt ?? null);
     })();
@@ -157,6 +176,23 @@ export function TeacherLessonBuilderPage() {
   async function addTextBlock() {
     markDirty();
     setBlocks((b) => [...b, { id: newId("block"), type: "text", variant: "body", text: "" }]);
+  }
+
+  async function addStepBreakBlock() {
+    markDirty();
+    setBlocks((b) => [...b, { id: newId("block"), type: "step_break", title: "" }]);
+  }
+
+  async function addQuizStepBlock() {
+    const id = newId("quiz");
+    const quiz: Quiz = { id, lessonId, questions: [] };
+    markDirty();
+    setQuizzesById((m) => ({ ...m, [id]: quiz }));
+    setSelectedQuizId(id);
+    setBlocks((b) => [
+      ...b,
+      { id: newId("block"), type: "quiz", quizId: id, title: "Quiz", requiredToContinue: true, passScorePct: 70 }
+    ]);
   }
 
   async function addFileBlock(file: File) {
@@ -172,6 +208,17 @@ export function TeacherLessonBuilderPage() {
       return;
     }
     const assetId = newId("asset");
+    let pageCount: number | undefined = undefined;
+    if (kind === "pdf") {
+      try {
+        const ab = await file.arrayBuffer();
+        const doc = await pdfjs.getDocument({ data: ab }).promise;
+        pageCount = doc.numPages;
+        await doc.destroy();
+      } catch {
+        pageCount = undefined;
+      }
+    }
     const asset: LessonAsset = {
       id: assetId,
       lessonId,
@@ -179,9 +226,11 @@ export function TeacherLessonBuilderPage() {
       name: file.name,
       mime: file.type,
       blob: file,
+      pageCount,
       createdAt: nowIso()
     };
     await db.lessonAssets.add(asset);
+    setAssetsById((m) => ({ ...m, [assetId]: asset }));
     let block: LessonBlock;
     if (kind === "image") block = { id: newId("block"), type: "image", assetId, mime: file.type, name: file.name };
     else if (kind === "audio") block = { id: newId("block"), type: "audio", assetId, mime: file.type, name: file.name };
@@ -193,19 +242,25 @@ export function TeacherLessonBuilderPage() {
   }
 
   function addQuestion() {
+    if (!selectedQuizId) {
+      setStatusMessage("Add a quiz step first, then edit questions.");
+      return;
+    }
     markDirty();
-    setQuestions((q) => [
-      ...q,
-      {
-        id: newId("q"),
-        prompt: "",
-        options: ["", "", "", ""],
-        correctOptionIndex: 0,
-        explanation: "",
-        conceptTags: [],
-        nextSteps: [{ type: "retry_quiz" }, { type: "repeat_lesson" }]
-      }
-    ]);
+    const nextQ: QuizQuestion = {
+      id: newId("q"),
+      prompt: "",
+      options: ["", "", "", ""],
+      correctOptionIndex: 0,
+      explanation: "",
+      conceptTags: [],
+      nextSteps: [{ type: "retry_quiz" }, { type: "repeat_lesson" }]
+    };
+    setQuizzesById((m) => {
+      const quiz = m[selectedQuizId];
+      if (!quiz) return m;
+      return { ...m, [selectedQuizId]: { ...quiz, questions: [...(quiz.questions ?? []), nextQ] } };
+    });
   }
 
   function validateAll() {
@@ -217,11 +272,15 @@ export function TeacherLessonBuilderPage() {
     if (!curriculumClassId) missing.push("Class");
     if (!curriculumSubjectId) missing.push("Subject");
     if (blocks.length === 0) missing.push("At least 1 content block");
-    for (const [i, q] of questions.entries()) {
-      if (!q.prompt.trim()) missing.push(`Quiz Q${i + 1}: prompt`);
-      const opts = q.options.map((o) => o.trim()).filter(Boolean);
-      if (opts.length < 2) missing.push(`Quiz Q${i + 1}: at least 2 options`);
-      if (!q.explanation.trim()) missing.push(`Quiz Q${i + 1}: explanation`);
+    const quizzes = Object.values(quizzesById);
+    for (const [qi, quiz] of quizzes.entries()) {
+      if ((quiz.questions ?? []).length === 0) missing.push(`Quiz ${qi + 1}: at least 1 question`);
+      for (const [i, q] of (quiz.questions ?? []).entries()) {
+        if (!q.prompt.trim()) missing.push(`Quiz ${qi + 1} Q${i + 1}: prompt`);
+        const opts = q.options.map((o) => o.trim()).filter(Boolean);
+        if (opts.length < 2) missing.push(`Quiz ${qi + 1} Q${i + 1}: at least 2 options`);
+        if (!q.explanation.trim()) missing.push(`Quiz ${qi + 1} Q${i + 1}: explanation`);
+      }
     }
     return missing;
   }
@@ -266,7 +325,7 @@ export function TeacherLessonBuilderPage() {
         createdAt,
         updatedAt: nowIso()
       };
-      const quiz: Quiz = { id: quizId, lessonId, questions };
+      const quizzes = Object.values(quizzesById).map((q) => ({ ...q, lessonId }));
 
       await db.transaction(
         "rw",
@@ -276,7 +335,14 @@ export function TeacherLessonBuilderPage() {
         async () => {
           await db.lessons.put(lesson);
           await db.lessonContents.put({ lessonId, blocks });
-          await db.quizzes.put(quiz);
+          const existing = await db.quizzes.where("lessonId").equals(lessonId).toArray();
+          const toDelete = existing.filter((q) => !quizzesById[q.id]).map((q) => q.id);
+          if (toDelete.length) {
+            await Promise.all(toDelete.map((id) => db.quizzes.delete(id)));
+          }
+          if (quizzes.length) {
+            await db.quizzes.bulkPut(quizzes);
+          }
         }
       );
       if (nextStatus === "pending_approval") {
@@ -357,7 +423,7 @@ export function TeacherLessonBuilderPage() {
     }, 7000);
     return () => window.clearInterval(id);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [curriculumReady, dirty, title, description, blocks, questions, curriculumLevelId, curriculumClassId, curriculumSubjectId, language, accessPolicy, tags]);
+  }, [curriculumReady, dirty, title, description, blocks, quizzesById, curriculumLevelId, curriculumClassId, curriculumSubjectId, language, accessPolicy, tags]);
 
   function moveBlock(id: string, dir: -1 | 1) {
     markDirty();
@@ -409,10 +475,9 @@ export function TeacherLessonBuilderPage() {
     setDragId(null);
   }
 
-  const quiz = useMemo<Quiz>(() => ({ id: quizId, lessonId, questions }), [quizId, lessonId, questions]);
   const missing = useMemo(
     () => validateAll(),
-    [title, description, curriculumLevelId, curriculumClassId, curriculumSubjectId, blocks.length, questions, user?.schoolId]
+    [title, description, curriculumLevelId, curriculumClassId, curriculumSubjectId, blocks.length, quizzesById, user?.schoolId]
   );
 
   const steps: { id: StepId; label: string; description: string }[] = [
@@ -638,6 +703,12 @@ export function TeacherLessonBuilderPage() {
                   <Button variant="secondary" onClick={() => void addTextBlock()}>
                     Add text
                   </Button>
+                  <Button variant="secondary" onClick={() => void addStepBreakBlock()}>
+                    Add step break
+                  </Button>
+                  <Button variant="secondary" onClick={() => void addQuizStepBlock()}>
+                    Add quiz step
+                  </Button>
                   <label className="inline-flex cursor-pointer items-center justify-center rounded-lg bg-surface2 px-4 py-2 text-sm font-medium text-text hover:bg-surface2/80">
                     Upload file
                     <input
@@ -721,9 +792,63 @@ export function TeacherLessonBuilderPage() {
                           value={b.text}
                           onChange={(e) => {
                             markDirty();
-                            setBlocks((all) => all.map((x) => (x.id === b.id ? { ...x, text: e.target.value } : x)));
+                            setBlocks((all) =>
+                              all.map((x) => (x.id === b.id ? { ...x, text: e.target.value } : x))
+                            );
                           }}
                         />
+                      </div>
+                    ) : b.type === "step_break" ? (
+                      <div className="mt-2">
+                        <Input
+                          label="Section title"
+                          value={b.title ?? ""}
+                          onChange={(e) => {
+                            markDirty();
+                            setBlocks((all) =>
+                              all.map((x) => (x.id === b.id ? { ...x, title: e.target.value } : x))
+                            );
+                          }}
+                        />
+                      </div>
+                    ) : b.type === "quiz" ? (
+                      <div className="mt-2 space-y-2">
+                        <div className="grid gap-3 md:grid-cols-2">
+                          <Input
+                            label="Quiz step title"
+                            value={b.title ?? ""}
+                            onChange={(e) => {
+                              markDirty();
+                              setBlocks((all) =>
+                                all.map((x) => (x.id === b.id ? { ...x, title: e.target.value } : x))
+                              );
+                            }}
+                          />
+                          <Input
+                            label="Pass score (%)"
+                            value={String(b.passScorePct ?? 70)}
+                            onChange={(e) => {
+                              const raw = Number(e.target.value);
+                              const pct = Number.isFinite(raw) ? Math.max(0, Math.min(100, Math.round(raw))) : 70;
+                              markDirty();
+                              setBlocks((all) =>
+                                all.map((x) => (x.id === b.id ? { ...x, passScorePct: pct } : x))
+                              );
+                            }}
+                          />
+                        </div>
+                        <div className="flex flex-wrap gap-2">
+                          <Button
+                            variant="secondary"
+                            onClick={() => {
+                              setSelectedQuizId(b.quizId);
+                              setStep("quiz");
+                            }}
+                          >
+                            Edit questions
+                          </Button>
+                          <div className="text-xs text-muted">Quiz ID: {b.quizId}</div>
+                        </div>
                       </div>
                     ) : (
                       <div className="mt-2 text-sm text-muted">{"name" in b ? b.name : ""}</div>
@@ -737,151 +862,288 @@ export function TeacherLessonBuilderPage() {
 
           {step === "quiz" ? (
             <Card
-              title="Quiz (MCQ self-test)"
+              title="Quizzes (MCQ self-test)"
               actions={
-                <Button variant="secondary" onClick={addQuestion}>
-                  Add question
-                </Button>
+                <div className="flex flex-wrap items-center gap-2">
+                  <Button variant="secondary" onClick={() => void addQuizStepBlock()}>
+                    Add quiz step
+                  </Button>
+                  <Button variant="secondary" onClick={addQuestion} disabled={!selectedQuizId}>
+                    Add question
+                  </Button>
+                </div>
               }
             >
-              <div className="space-y-4">
-                {questions.map((q, idx) => (
-                  <div key={q.id} className="rounded-lg border border-border bg-surface p-3">
-                    <div className="flex items-center justify-between gap-2">
-                      <div className="text-sm font-semibold text-text">Question {idx + 1}</div>
-                      <Button
-                        variant="danger"
-                        onClick={() => {
-                          markDirty();
-                          setQuestions((all) => all.filter((x) => x.id !== q.id));
-                        }}
-                      >
-                        Remove
-                      </Button>
-                    </div>
-                    <div className="mt-3 space-y-3">
-                      <Input
-                        label="Prompt"
-                        value={q.prompt}
-                        onChange={(e) => {
-                          markDirty();
-                          setQuestions((all) => all.map((x) => (x.id === q.id ? { ...x, prompt: e.target.value } : x)));
-                        }}
-                      />
-                      <div className="space-y-2">
-                        <div className="flex items-center justify-between">
-                          <div className="text-sm text-muted">Options</div>
-                          <Button
-                            variant="secondary"
-                            onClick={() => {
-                              markDirty();
-                              setQuestions((all) =>
-                                all.map((x) =>
-                                  x.id === q.id ? { ...x, options: [...x.options, ""] } : x
-                                )
-                              );
-                            }}
-                          >
-                            Add option
-                          </Button>
-                        </div>
-                        <div className="grid gap-3 md:grid-cols-2">
-                          {q.options.map((opt, i) => (
-                            <div key={i} className="space-y-1">
-                              <Input
-                                label={`Option ${i + 1}`}
-                                value={opt}
-                                onChange={(e) => {
-                                  markDirty();
-                                  setQuestions((all) =>
-                                    all.map((x) =>
-                                      x.id === q.id
-                                        ? { ...x, options: x.options.map((o, oi) => (oi === i ? e.target.value : o)) }
-                                        : x
-                                    )
-                                  );
-                                }}
-                              />
-                              {q.options.length > 2 ? (
-                                <button
-                                  type="button"
-                                  className="text-xs text-danger hover:underline"
+              {Object.keys(quizzesById).length === 0 ? (
+                <div className="text-sm text-muted">
+                  No quizzes yet. Add a quiz step in Blocks to gate progress, then edit its questions here.
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  <Select
+                    label="Select quiz"
+                    value={selectedQuizId ?? ""}
+                    onChange={(e) => setSelectedQuizId(e.target.value || null)}
+                  >
+                    <option value="">Select quiz…</option>
+                    {Object.keys(quizzesById)
+                      .sort((a, b) => a.localeCompare(b))
+                      .map((id) => {
+                        const label = (() => {
+                          const qb = blocks.find(
+                            (b): b is Extract<LessonBlock, { type: "quiz" }> => b.type === "quiz" && b.quizId === id
+                          );
+                          return qb?.title?.trim() || id;
+                        })();
+                        return (
+                          <option key={id} value={id}>
+                            {label}
+                          </option>
+                        );
+                      })}
+                  </Select>
+
+                  {selectedQuizId && quizzesById[selectedQuizId] ? (
+                    <div className="space-y-4">
+                      {quizzesById[selectedQuizId]!.questions.map((q, idx) => (
+                        <div key={q.id} className="rounded-lg border border-border bg-surface p-3">
+                          <div className="flex items-center justify-between gap-2">
+                            <div className="text-sm font-semibold text-text">Question {idx + 1}</div>
+                            <Button
+                              variant="danger"
+                              onClick={() => {
+                                markDirty();
+                                setQuizzesById((m) => {
+                                  const quiz = m[selectedQuizId];
+                                  if (!quiz) return m;
+                                  return {
+                                    ...m,
+                                    [selectedQuizId]: { ...quiz, questions: quiz.questions.filter((x) => x.id !== q.id) }
+                                  };
+                                });
+                              }}
+                            >
+                              Remove
+                            </Button>
+                          </div>
+
+                          <div className="mt-3 space-y-3">
+                            <Input
+                              label="Prompt"
+                              value={q.prompt}
+                              onChange={(e) => {
+                                markDirty();
+                                setQuizzesById((m) => {
+                                  const quiz = m[selectedQuizId];
+                                  if (!quiz) return m;
+                                  return {
+                                    ...m,
+                                    [selectedQuizId]: {
+                                      ...quiz,
+                                      questions: quiz.questions.map((x) => (x.id === q.id ? { ...x, prompt: e.target.value } : x))
+                                    }
+                                  };
+                                });
+                              }}
+                            />
+
+                            <div className="space-y-2">
+                              <div className="flex items-center justify-between">
+                                <div className="text-sm text-muted">Options</div>
+                                <Button
+                                  variant="secondary"
                                   onClick={() => {
                                     markDirty();
-                                    setQuestions((all) =>
-                                      all.map((x) => {
-                                        if (x.id !== q.id) return x;
-                                        const nextOptions = x.options.filter((_, oi) => oi !== i);
-                                        const nextCorrect = Math.min(x.correctOptionIndex, nextOptions.length - 1);
-                                        return { ...x, options: nextOptions, correctOptionIndex: nextCorrect };
-                                      })
-                                    );
+                                    setQuizzesById((m) => {
+                                      const quiz = m[selectedQuizId];
+                                      if (!quiz) return m;
+                                      return {
+                                        ...m,
+                                        [selectedQuizId]: {
+                                          ...quiz,
+                                          questions: quiz.questions.map((x) =>
+                                            x.id === q.id ? { ...x, options: [...x.options, ""] } : x
+                                          )
+                                        }
+                                      };
+                                    });
                                   }}
                                 >
-                                  Remove option
-                                </button>
-                              ) : null}
+                                  Add option
+                                </Button>
+                              </div>
+
+                              <div className="grid gap-3 md:grid-cols-2">
+                                {q.options.map((opt, i) => (
+                                  <div key={i} className="space-y-1">
+                                    <Input
+                                      label={`Option ${i + 1}`}
+                                      value={opt}
+                                      onChange={(e) => {
+                                        markDirty();
+                                        setQuizzesById((m) => {
+                                          const quiz = m[selectedQuizId];
+                                          if (!quiz) return m;
+                                          return {
+                                            ...m,
+                                            [selectedQuizId]: {
+                                              ...quiz,
+                                              questions: quiz.questions.map((x) =>
+                                                x.id !== q.id
+                                                  ? x
+                                                  : { ...x, options: x.options.map((o, oi) => (oi === i ? e.target.value : o)) }
+                                              )
+                                            }
+                                          };
+                                        });
+                                      }}
+                                    />
+                                    {q.options.length > 2 ? (
+                                      <button
+                                        type="button"
+                                        className="text-xs text-danger hover:underline"
+                                        onClick={() => {
+                                          markDirty();
+                                          setQuizzesById((m) => {
+                                            const quiz = m[selectedQuizId];
+                                            if (!quiz) return m;
+                                            return {
+                                              ...m,
+                                              [selectedQuizId]: {
+                                                ...quiz,
+                                                questions: quiz.questions.map((x) => {
+                                                  if (x.id !== q.id) return x;
+                                                  const nextOptions = x.options.filter((_, oi) => oi !== i);
+                                                  const nextCorrect = Math.min(x.correctOptionIndex, nextOptions.length - 1);
+                                                  return { ...x, options: nextOptions, correctOptionIndex: nextCorrect };
+                                                })
+                                              }
+                                            };
+                                          });
+                                        }}
+                                      >
+                                        Remove option
+                                      </button>
+                                    ) : null}
+                                  </div>
+                                ))}
+                              </div>
                             </div>
-                          ))}
+
+                            <Select
+                              label="Correct option"
+                              value={String(q.correctOptionIndex)}
+                              onChange={(e) => {
+                                markDirty();
+                                setQuizzesById((m) => {
+                                  const quiz = m[selectedQuizId];
+                                  if (!quiz) return m;
+                                  return {
+                                    ...m,
+                                    [selectedQuizId]: {
+                                      ...quiz,
+                                      questions: quiz.questions.map((x) =>
+                                        x.id === q.id ? { ...x, correctOptionIndex: Number(e.target.value) } : x
+                                      )
+                                    }
+                                  };
+                                });
+                              }}
+                            >
+                              {q.options.map((_, i) => (
+                                <option key={i} value={String(i)}>
+                                  Option {i + 1}
+                                </option>
+                              ))}
+                            </Select>
+
+                            <label className="block">
+                              <div className="mb-1 text-sm text-muted">Explanation</div>
+                              <textarea
+                                className="w-full rounded-lg border border-border bg-surface px-3 py-2 text-sm text-text outline-none focus:border-brand"
+                                rows={2}
+                                value={q.explanation}
+                                onChange={(e) => {
+                                  markDirty();
+                                  setQuizzesById((m) => {
+                                    const quiz = m[selectedQuizId];
+                                    if (!quiz) return m;
+                                    return {
+                                      ...m,
+                                      [selectedQuizId]: {
+                                        ...quiz,
+                                        questions: quiz.questions.map((x) => (x.id === q.id ? { ...x, explanation: e.target.value } : x))
+                                      }
+                                    };
+                                  });
+                                }}
+                              />
+                            </label>
+
+                            <Input
+                              label="Concept tags (comma separated)"
+                              value={q.conceptTags.join(", ")}
+                              onChange={(e) => {
+                                markDirty();
+                                setQuizzesById((m) => {
+                                  const quiz = m[selectedQuizId];
+                                  if (!quiz) return m;
+                                  return {
+                                    ...m,
+                                    [selectedQuizId]: {
+                                      ...quiz,
+                                      questions: quiz.questions.map((x) =>
+                                        x.id === q.id
+                                          ? {
+                                              ...x,
+                                              conceptTags: e.target.value.split(",").map((t) => t.trim()).filter(Boolean)
+                                            }
+                                          : x
+                                      )
+                                    }
+                                  };
+                                });
+                              }}
+                            />
+                          </div>
                         </div>
-                      </div>
-                      <Select
-                        label="Correct option"
-                        value={String(q.correctOptionIndex)}
-                        onChange={(e) => {
-                          markDirty();
-                          setQuestions((all) =>
-                            all.map((x) => (x.id === q.id ? { ...x, correctOptionIndex: Number(e.target.value) } : x))
-                          );
-                        }}
-                      >
-                        {q.options.map((_, i) => (
-                          <option key={i} value={String(i)}>
-                            Option {i + 1}
-                          </option>
-                        ))}
-                      </Select>
-                      <label className="block">
-                        <div className="mb-1 text-sm text-muted">Explanation</div>
-                        <textarea
-                          className="w-full rounded-lg border border-border bg-surface px-3 py-2 text-sm text-text outline-none focus:border-brand"
-                          rows={2}
-                          value={q.explanation}
-                          onChange={(e) => {
-                            markDirty();
-                            setQuestions((all) => all.map((x) => (x.id === q.id ? { ...x, explanation: e.target.value } : x)));
-                          }}
-                        />
-                      </label>
-                      <Input
-                        label="Concept tags (comma separated)"
-                        value={q.conceptTags.join(", ")}
-                        onChange={(e) => {
-                          markDirty();
-                          setQuestions((all) =>
-                            all.map((x) =>
-                              x.id === q.id
-                                ? { ...x, conceptTags: e.target.value.split(",").map((t) => t.trim()).filter(Boolean) }
-                                : x
-                            )
-                          );
-                        }}
-                      />
+                      ))}
+
+                      {quizzesById[selectedQuizId]!.questions.length === 0 ? (
+                        <div className="text-sm text-muted">Add questions for self-testing.</div>
+                      ) : null}
                     </div>
-                  </div>
-                ))}
-                {questions.length === 0 ? <div className="text-sm text-muted">Add questions for self-testing.</div> : null}
-              </div>
+                  ) : (
+                    <div className="text-sm text-muted">Select a quiz to edit its questions.</div>
+                  )}
+                </div>
+              )}
             </Card>
           ) : null}
 
           {step === "preview" ? (
             <div className="space-y-4">
               <Card title="Lesson preview">
-                {blocks.length === 0 ? <div className="text-sm text-muted">No blocks yet.</div> : <LessonPlayer blocks={blocks} />}
-              </Card>
-              <Card title="Quiz preview">
-                <QuizPreview quiz={quiz} />
+                {blocks.length === 0 ? (
+                  <div className="text-sm text-muted">No blocks yet.</div>
+                ) : (
+                  <LessonStepperPlayer
+                    steps={buildLessonSteps({ blocks, assetsById, quizzesById })}
+                    mode="preview"
+                    completedStepKeys={new Set()}
+                    bestScoreByQuizId={{}}
+                    quizzesById={quizzesById}
+                    assetsById={assetsById}
+                    onPdfNumPages={async (assetId, n) => {
+                      const existing = assetsById[assetId];
+                      if (!existing) return;
+                      if (existing.pageCount === n) return;
+                      const nextAsset = { ...existing, pageCount: n };
+                      await db.lessonAssets.put(nextAsset);
+                      setAssetsById((m) => ({ ...m, [assetId]: nextAsset }));
+                    }}
+                  />
+                )}
               </Card>
             </div>
           ) : null}

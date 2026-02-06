@@ -8,6 +8,12 @@ import { Button } from "@/shared/ui/Button";
 import type { Lesson, Notification, Progress, QuizAttempt, Quiz } from "@/shared/types";
 import { StatusPill } from "@/shared/ui/StatusPill";
 import { useSync } from "@/shared/sync/SyncContext";
+import { computeLessonStatusStats } from "@/features/teacher/lessonStatusStats";
+import {
+  buildNeedsAttentionLessons,
+  buildUnreadNotifications,
+  computeTeacherEngagementMetrics
+} from "@/features/teacher/teacherDashboardMetrics";
 
 export function TeacherDashboard() {
   const { user } = useAuth();
@@ -26,26 +32,17 @@ export function TeacherDashboard() {
     (async () => {
       if (!user) return;
       const mine = (await db.lessons.toArray()).filter((l) => l.createdByUserId === user.id && !l.deletedAt);
-      const myNotifs = (await db.notifications.toArray())
-        .filter((n) => n.userId === user.id && !n.readAt)
-        .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
-        .slice(0, 5);
+      const myNotifs = buildUnreadNotifications((await db.notifications.toArray()).filter((n) => n.userId === user.id));
 
-      const lessonIds = mine.map((l) => l.id);
-      const progress = (await db.progress.toArray()).filter((p) => lessonIds.includes(p.lessonId)) as Progress[];
-
-      const quizzes = (await db.quizzes.toArray()).filter((q) => lessonIds.includes(q.lessonId)) as Quiz[];
-      const quizIds = quizzes.map((q) => q.id);
-      const attempts = (await db.quizAttempts.toArray()).filter((a) => quizIds.includes(a.quizId)) as QuizAttempt[];
-
-      const views = progress.length;
-      const completions = progress.filter((p) => Boolean(p.completedAt)).length;
-      const avgScore =
-        attempts.length > 0 ? attempts.reduce((sum, a) => sum + a.score, 0) / attempts.length : null;
-      const lastActivityAt = progress.reduce<string | null>(
-        (max, p) => (!max || p.lastSeenAt > max ? p.lastSeenAt : max),
-        null
-      );
+      const progress = (await db.progress.toArray()) as Progress[];
+      const quizzes = (await db.quizzes.toArray()) as Quiz[];
+      const attempts = (await db.quizAttempts.toArray()) as QuizAttempt[];
+      const { views, completions, avgScore, lastActivityAt } = computeTeacherEngagementMetrics({
+        lessons: mine,
+        progressRows: progress,
+        quizzes,
+        attempts
+      });
 
       if (cancelled) return;
       setLessons(mine.sort((a, b) => b.updatedAt.localeCompare(a.updatedAt)));
@@ -60,21 +57,11 @@ export function TeacherDashboard() {
   if (!user) return null;
 
   const stats = useMemo(() => {
-    const by = (s: Lesson["status"]) => lessons.filter((l) => l.status === s).length;
-    return {
-      total: lessons.length,
-      draft: by("draft"),
-      pending: by("pending_approval"),
-      approved: by("approved"),
-      rejected: by("rejected"),
-      unpublished: by("unpublished")
-    };
+    return computeLessonStatusStats({ lessons });
   }, [lessons]);
 
   const needsAttention = useMemo(() => {
-    return lessons
-      .filter((l) => l.status === "rejected" || l.status === "unpublished")
-      .slice(0, 5);
+    return buildNeedsAttentionLessons(lessons);
   }, [lessons]);
 
   return (
@@ -98,12 +85,30 @@ export function TeacherDashboard() {
       />
 
       <div className="grid gap-4 md:grid-cols-6">
-        <Card title="Total">{stats.total}</Card>
-        <Card title="Draft">{stats.draft}</Card>
-        <Card title="Pending">{stats.pending}</Card>
-        <Card title="Approved">{stats.approved}</Card>
-        <Card title="Rejected">{stats.rejected}</Card>
-        <Card title="Unpublished">{stats.unpublished}</Card>
+        <Card title="Total">
+          <div className="text-2xl font-semibold">{stats.total}</div>
+          <div className="mt-1 text-xs text-muted">{stats.recent7d.total} updated last 7d</div>
+        </Card>
+        <Card title="Draft">
+          <div className="text-2xl font-semibold">{stats.draft}</div>
+          <div className="mt-1 text-xs text-muted">{stats.recent7d.draft} updated last 7d</div>
+        </Card>
+        <Card title="Pending">
+          <div className="text-2xl font-semibold">{stats.pending}</div>
+          <div className="mt-1 text-xs text-muted">{stats.recent7d.pending} updated last 7d</div>
+        </Card>
+        <Card title="Approved">
+          <div className="text-2xl font-semibold">{stats.approved}</div>
+          <div className="mt-1 text-xs text-muted">{stats.recent7d.approved} updated last 7d</div>
+        </Card>
+        <Card title="Rejected">
+          <div className="text-2xl font-semibold">{stats.rejected}</div>
+          <div className="mt-1 text-xs text-muted">{stats.recent7d.rejected} updated last 7d</div>
+        </Card>
+        <Card title="Unpublished">
+          <div className="text-2xl font-semibold">{stats.unpublished}</div>
+          <div className="mt-1 text-xs text-muted">{stats.recent7d.unpublished} updated last 7d</div>
+        </Card>
       </div>
 
       <div className="grid gap-4 lg:grid-cols-3">
@@ -165,7 +170,7 @@ export function TeacherDashboard() {
           </div>
         </Card>
 
-        <Card title="Notifications">
+        <Card title={`Notifications (${notifications.length})`}>
           {notifications.length === 0 ? (
             <div className="text-sm text-muted">No unread notifications.</div>
           ) : (

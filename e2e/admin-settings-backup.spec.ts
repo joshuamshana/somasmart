@@ -41,7 +41,7 @@ test("Admin settings: curriculum CRUD + backup/export/reset/import roundtrip", a
   await page.getByLabel("Subject name").fill(subjectName);
   await page.getByLabel("Category (optional)").selectOption({ label: categoryName });
   await page.getByRole("button", { name: "Add subject" }).click();
-  await expect(page.getByText(subjectName)).toBeVisible();
+  await expect(page.locator("[data-testid^='subject-row-']").filter({ hasText: subjectName }).first()).toBeVisible();
 
   // Export backup
   const downloadPromise = page.waitForEvent("download");
@@ -91,5 +91,5 @@ test("Admin settings: curriculum CRUD + backup/export/reset/import roundtrip", a
   await expect(page.locator("div.font-semibold").filter({ hasText: categoryName })).toBeVisible();
   await expect(page.getByRole("button", { name: new RegExp(levelName) }).first()).toBeVisible();
   await expect(page.getByRole("button", { name: new RegExp(className) }).first()).toBeVisible();
-  await expect(page.getByText(subjectName)).toBeVisible();
+  await expect(page.locator("[data-testid^='subject-row-']").filter({ hasText: subjectName }).first()).toBeVisible();
 });

@@ -75,5 +75,5 @@ test("End-to-end: teacher submits lesson; admin approves; student enrolls via co
   // Back to lesson should now be available.
   await page.goto(`/student/lessons?device=${device}`);
   await page.getByRole("link").filter({ hasText: title }).first().click();
-  await expect(page.getByText("Private lesson content.")).toBeVisible({ timeout: 30_000 });
+  await expect(page.getByText("Private lesson content.", { exact: true })).toBeVisible({ timeout: 30_000 });
 });

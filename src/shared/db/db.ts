@@ -11,6 +11,7 @@ import type {
   Lesson,
   LessonAsset,
   LessonBlock,
+  LessonStepProgress,
   LicenseGrant,
   Notification,
   Message,
@@ -42,6 +43,7 @@ export class SomaSmartDB extends Dexie {
   lessonAssets!: Table<LessonAsset, string>;
   quizzes!: Table<Quiz, string>;
   progress!: Table<Progress, string>;
+  lessonStepProgress!: Table<LessonStepProgress, string>;
   quizAttempts!: Table<QuizAttempt, string>;
   payments!: Table<Payment, string>;
   licenseGrants!: Table<LicenseGrant, string>;
@@ -54,8 +56,8 @@ export class SomaSmartDB extends Dexie {
   settings!: Table<AppSetting, string>;
   outboxEvents!: Table<OutboxEvent, string>;
 
-  constructor() {
-    super(getLocalDbName());
+  constructor(dbName?: string) {
+    super(dbName ?? getLocalDbName());
     this.version(1).stores({
       users: "id, role, status, username, schoolId, createdAt",
       lessons: "id, status, subject, level, language, createdByUserId, createdAt, updatedAt",
@@ -352,6 +354,33 @@ export class SomaSmartDB extends Dexie {
           await contentsTable.put({ ...c, blocks: nextBlocks });
         }
       });
+
+    this.version(9).stores({
+      users: "id, role, status, username, schoolId, createdAt, deletedAt",
+      schools: "id, code, createdAt, deletedAt",
+      curriculumCategories: "id, name, createdAt, updatedAt, deletedAt",
+      curriculumLevels: "id, name, sortOrder, createdAt, updatedAt, deletedAt",
+      curriculumClasses: "id, levelId, name, sortOrder, createdAt, updatedAt, deletedAt",
+      curriculumSubjects: "id, classId, name, createdAt, updatedAt, deletedAt, categoryId",
+      lessons:
+        "id, status, subject, className, curriculumSubjectId, curriculumClassId, curriculumLevelId, schoolId, level, language, createdByUserId, createdAt, updatedAt, deletedAt",
+      lessonContents: "lessonId",
+      lessonAssets: "id, lessonId, kind, createdAt",
+      quizzes: "id, lessonId",
+      progress: "id, studentId, lessonId, lastSeenAt",
+      lessonStepProgress: "id, studentId, lessonId, stepKey, completedAt",
+      quizAttempts: "id, studentId, quizId, createdAt",
+      payments: "id, studentId, status, createdAt",
+      licenseGrants: "id, studentId, sourcePaymentId, createdAt, deletedAt",
+      coupons: "code, active, deletedAt, batchId",
+      messages: "id, fromUserId, toUserId, status, createdAt",
+      notifications: "id, userId, type, createdAt, readAt",
+      streaks: "studentId, lastActiveDate, updatedAt",
+      badges: "id, studentId, badgeId, earnedAt",
+      auditLogs: "id, actorUserId, action, entityType, entityId, createdAt",
+      settings: "key, updatedAt",
+      outboxEvents: "id, type, syncStatus, createdAt"
+    });
   }
 }
 

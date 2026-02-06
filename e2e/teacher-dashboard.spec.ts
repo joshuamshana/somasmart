@@ -12,5 +12,10 @@ test("Teacher dashboard: shows core panels and actions", async ({ page }) => {
   await expect(page.getByRole("button", { name: "Create lesson" })).toBeVisible();
   await expect(page.getByText("Needs attention")).toBeVisible();
   await expect(page.getByText("Engagement summary")).toBeVisible();
+  await expect(page.getByText(/Notifications \(\d+\)/)).toBeVisible();
+  await expect(page.getByText("Last sync")).toBeVisible();
+  await expect(page.getByText("Queued")).toBeVisible();
+  await expect(page.getByText("Failed")).toBeVisible();
+  await expect(page.getByRole("button", { name: "Sync now" })).toBeVisible();
   await expect(page.getByRole("button", { name: "Open sync" })).toBeVisible();
 });

@@ -12,12 +12,33 @@ test("P0: student registers -> opens lesson -> completes quiz", async ({ page, c
   const seededLesson = page.getByRole("link", { name: /Introduction to Numbers/i }).first();
   await expect(seededLesson).toBeVisible();
 
-  // simulate offline (PWA-style) for catalog navigation
-  await context.setOffline(true);
   await seededLesson.click();
-  await expect(page.getByText("Self Test Quiz")).toBeVisible();
-  await page.getByText("4").click();
-  await page.getByRole("button", { name: "Submit Quiz" }).click();
+  await expect(page).toHaveURL(/\/student\/lessons\/lesson_seed_numbers/);
+  await expect(page.getByText("Introduction to Numbers")).toBeVisible();
+
+  // simulate offline (PWA-style) once content is loaded
+  await context.setOffline(true);
+
+  // The student player is step-based; advance until we reach the quiz step.
+  const submitQuiz = page.getByRole("button", { name: "Submit Quiz" });
+  for (let i = 0; i < 12; i++) {
+    if (await submitQuiz.isVisible()) break;
+    const next = page.getByRole("button", { name: "Next" });
+    if (await next.isVisible()) {
+      const disabled = await next.evaluate((el) => (el as HTMLButtonElement).disabled);
+      if (!disabled) {
+        await next.evaluate((el) => (el as HTMLButtonElement).click());
+        await page.waitForTimeout(150);
+        continue;
+      }
+    }
+    await page.waitForTimeout(200);
+  }
+
+  await expect(page.getByText(/Pass: \d+% to continue/i)).toBeVisible();
+  await expect(submitQuiz).toBeVisible();
+  await page.getByRole("radio", { name: /^4$/ }).check();
+  await submitQuiz.click();
   await expect(page.getByText("Correct")).toBeVisible();
 });
 

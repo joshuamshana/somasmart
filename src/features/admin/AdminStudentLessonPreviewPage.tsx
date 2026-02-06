@@ -1,15 +1,15 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { Link, useLocation, useParams } from "react-router-dom";
-import type { Lesson, LessonBlock, Quiz } from "@/shared/types";
+import type { Lesson, LessonAsset, LessonBlock, Quiz } from "@/shared/types";
 import { db } from "@/shared/db/db";
 import { PageHeader } from "@/shared/ui/PageHeader";
 import { Card } from "@/shared/ui/Card";
-import { LessonPlayer } from "@/features/content/LessonPlayer";
-import { QuizPreview } from "@/features/teacher/QuizPreview";
 import { Button } from "@/shared/ui/Button";
 import { getSubjectAccessDefaultsByCurriculumSubjectId } from "@/shared/db/accessDefaultsRepo";
 import { getLessonEffectiveAccessPolicy } from "@/shared/access/accessEngine";
 import { Select } from "@/shared/ui/Select";
+import { buildLessonSteps } from "@/features/content/lessonSteps";
+import { LessonStepperPlayer } from "@/features/content/LessonStepperPlayer";
 
 type PreviewMode = "unlocked" | "locked";
 
@@ -21,7 +21,8 @@ export function AdminStudentLessonPreviewPage() {
 
   const [lesson, setLesson] = useState<Lesson | null>(null);
   const [blocks, setBlocks] = useState<LessonBlock[]>([]);
-  const [quiz, setQuiz] = useState<Quiz | null>(null);
+  const [assetsById, setAssetsById] = useState<Record<string, LessonAsset | undefined>>({});
+  const [quizzesById, setQuizzesById] = useState<Record<string, Quiz | undefined>>({});
   const [subjectDefaults, setSubjectDefaults] = useState<Record<string, import("@/shared/types").AccessPolicy>>({});
   const [unlockHint, setUnlockHint] = useState<string | null>(null);
   const [mode, setMode] = useState<PreviewMode>("unlocked");
@@ -44,16 +45,54 @@ export function AdminStudentLessonPreviewPage() {
       if (!lessonId) return;
       const l = await db.lessons.get(lessonId);
       const content = await db.lessonContents.get(lessonId);
-      const q = (await db.quizzes.toArray()).find((qq) => qq.lessonId === lessonId) ?? null;
       if (cancelled) return;
       setLesson(l ?? null);
       setBlocks(content?.blocks ?? []);
-      setQuiz(q);
     })();
     return () => {
       cancelled = true;
     };
   }, [lessonId]);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      if (!lessonId) return;
+      const q = await db.quizzes.where("lessonId").equals(lessonId).toArray();
+      if (cancelled) return;
+      const map: Record<string, Quiz | undefined> = {};
+      for (const quiz of q) map[quiz.id] = quiz;
+      setQuizzesById(map);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [lessonId]);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const ids = Array.from(
+        new Set(
+          blocks
+            .filter((b): b is Extract<LessonBlock, { assetId: string }> => "assetId" in b)
+            .map((b) => b.assetId)
+        )
+      );
+      if (ids.length === 0) {
+        if (!cancelled) setAssetsById({});
+        return;
+      }
+      const assets = await Promise.all(ids.map((id) => db.lessonAssets.get(id)));
+      if (cancelled) return;
+      const map: Record<string, LessonAsset | undefined> = {};
+      for (let i = 0; i < ids.length; i++) map[ids[i]!] = (assets[i] ?? undefined) as LessonAsset | undefined;
+      setAssetsById(map);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [blocks]);
 
   useEffect(() => {
     let cancelled = false;
@@ -88,6 +127,8 @@ export function AdminStudentLessonPreviewPage() {
     if (!lesson) return null;
     return getLessonEffectiveAccessPolicy({ lesson, subjectDefaultsByCurriculumSubjectId: subjectDefaults });
   }, [lesson, subjectDefaults]);
+
+  const steps = useMemo(() => buildLessonSteps({ blocks, assetsById, quizzesById }), [assetsById, blocks, quizzesById]);
 
   if (!lessonId) return <div>Missing lesson id.</div>;
   if (!lesson) return <div>Loading…</div>;
@@ -163,21 +204,26 @@ export function AdminStudentLessonPreviewPage() {
               {lesson.subject} • {lesson.level} • {lesson.language}
             </div>
             <div className="mt-3">
-              <LessonPlayer blocks={blocks} />
+              <LessonStepperPlayer
+                steps={steps}
+                mode="preview"
+                completedStepKeys={new Set()}
+                bestScoreByQuizId={{}}
+                quizzesById={quizzesById}
+                assetsById={assetsById}
+                onPdfNumPages={async (assetId, n) => {
+                  const existing = assetsById[assetId];
+                  if (!existing) return;
+                  if (existing.pageCount === n) return;
+                  const nextAsset = { ...existing, pageCount: n };
+                  await db.lessonAssets.put(nextAsset);
+                  setAssetsById((m) => ({ ...m, [assetId]: nextAsset }));
+                }}
+              />
             </div>
           </Card>
-          {quiz ? (
-            <Card title="Self Test Quiz (preview)">
-              <QuizPreview quiz={quiz} />
-            </Card>
-          ) : (
-            <Card title="Self Test Quiz (preview)">
-              <div className="text-sm text-slate-300">No quiz for this lesson yet.</div>
-            </Card>
-          )}
         </>
       )}
     </div>
   );
 }
-
