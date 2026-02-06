@@ -129,32 +129,32 @@ export function TeacherSupportPage() {
               </option>
             ))}
           </Select>
-          <div className="self-end text-xs text-slate-400">
+          <div className="self-end text-xs text-muted">
             Messages are stored locally and synced later (sync not implemented in MVP).
           </div>
         </div>
       </Card>
 
       <Card title={selectedStudent ? `Conversation with ${selectedStudent.displayName}` : "Conversation"}>
-        <div className="max-h-[50vh] space-y-2 overflow-auto rounded border border-slate-800 p-3">
+        <div className="max-h-[50vh] space-y-2 overflow-auto rounded border border-border p-3">
           {messages.map((m) => (
             <div
               key={m.id}
               className={`rounded-lg px-3 py-2 text-sm ${
-                m.fromUserId === user.id ? "bg-sky-950 text-sky-100" : "bg-slate-900 text-slate-200"
+                m.fromUserId === user.id ? "bg-info-surface text-info-text" : "bg-surface2 text-text"
               }`}
             >
-              <div className="text-xs text-slate-400">{new Date(m.createdAt).toLocaleString()}</div>
+              <div className="text-xs text-muted">{new Date(m.createdAt).toLocaleString()}</div>
               <div className="mt-1 whitespace-pre-wrap">{m.body}</div>
-              <div className="mt-1 text-[11px] text-slate-500">Status: {m.status}</div>
+              <div className="mt-1 text-[11px] text-muted">Status: {m.status}</div>
             </div>
           ))}
-          {messages.length === 0 ? <div className="text-sm text-slate-400">No messages yet.</div> : null}
+          {messages.length === 0 ? <div className="text-sm text-muted">No messages yet.</div> : null}
         </div>
-        {blockedReason ? <div className="mt-3 text-sm text-amber-200">{blockedReason}</div> : null}
+        {blockedReason ? <div className="mt-3 text-sm text-warning-text">{blockedReason}</div> : null}
         <div className="mt-3 flex gap-2">
           <textarea
-            className="flex-1 rounded-lg border border-slate-800 bg-slate-950 px-3 py-2 text-sm outline-none focus:border-sky-500"
+            className="flex-1 rounded-lg border border-border bg-surface px-3 py-2 text-sm outline-none focus:border-brand"
             rows={2}
             value={draft}
             onChange={(e) => setDraft(e.target.value)}

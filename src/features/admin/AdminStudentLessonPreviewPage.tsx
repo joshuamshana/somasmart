@@ -173,27 +173,27 @@ export function AdminStudentLessonPreviewPage() {
 
       {showLocked ? (
         <Card title={lesson.title}>
-          <div className="text-sm text-amber-200">Locked. This is what a student without access sees.</div>
+          <div className="text-sm text-warning-text">Locked. This is what a student without access sees.</div>
           {unlockHint ? (
-            <div className="mt-2 text-xs text-slate-400">
-              Redeem a code that unlocks: <span className="font-semibold text-slate-200">{unlockHint}</span>
+            <div className="mt-2 text-xs text-muted">
+              Redeem a code that unlocks: <span className="font-semibold text-text">{unlockHint}</span>
             </div>
           ) : null}
 
-          <details className="mt-4 rounded-lg border border-slate-800 bg-slate-950 p-3">
-            <summary className="cursor-pointer text-sm text-slate-200">How do I get a coupon?</summary>
-            <div className="mt-3 space-y-2 text-sm text-slate-300">
+          <details className="mt-4 rounded-lg border border-border bg-surface p-3">
+            <summary className="cursor-pointer text-sm text-text">How do I get a coupon?</summary>
+            <div className="mt-3 space-y-2 text-sm text-muted">
               <div>
-                <div className="font-semibold text-slate-200">Sponsored by school</div>
-                <div className="text-slate-400">Ask your School Admin to grant access for this subject.</div>
+                <div className="font-semibold text-text">Sponsored by school</div>
+                <div className="text-muted">Ask your School Admin to grant access for this subject.</div>
               </div>
               <div>
-                <div className="font-semibold text-slate-200">Buy / redeem voucher</div>
-                <div className="text-slate-400">Get a voucher/coupon code, then redeem it on the Payments page.</div>
+                <div className="font-semibold text-text">Buy / redeem voucher</div>
+                <div className="text-muted">Get a voucher/coupon code, then redeem it on the Payments page.</div>
               </div>
               <div>
-                <div className="font-semibold text-slate-200">Ask teacher/admin</div>
-                <div className="text-slate-400">
+                <div className="font-semibold text-text">Ask teacher/admin</div>
+                <div className="text-muted">
                   Request a class coupon from your teacher, or contact support/admin for help.
                 </div>
               </div>
@@ -203,7 +203,7 @@ export function AdminStudentLessonPreviewPage() {
       ) : (
         <>
           <Card title={lesson.title}>
-            <div className="text-xs text-slate-400">
+            <div className="text-xs text-muted">
               {lesson.subject} • {lesson.level} • {lesson.language}
             </div>
             <div className="mt-3">

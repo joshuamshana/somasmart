@@ -44,29 +44,29 @@ export function SchoolDashboard() {
   return (
     <div className="grid gap-4 md:grid-cols-3">
       <Card title="School">
-        <div className="text-sm text-slate-300">{schoolName}</div>
+        <div className="text-sm text-muted">{schoolName}</div>
         {schoolCode ? (
-          <div className="mt-2 text-xs text-slate-400">
+          <div className="mt-2 text-xs text-muted">
             School code: <span className="font-mono">{schoolCode}</span>
           </div>
         ) : null}
         <div className="mt-3 space-y-1 text-sm">
-          <Link className="text-sky-400 hover:underline" to="/school/users">
+          <Link className="text-link hover:underline" to="/school/users">
             Manage users
           </Link>
           <div>
-            <Link className="text-sky-400 hover:underline" to="/school/licenses">
+            <Link className="text-link hover:underline" to="/school/licenses">
               Manage licenses
             </Link>
           </div>
           <div>
-            <Link className="text-sky-400 hover:underline" to="/school/analytics">
+            <Link className="text-link hover:underline" to="/school/analytics">
               View analytics
             </Link>
           </div>
         </div>
-        <div className="mt-4 border-t border-slate-800 pt-3">
-          <label className="flex items-center gap-2 text-sm text-slate-300">
+        <div className="mt-4 border-t border-border pt-3">
+          <label className="flex items-center gap-2 text-sm text-muted">
             <input
               type="checkbox"
               className="h-4 w-4"
@@ -79,7 +79,7 @@ export function SchoolDashboard() {
             />
             Enable messaging for minors
           </label>
-          <div className="mt-1 text-xs text-slate-500">If off, student support chat is blocked for minor accounts.</div>
+          <div className="mt-1 text-xs text-muted">If off, student support chat is blocked for minor accounts.</div>
         </div>
       </Card>
       <Card title="Students">{stats.students}</Card>

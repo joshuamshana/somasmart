@@ -308,7 +308,7 @@ export function AdminCouponsPage() {
             <input type="checkbox" className="h-4 w-4" checked={editActive} onChange={(e) => setEditActive(e.target.checked)} />
             Active
           </label>
-          {editMsg ? <div className="text-sm text-rose-400">{editMsg}</div> : null}
+          {editMsg ? <div className="text-sm text-danger-text">{editMsg}</div> : null}
           <div className="flex justify-end gap-2">
             <Button variant="secondary" onClick={() => setEditOpen(false)}>
               Cancel

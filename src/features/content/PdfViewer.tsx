@@ -61,17 +61,17 @@ export function PdfViewer({
     <div className="space-y-2">
       {controlledPage == null ? (
         <div className="flex items-center justify-between gap-2">
-          <div className="text-xs text-slate-400">PDF {numPages ? `${page} / ${numPages}` : ""}</div>
+          <div className="text-xs text-muted">PDF {numPages ? `${page} / ${numPages}` : ""}</div>
           <div className="flex gap-2">
             <button
-              className="rounded bg-slate-800 px-2 py-1 text-xs hover:bg-slate-700 disabled:opacity-50"
+              className="rounded bg-surface2 px-2 py-1 text-xs hover:bg-surface2/80 disabled:opacity-50"
               disabled={page <= 1}
               onClick={() => setInternalPage((p) => Math.max(1, p - 1))}
             >
               Prev
             </button>
             <button
-              className="rounded bg-slate-800 px-2 py-1 text-xs hover:bg-slate-700 disabled:opacity-50"
+              className="rounded bg-surface2 px-2 py-1 text-xs hover:bg-surface2/80 disabled:opacity-50"
               disabled={numPages ? page >= numPages : true}
               onClick={() => setInternalPage((p) => (numPages ? Math.min(numPages, p + 1) : p))}
             >
@@ -80,10 +80,10 @@ export function PdfViewer({
           </div>
         </div>
       ) : (
-        <div className="text-xs text-slate-400">PDF {numPages ? `${page} / ${numPages}` : ""}</div>
+        <div className="text-xs text-muted">PDF {numPages ? `${page} / ${numPages}` : ""}</div>
       )}
-      {error ? <div className="text-sm text-rose-400">{error}</div> : null}
-      <canvas ref={canvasRef} className="max-w-full rounded border border-slate-800" />
+      {error ? <div className="text-sm text-danger-text">{error}</div> : null}
+      <canvas ref={canvasRef} className="max-w-full rounded border border-border" />
     </div>
   );
 }

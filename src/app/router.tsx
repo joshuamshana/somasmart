@@ -40,6 +40,7 @@ import { SyncPage } from "@/features/sync/SyncPage";
 import { NotificationsPage } from "@/features/notifications/NotificationsPage";
 import { PublicLessonGateRedirect } from "@/features/content/PublicLessonGateRedirect";
 import { RouteErrorPage } from "@/app/RouteErrorPage";
+import { AppearanceSettingsPage } from "@/features/settings/AppearanceSettingsPage";
 
 const router = createBrowserRouter([
   {
@@ -112,6 +113,14 @@ const router = createBrowserRouter([
         element: (
           <RequireRole roles={["student", "teacher", "admin", "school_admin"]}>
             <NotificationsPage />
+          </RequireRole>
+        )
+      },
+      {
+        path: "settings/appearance",
+        element: (
+          <RequireRole roles={["student", "teacher", "admin", "school_admin"]}>
+            <AppearanceSettingsPage />
           </RequireRole>
         )
       },

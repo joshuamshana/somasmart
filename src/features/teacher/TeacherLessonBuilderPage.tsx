@@ -669,7 +669,7 @@ export function TeacherLessonBuilderPage() {
                             "Gate-only"}
                         </div>
                         {block.quizGate ? (
-                          <div className="mt-1 text-xs text-amber-300">Quiz gate {block.quizGate.passScorePct}%</div>
+                          <div className="mt-1 text-xs text-warning-text">Quiz gate {block.quizGate.passScorePct}%</div>
                         ) : null}
                       </button>
                     ))}

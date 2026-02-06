@@ -185,30 +185,30 @@ export function LearnLandingPage() {
   return (
     <div className="space-y-4">
       <Card title={isStudent ? "Learn" : "Learn (Public)"}>
-        <div className="text-sm text-slate-300">
+        <div className="text-sm text-muted">
           {isStudent
             ? "Continue learning and discover new lessons."
             : "Browse lessons. Sign in to open any lesson."}
         </div>
         {!loading && !user ? (
           <div className="mt-3 flex flex-wrap gap-3 text-sm">
-            <Link className="text-sky-400 hover:underline" to={`/login${search}`}>
+            <Link className="text-link hover:underline" to={`/login${search}`}>
               Login
             </Link>
-            <Link className="text-sky-400 hover:underline" to={`/register${search}`}>
+            <Link className="text-link hover:underline" to={`/register${search}`}>
               Register (Student)
             </Link>
           </div>
         ) : null}
         {isStudent ? (
           <div className="mt-3 flex flex-wrap gap-3 text-sm">
-            <Link className="text-sky-400 hover:underline" to={`/student/lessons${search}`}>
+            <Link className="text-link hover:underline" to={`/student/lessons${search}`}>
               Browse lessons
             </Link>
-            <Link className="text-sky-400 hover:underline" to={`/student/progress${search}`}>
+            <Link className="text-link hover:underline" to={`/student/progress${search}`}>
               Progress
             </Link>
-            <Link className="text-sky-400 hover:underline" to={`/student/payments${search}`}>
+            <Link className="text-link hover:underline" to={`/student/payments${search}`}>
               Enroll / Payments
             </Link>
           </div>
@@ -219,17 +219,17 @@ export function LearnLandingPage() {
         <div className="grid gap-4 md:grid-cols-4">
           <Card title="Continue learning">
             {continueLessons.length === 0 ? (
-              <div className="text-sm text-slate-400">Start a lesson to see it here.</div>
+              <div className="text-sm text-muted">Start a lesson to see it here.</div>
             ) : (
               <div className="space-y-3">
                 {continueLessons.map((l) => (
                   <Link
                     key={l.id}
                     to={`/student/lessons/${l.id}${search}`}
-                    className="block rounded-lg border border-slate-800 bg-slate-950 p-3 hover:border-slate-700"
+                    className="block rounded-lg border border-border bg-surface p-3 hover:border-border/80"
                   >
-                    <div className="text-sm font-semibold text-slate-200">{l.title}</div>
-                    <div className="mt-1 text-xs text-slate-400">
+                    <div className="text-sm font-semibold text-text">{l.title}</div>
+                    <div className="mt-1 text-xs text-muted">
                       Last seen: {new Date(progressByLessonId[l.id]!.lastSeenAt).toLocaleString()}
                     </div>
                   </Link>
@@ -241,39 +241,39 @@ export function LearnLandingPage() {
             <div className="text-2xl font-semibold">
               {progress.filter((p) => Boolean(p.completedAt)).length}
             </div>
-            <div className="text-xs text-slate-400">Keep going.</div>
+            <div className="text-xs text-muted">Keep going.</div>
           </Card>
           <Card title="Quiz attempts">
             <div className="text-2xl font-semibold">{attempts.length}</div>
-            <div className="text-xs text-slate-400">Self tests taken.</div>
+            <div className="text-xs text-muted">Self tests taken.</div>
           </Card>
           <Card title="Streak">
             <div className="text-2xl font-semibold">{streakDays}</div>
-            <div className="text-xs text-slate-400">Days active in a row</div>
-            <div className="mt-2 text-xs text-slate-500">Complete lessons or quizzes to keep it going.</div>
+            <div className="text-xs text-muted">Days active in a row</div>
+            <div className="mt-2 text-xs text-muted">Complete lessons or quizzes to keep it going.</div>
           </Card>
         </div>
       ) : null}
 
       {isStudent ? (
         <Card title="Badges">
-          <div className="text-sm text-slate-300">{badges.length} earned</div>
+          <div className="text-sm text-muted">{badges.length} earned</div>
           <div className="mt-2 flex flex-wrap gap-2">
             {badges.slice(0, 10).map((b) => (
-              <span key={b.id} className="rounded bg-slate-800 px-2 py-1 text-xs text-slate-200">
+              <span key={b.id} className="rounded bg-surface2 px-2 py-1 text-xs text-text">
                 {b.badgeId}
               </span>
             ))}
           </div>
-          {badges.length === 0 ? <div className="mt-2 text-xs text-slate-500">No badges yet.</div> : null}
+          {badges.length === 0 ? <div className="mt-2 text-xs text-muted">No badges yet.</div> : null}
         </Card>
       ) : null}
 
       <div className="grid gap-4 lg:grid-cols-[320px,1fr]">
         <div className="lg:sticky lg:top-20 lg:self-start">
           <div className="lg:hidden">
-            <details className="rounded-xl border border-slate-800 bg-slate-950 p-4">
-              <summary className="cursor-pointer text-sm font-semibold text-slate-200">
+            <details className="rounded-xl border border-border bg-surface p-4">
+              <summary className="cursor-pointer text-sm font-semibold text-text">
                 Filters
               </summary>
               <div className="mt-4 grid gap-3">
@@ -411,22 +411,22 @@ export function LearnLandingPage() {
               <Link
                 key={l.id}
                 to={to}
-                className="block rounded-xl border border-slate-800 bg-slate-950 p-4 hover:border-slate-700"
+                className="block rounded-xl border border-border bg-surface p-4 hover:border-border/80"
               >
                 <div className="flex items-start justify-between gap-4">
                   <div className="min-w-0">
                     <div className="truncate text-sm font-semibold">{l.title}</div>
-                    <div className="mt-1 text-xs text-slate-400">
+                    <div className="mt-1 text-xs text-muted">
                       {l.subject} • {l.level} • {l.language}
                     </div>
-                    <div className="mt-2 text-sm text-slate-300">{l.description}</div>
+                    <div className="mt-2 text-sm text-muted">{l.description}</div>
                     {!isStudent ? (
-                      <div className="mt-3 text-xs text-slate-400">Sign in to view</div>
+                      <div className="mt-3 text-xs text-muted">Sign in to view</div>
                     ) : null}
                   </div>
                   <div
                     className={`shrink-0 rounded px-2 py-1 text-xs ${
-                      policy === "free" ? "bg-emerald-950 text-emerald-200" : "bg-amber-950 text-amber-200"
+                      policy === "free" ? "bg-success-surface text-success-text" : "bg-warning-surface text-warning-text"
                     }`}
                   >
                     {policy === "free" ? "Free" : "Requires coupon"}
@@ -435,7 +435,7 @@ export function LearnLandingPage() {
               </Link>
             );
           })}
-          {filtered.length === 0 ? <div className="text-sm text-slate-400">No lessons found.</div> : null}
+          {filtered.length === 0 ? <div className="text-sm text-muted">No lessons found.</div> : null}
         </div>
       </div>
     </div>

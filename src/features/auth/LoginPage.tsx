@@ -59,11 +59,11 @@ export function LoginPage() {
             error={errors.password?.message}
             {...register("password")}
           />
-          {formError ? <div className="text-sm text-rose-400">{formError}</div> : null}
+          {formError ? <div className="text-sm text-danger-text">{formError}</div> : null}
           <Button type="submit" disabled={isSubmitting} className="w-full">
             {isSubmitting ? "Logging in…" : "Login"}
           </Button>
-          <div className="text-xs text-slate-400">
+          <div className="text-xs text-muted">
             Seeded accounts: <span className="font-mono">admin/admin123</span>,{" "}
             <span className="font-mono">teacher1/teacher123</span>
           </div>

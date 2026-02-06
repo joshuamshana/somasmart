@@ -122,7 +122,7 @@ export function SchoolUsersPage() {
             <Button type="submit" disabled={isSubmitting}>
               {isSubmitting ? "Creating…" : "Create"}
             </Button>
-            {msg ? <div className="text-sm text-slate-200">{msg}</div> : null}
+            {msg ? <div className="text-sm text-text">{msg}</div> : null}
           </div>
         </form>
       </Card>
@@ -133,7 +133,7 @@ export function SchoolUsersPage() {
         </div>
         <div className="overflow-auto">
           <table className="min-w-full text-left text-sm">
-            <thead className="text-xs text-slate-400">
+            <thead className="text-xs text-muted">
               <tr>
                 <th className="py-2">Name</th>
                 <th className="py-2">Username</th>
@@ -144,7 +144,7 @@ export function SchoolUsersPage() {
             </thead>
             <tbody>
               {filtered.map((u) => (
-                <tr key={u.id} className="border-t border-slate-800">
+                <tr key={u.id} className="border-t border-border">
                   <td className="py-2">{u.displayName}</td>
                   <td className="py-2 font-mono text-xs">{u.username}</td>
                   <td className="py-2">{u.role}</td>
@@ -152,7 +152,7 @@ export function SchoolUsersPage() {
                   <td className="py-2">
                     <div className="flex flex-wrap gap-2">
                       {u.role === "teacher" ? (
-                        <div className="text-xs text-slate-400">Managed by System Admin</div>
+                        <div className="text-xs text-muted">Managed by System Admin</div>
                       ) : u.status !== "suspended" ? (
                           <Button variant="secondary" onClick={() => void updateStatus(u.id, "suspended")}>
                             Suspend
@@ -168,7 +168,7 @@ export function SchoolUsersPage() {
               ))}
             </tbody>
           </table>
-          {filtered.length === 0 ? <div className="text-sm text-slate-400">No users found.</div> : null}
+          {filtered.length === 0 ? <div className="text-sm text-muted">No users found.</div> : null}
         </div>
       </Card>
     </div>

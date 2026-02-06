@@ -172,7 +172,7 @@ export function LessonStepperPlayer({
           </Button>
           <div className="flex items-center gap-2">
             {mode === "student" && activeStep && !canGoNext ? (
-              <div className="hidden text-xs text-amber-200 md:block">{canAdvance(activeStep, progressState).reason}</div>
+              <div className="hidden text-xs text-warning-text md:block">{canAdvance(activeStep, progressState).reason}</div>
             ) : null}
             <Button onClick={() => void next()} disabled={mode === "student" ? !canGoNext : false}>
               {isLast ? "Finish" : "Next"}
@@ -213,7 +213,7 @@ function QuizGate({
         <div className="text-sm font-semibold text-text">Pass: {gate.passScorePct}% to continue</div>
         <div className="mt-1 text-xs text-muted">
           Best score:{" "}
-          <span className={passed ? "font-semibold text-emerald-300" : "font-semibold text-amber-200"}>
+          <span className={passed ? "font-semibold text-success-text" : "font-semibold text-warning-text"}>
             {typeof best === "number" ? `${best}%` : "—"}
           </span>
         </div>

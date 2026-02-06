@@ -22,7 +22,7 @@ export function RouteErrorPage() {
   return (
     <div className="mx-auto max-w-2xl p-4">
       <Card title={details.title}>
-        <div className="text-sm text-slate-300">{details.message}</div>
+        <div className="text-sm text-muted">{details.message}</div>
 
         <div className="mt-4 flex flex-wrap gap-2">
           <Button onClick={() => window.location.reload()}>Reload</Button>
@@ -34,9 +34,9 @@ export function RouteErrorPage() {
           </Button>
         </div>
 
-        <details className="mt-4 rounded-lg border border-slate-800 bg-slate-950 p-3">
-          <summary className="cursor-pointer text-sm text-slate-200">Error details</summary>
-          <pre className="mt-3 whitespace-pre-wrap text-xs text-slate-400">
+        <details className="mt-4 rounded-lg border border-border bg-surface p-3">
+          <summary className="cursor-pointer text-sm text-text">Error details</summary>
+          <pre className="mt-3 whitespace-pre-wrap text-xs text-muted">
             {(() => {
               if (isRouteErrorResponse(error)) {
                 return JSON.stringify(

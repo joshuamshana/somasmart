@@ -67,7 +67,7 @@ export function RegisterPage() {
             <input type="checkbox" className="h-4 w-4" {...register("isMinor")} />
             Student is a minor (parental controls)
           </label>
-          {formError ? <div className="text-sm text-rose-400">{formError}</div> : null}
+          {formError ? <div className="text-sm text-danger-text">{formError}</div> : null}
           <Button type="submit" disabled={isSubmitting} className="w-full">
             {isSubmitting ? "Creating…" : "Register"}
           </Button>

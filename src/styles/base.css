@@ -3,7 +3,7 @@
 }
 
 ::selection {
-  background: rgba(14, 165, 233, 0.35);
+  background: rgb(var(--color-brand) / 0.35);
 }
 
 html,
@@ -16,8 +16,15 @@ body {
   font-feature-settings: "ss01" 1, "ss02" 1;
 }
 
+html[data-theme="light"] {
+  color-scheme: light;
+}
+
+html[data-theme="dark"] {
+  color-scheme: dark;
+}
+
 :focus-visible {
   outline: 2px solid rgb(var(--color-brand) / 0.9);
   outline-offset: 2px;
 }
-

@@ -56,24 +56,24 @@ export function NotificationsPage() {
       >
         <div className="space-y-3">
           {items.map((n) => (
-            <div key={n.id} className="rounded-lg border border-slate-800 bg-slate-950 p-3">
+            <div key={n.id} className="rounded-lg border border-border bg-surface p-3">
               <div className="flex items-start justify-between gap-3">
                 <div>
                   <div className="text-sm font-semibold">{n.title}</div>
-                  {n.body ? <div className="mt-1 text-sm text-slate-300">{n.body}</div> : null}
-                  <div className="mt-2 text-xs text-slate-500">{new Date(n.createdAt).toLocaleString()}</div>
+                  {n.body ? <div className="mt-1 text-sm text-muted">{n.body}</div> : null}
+                  <div className="mt-2 text-xs text-muted">{new Date(n.createdAt).toLocaleString()}</div>
                 </div>
                 {!n.readAt ? (
                   <Button variant="secondary" onClick={() => void markRead(n.id)}>
                     Mark read
                   </Button>
                 ) : (
-                  <div className="rounded bg-slate-800 px-2 py-1 text-xs text-slate-300">read</div>
+                  <div className="rounded bg-surface2 px-2 py-1 text-xs text-muted">read</div>
                 )}
               </div>
             </div>
           ))}
-          {items.length === 0 ? <div className="text-sm text-slate-400">No notifications yet.</div> : null}
+          {items.length === 0 ? <div className="text-sm text-muted">No notifications yet.</div> : null}
         </div>
       </Card>
     </div>

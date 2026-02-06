@@ -222,7 +222,7 @@ export function SchoolLicensesPage() {
             <Button type="submit" disabled={isSubmitting}>
               {isSubmitting ? "Saving…" : "Grant access"}
             </Button>
-            {msg ? <div className="text-sm text-slate-200">{msg}</div> : null}
+            {msg ? <div className="text-sm text-text">{msg}</div> : null}
           </div>
         </form>
       </Card>
@@ -230,7 +230,7 @@ export function SchoolLicensesPage() {
       <Card title="Active grants">
         <div className="overflow-auto">
           <table className="min-w-full text-left text-sm">
-            <thead className="text-xs text-slate-400">
+            <thead className="text-xs text-muted">
               <tr>
                 <th className="py-2">Student</th>
                 <th className="py-2">Scope</th>
@@ -239,7 +239,7 @@ export function SchoolLicensesPage() {
             </thead>
             <tbody>
               {grantsForStudent.map((g) => (
-                <tr key={g.id} className="border-t border-slate-800">
+                <tr key={g.id} className="border-t border-border">
                   <td className="py-2">{students.find((s) => s.id === g.studentId)?.displayName ?? g.studentId}</td>
                   <td className="py-2">{formatScope(g.scope)}</td>
                   <td className="py-2">{g.validUntil ? new Date(g.validUntil).toLocaleDateString() : "—"}</td>
@@ -247,7 +247,7 @@ export function SchoolLicensesPage() {
               ))}
             </tbody>
           </table>
-          {grantsForStudent.length === 0 ? <div className="text-sm text-slate-400">No grants.</div> : null}
+          {grantsForStudent.length === 0 ? <div className="text-sm text-muted">No grants.</div> : null}
         </div>
       </Card>
     </div>

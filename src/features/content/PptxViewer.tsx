@@ -58,16 +58,16 @@ export function PptxViewer({ blob, name }: { blob: Blob; name: string }) {
   return (
     <div className="space-y-2">
       {error ? (
-        <div className="rounded border border-amber-700 bg-amber-950 p-3 text-sm text-amber-200">
+        <div className="rounded border border-warning-border bg-warning-surface p-3 text-sm text-warning-text">
           <div className="font-semibold">PPTX preview unavailable</div>
           <div className="mt-1">{error}</div>
-          <div className="mt-2 text-xs text-amber-300">
+          <div className="mt-2 text-xs text-warning-text">
             Suggested fallback: export this PPTX to PDF and upload the PDF version.
           </div>
         </div>
       ) : null}
-      <div ref={ref} className="overflow-auto rounded border border-slate-800 bg-slate-950 p-2" />
-      <details className="text-xs text-slate-400">
+      <div ref={ref} className="overflow-auto rounded border border-border bg-surface p-2" />
+      <details className="text-xs text-muted">
         <summary>File info</summary>
         <div className="mt-1">{name}</div>
       </details>

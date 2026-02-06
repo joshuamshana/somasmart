@@ -47,7 +47,7 @@ export function ConfirmDialog({
         onClose={() => (busy ? null : onCancel())}
       >
         <Transition.Child as={Fragment} enter="duration-0" enterFrom="opacity-0" enterTo="opacity-100" leave="duration-0" leaveFrom="opacity-100" leaveTo="opacity-0">
-          <div className="fixed inset-0 bg-black/60" />
+          <div className="fixed inset-0 bg-overlay/60" />
         </Transition.Child>
 
         <div className="fixed inset-0 overflow-y-auto">

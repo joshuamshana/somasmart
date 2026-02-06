@@ -147,43 +147,43 @@ export function StudentDashboard() {
     <div className="space-y-4">
       <div className="grid gap-4 md:grid-cols-4">
       <Card title="Welcome">
-        <div className="text-sm text-slate-300">Hello, {user.displayName}.</div>
+        <div className="text-sm text-muted">Hello, {user.displayName}.</div>
         <div className="mt-3 flex gap-2">
-          <Link className="text-sm text-sky-400 hover:underline" to={`/student/lessons${search}`}>
+          <Link className="text-sm text-link hover:underline" to={`/student/lessons${search}`}>
             Browse lessons
           </Link>
         </div>
       </Card>
       <Card title="Lessons">
         <div className="text-2xl font-semibold">{stats.lessons}</div>
-        <div className="text-xs text-slate-400">Approved lessons available offline</div>
+        <div className="text-xs text-muted">Approved lessons available offline</div>
       </Card>
       <Card title="Your progress">
         <div className="text-2xl font-semibold">{stats.completed}</div>
-        <div className="text-xs text-slate-400">Lessons completed</div>
-        <div className="mt-2 text-xs text-slate-500">{stats.attempts} quiz attempts</div>
+        <div className="text-xs text-muted">Lessons completed</div>
+        <div className="mt-2 text-xs text-muted">{stats.attempts} quiz attempts</div>
       </Card>
       <Card title="Streak">
         <div className="text-2xl font-semibold">{streakDays}</div>
-        <div className="text-xs text-slate-400">Days active in a row</div>
-        <div className="mt-2 text-xs text-slate-500">Complete lessons or quizzes to keep it going.</div>
+        <div className="text-xs text-muted">Days active in a row</div>
+        <div className="mt-2 text-xs text-muted">Complete lessons or quizzes to keep it going.</div>
       </Card>
       </div>
 
       <div className="grid gap-4 lg:grid-cols-3">
         <Card title="Continue learning">
           {continueLessons.length === 0 ? (
-            <div className="text-sm text-slate-400">Start a lesson to see it here.</div>
+            <div className="text-sm text-muted">Start a lesson to see it here.</div>
           ) : (
             <div className="space-y-3">
               {continueLessons.map((l) => (
                 <Link
                   key={l.id}
                   to={`/student/lessons/${l.id}${search}`}
-                  className="block rounded-lg border border-slate-800 bg-slate-950 p-3 hover:border-slate-700"
+                  className="block rounded-lg border border-border bg-surface p-3 hover:border-border/80"
                 >
-                  <div className="text-sm font-semibold text-slate-200">{l.title}</div>
-                  <div className="mt-1 text-xs text-slate-400">
+                  <div className="text-sm font-semibold text-text">{l.title}</div>
+                  <div className="mt-1 text-xs text-muted">
                     Last seen: {new Date(progressByLessonId[l.id]!.lastSeenAt).toLocaleString()}
                   </div>
                 </Link>
@@ -219,22 +219,22 @@ export function StudentDashboard() {
                 </option>
               ))}
             </Select>
-            <div className="text-xs text-slate-500">
+            <div className="text-xs text-muted">
               Enroll/unlock happens via codes (Payments) or school sponsorship.
             </div>
           </div>
         </Card>
 
         <Card title="Badges">
-          <div className="text-sm text-slate-300">{badges.length} earned</div>
+          <div className="text-sm text-muted">{badges.length} earned</div>
           <div className="mt-2 flex flex-wrap gap-2">
             {badges.slice(0, 6).map((b) => (
-              <span key={b.id} className="rounded bg-slate-800 px-2 py-1 text-xs text-slate-200">
+              <span key={b.id} className="rounded bg-surface2 px-2 py-1 text-xs text-text">
                 {b.badgeId}
               </span>
             ))}
           </div>
-          {badges.length === 0 ? <div className="mt-2 text-xs text-slate-500">No badges yet.</div> : null}
+          {badges.length === 0 ? <div className="mt-2 text-xs text-muted">No badges yet.</div> : null}
         </Card>
       </div>
 
@@ -248,37 +248,37 @@ export function StudentDashboard() {
               <Link
                 key={l.id}
                 to={`/student/lessons/${l.id}${search}`}
-                className="rounded-xl border border-slate-800 bg-slate-950 p-4 hover:border-slate-700"
+                className="rounded-xl border border-border bg-surface p-4 hover:border-border/80"
               >
                 <div className="flex items-start justify-between gap-4">
                   <div className="min-w-0">
                     <div className="truncate text-sm font-semibold">{l.title}</div>
-                    <div className="mt-1 text-xs text-slate-400">
+                    <div className="mt-1 text-xs text-muted">
                       {l.subject} • {l.level} • {l.language}
                     </div>
                     {p ? (
-                      <div className="mt-2 text-xs text-slate-500">
+                      <div className="mt-2 text-xs text-muted">
                         {p.completedAt ? "Completed" : "In progress"} • Last seen {new Date(p.lastSeenAt).toLocaleDateString()}
                       </div>
                     ) : (
-                      <div className="mt-2 text-xs text-slate-500">Not started</div>
+                      <div className="mt-2 text-xs text-muted">Not started</div>
                     )}
                   </div>
                   <div className="flex flex-col items-end gap-2">
                     <div
                       className={`rounded px-2 py-1 text-xs ${
-                        access.allowed ? "bg-emerald-950 text-emerald-200" : "bg-amber-950 text-amber-200"
+                        access.allowed ? "bg-success-surface text-success-text" : "bg-warning-surface text-warning-text"
                       }`}
                     >
                       {access.allowed ? "Available" : "Locked"}
                     </div>
-                    <div className="text-[11px] text-slate-500">{policy === "free" ? "Free" : "Coupon"}</div>
+                    <div className="text-[11px] text-muted">{policy === "free" ? "Free" : "Coupon"}</div>
                   </div>
                 </div>
               </Link>
             );
           })}
-          {recommended.length === 0 ? <div className="text-sm text-slate-400">No lessons found.</div> : null}
+          {recommended.length === 0 ? <div className="text-sm text-muted">No lessons found.</div> : null}
         </div>
       </Card>
     </div>

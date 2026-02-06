@@ -123,6 +123,12 @@ Improve teacher day-to-day workflow and visibility (no backend required; offline
 - REQ-1908 Admin support desk inbox + triage
 - REQ-1909 Sync: student registrations + admin CRUD propagate across devices
 
+## Milestone 22 — Theming + token centralization
+- REQ-2201 Design tokens support light/dark semantic palettes
+- REQ-2202 User theme preference supports `light|dark|auto` and persists
+- REQ-2203 Global Appearance settings page at `/settings/appearance` for authenticated roles
+- REQ-2204 App UI colors/visual semantics are centralized in design tokens (no hardcoded palette classes in UI)
+
 ## Remaining work / next move
 
 As of **2026-02-06**, `npm test` and `npm run test:e2e` are green, and all requirements in `docs/coverage-matrix.md` are marked `done`.

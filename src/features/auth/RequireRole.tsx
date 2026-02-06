@@ -25,7 +25,7 @@ export function RequireRole({
   if (requireApproved && user.role === "teacher" && user.status !== "active") {
     return (
       <Card title="Teacher approval pending">
-        <p className="text-sm text-slate-300">
+        <p className="text-sm text-muted">
           Your account is pending admin approval. You can’t upload lessons until you’re approved.
         </p>
         <div className="mt-4">

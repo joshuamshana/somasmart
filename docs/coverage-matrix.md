@@ -92,3 +92,7 @@ Trace requirements to implementation and tests. Status meanings:
 | REQ-2104 | `src/features/teacher/TeacherLessonsPage.tsx` | `e2e/teacher-upload-ux.spec.ts` | done |
 | REQ-2105 | `src/features/teacher/TeacherLessonBuilderPage.tsx` | `e2e/teacher-lesson-creator.spec.ts`, `e2e/teacher-upload-ux.spec.ts` | done |
 | REQ-2106 | `src/features/teacher/TeacherLessonBuilderPage.tsx` | `e2e/teacher-upload-ux.spec.ts` | done |
+| REQ-2201 | `src/styles/tokens.css`, `tailwind.config.ts` | `src/shared/theme/ThemeProvider.test.tsx`, `e2e/theme-appearance.spec.ts` | done |
+| REQ-2202 | `src/shared/theme/ThemeProvider.tsx`, `src/app/providers.tsx` | `src/shared/theme/ThemeProvider.test.tsx`, `src/features/settings/AppearanceSettingsPage.test.tsx`, `e2e/theme-appearance.spec.ts` | done |
+| REQ-2203 | `src/features/settings/AppearanceSettingsPage.tsx`, `src/app/router.tsx`, `src/app/shell.tsx`, `src/features/teacher/TeacherLayout.tsx`, `src/features/admin/AdminLayout.tsx` | `src/features/settings/AppearanceSettingsPage.test.tsx`, `e2e/theme-appearance.spec.ts` | done |
+| REQ-2204 | `src/**/*.tsx` (semantic token class migration), `src/styles/tokens.css` | `npm run typecheck`, `npm test`, `npm run test:e2e -- e2e/theme-appearance.spec.ts e2e/admin-layout.spec.ts` | done |

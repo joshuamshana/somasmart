@@ -111,7 +111,7 @@ export function StudentProgressPage() {
       >
         <div className="overflow-auto">
           <table className="min-w-full text-left text-sm">
-            <thead className="text-xs text-slate-400">
+            <thead className="text-xs text-muted">
               <tr>
                 <th className="py-2">Lesson</th>
                 <th className="py-2">Completed</th>
@@ -121,7 +121,7 @@ export function StudentProgressPage() {
             </thead>
             <tbody>
               {progress.map((p) => (
-                <tr key={p.id} className="border-t border-slate-800">
+                <tr key={p.id} className="border-t border-border">
                   <td className="py-2">{lessonsById[p.lessonId]?.title ?? p.lessonId}</td>
                   <td className="py-2">{p.completedAt ? "Yes" : "No"}</td>
                   <td className="py-2">{Math.round(p.timeSpentSec / 60)} min</td>
@@ -130,14 +130,14 @@ export function StudentProgressPage() {
               ))}
             </tbody>
           </table>
-          {progress.length === 0 ? <div className="text-sm text-slate-400">No activity yet.</div> : null}
+          {progress.length === 0 ? <div className="text-sm text-muted">No activity yet.</div> : null}
         </div>
       </Card>
 
       <Card title="Quiz Attempts">
         <div className="overflow-auto">
           <table className="min-w-full text-left text-sm">
-            <thead className="text-xs text-slate-400">
+            <thead className="text-xs text-muted">
               <tr>
                 <th className="py-2">Date</th>
                 <th className="py-2">Score</th>
@@ -148,14 +148,14 @@ export function StudentProgressPage() {
                 .slice()
                 .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
                 .map((a) => (
-                  <tr key={a.id} className="border-t border-slate-800">
+                  <tr key={a.id} className="border-t border-border">
                     <td className="py-2">{new Date(a.createdAt).toLocaleString()}</td>
                     <td className="py-2">{a.score}%</td>
                   </tr>
                 ))}
             </tbody>
           </table>
-          {attempts.length === 0 ? <div className="text-sm text-slate-400">No quiz attempts yet.</div> : null}
+          {attempts.length === 0 ? <div className="text-sm text-muted">No quiz attempts yet.</div> : null}
         </div>
       </Card>
     </div>

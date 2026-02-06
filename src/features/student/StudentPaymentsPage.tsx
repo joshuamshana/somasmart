@@ -84,10 +84,10 @@ export function StudentPaymentsPage() {
   return (
     <div className="space-y-4">
       <Card title="Your access">
-        <div className="text-sm text-slate-300">
+        <div className="text-sm text-muted">
           Active grants: <span className="font-semibold">{grants.length}</span>
         </div>
-        <div className="mt-2 text-xs text-slate-500">
+        <div className="mt-2 text-xs text-muted">
           Trial lessons are always available (tagged <span className="font-mono">trial</span>).
         </div>
       </Card>
@@ -95,9 +95,9 @@ export function StudentPaymentsPage() {
       <Card title="Redeem Coupon / Voucher">
         <div className="grid gap-3 md:grid-cols-3">
           <label className="block">
-            <div className="mb-1 text-sm text-slate-300">Type</div>
+            <div className="mb-1 text-sm text-muted">Type</div>
               <select
-                className="w-full rounded-lg border border-slate-800 bg-slate-950 px-3 py-2 text-sm"
+                className="w-full rounded-lg border border-border bg-surface px-3 py-2 text-sm"
                 value={method}
                 onChange={(e) => setMethod(e.target.value as "coupon" | "voucher")}
               >
@@ -111,15 +111,15 @@ export function StudentPaymentsPage() {
         </div>
         <div className="mt-3 flex items-center gap-3">
           <Button onClick={redeem}>Redeem</Button>
-          <div className="text-xs text-slate-400">
+          <div className="text-xs text-muted">
             Try seeded code: <span className="font-mono">FREE30</span>
           </div>
         </div>
-        {message ? <div className="mt-3 text-sm text-slate-200">{message}</div> : null}
+        {message ? <div className="mt-3 text-sm text-text">{message}</div> : null}
       </Card>
 
       <Card title="Mobile Money (MVP)">
-        <div className="text-sm text-slate-300">
+        <div className="text-sm text-muted">
           Pay via your provider, then enter the transaction reference below. Verification will happen after sync is implemented.
         </div>
         <MobileMoneyForm onSubmit={submitMobileMoney} />

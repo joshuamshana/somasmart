@@ -230,9 +230,9 @@ export function StudentLessonPage() {
   if (lesson.deletedAt || lesson.status !== "approved" || (lesson.expiresAt && lesson.expiresAt <= now)) {
     return (
       <Card title="Lesson unavailable">
-        <div className="text-sm text-slate-300">This lesson is not available.</div>
+        <div className="text-sm text-muted">This lesson is not available.</div>
         <div className="mt-3">
-          <Link className="text-sm text-sky-400 hover:underline" to="/student/lessons">
+          <Link className="text-sm text-link hover:underline" to="/student/lessons">
             Back to lessons
           </Link>
         </div>
@@ -243,10 +243,10 @@ export function StudentLessonPage() {
   if (access && !access.allowed) {
     return (
       <Card title={lesson.title}>
-        <div className="text-sm text-amber-200">{access.reason}</div>
+        <div className="text-sm text-warning-text">{access.reason}</div>
         {unlockHint ? (
-          <div className="mt-2 text-xs text-slate-400">
-            Redeem a code that unlocks: <span className="font-semibold text-slate-200">{unlockHint}</span>
+          <div className="mt-2 text-xs text-muted">
+            Redeem a code that unlocks: <span className="font-semibold text-text">{unlockHint}</span>
           </div>
         ) : null}
 
@@ -259,22 +259,22 @@ export function StudentLessonPage() {
           </Link>
         </div>
 
-        <details className="mt-4 rounded-lg border border-slate-800 bg-slate-950 p-3">
-          <summary className="cursor-pointer text-sm text-slate-200">How do I get a coupon?</summary>
-          <div className="mt-3 space-y-2 text-sm text-slate-300">
+        <details className="mt-4 rounded-lg border border-border bg-surface p-3">
+          <summary className="cursor-pointer text-sm text-text">How do I get a coupon?</summary>
+          <div className="mt-3 space-y-2 text-sm text-muted">
             <div>
-              <div className="font-semibold text-slate-200">Sponsored by school</div>
-              <div className="text-slate-400">Ask your School Admin to grant access for this subject.</div>
+              <div className="font-semibold text-text">Sponsored by school</div>
+              <div className="text-muted">Ask your School Admin to grant access for this subject.</div>
             </div>
             <div>
-              <div className="font-semibold text-slate-200">Buy / redeem voucher</div>
-              <div className="text-slate-400">
+              <div className="font-semibold text-text">Buy / redeem voucher</div>
+              <div className="text-muted">
                 Get a voucher card or coupon code, then redeem it on the Payments page.
               </div>
             </div>
             <div>
-              <div className="font-semibold text-slate-200">Ask teacher/admin</div>
-              <div className="text-slate-400">
+              <div className="font-semibold text-text">Ask teacher/admin</div>
+              <div className="text-muted">
                 Request a class coupon from your teacher, or contact support/admin for help.
               </div>
             </div>
@@ -287,13 +287,13 @@ export function StudentLessonPage() {
   return (
     <div className="space-y-4">
       <Card title={lesson.title}>
-        <div className="text-xs text-slate-400">
+        <div className="text-xs text-muted">
           {lesson.subject} • {lesson.level} • {lesson.language}
         </div>
         {progressRow?.completedAt && !isReplayMode ? (
-          <div className="mt-3 rounded-lg border border-emerald-800 bg-emerald-950/40 p-3">
-            <div className="text-sm font-semibold text-emerald-200">Completed lesson</div>
-            <div className="mt-1 text-xs text-emerald-300">
+          <div className="mt-3 rounded-lg border border-success-border bg-success-surface p-3">
+            <div className="text-sm font-semibold text-success-text">Completed lesson</div>
+            <div className="mt-1 text-xs text-success-text">
               Finished on {new Date(progressRow.completedAt).toLocaleString()}
             </div>
             <div className="mt-3 flex flex-wrap gap-2">

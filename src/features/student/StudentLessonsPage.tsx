@@ -231,28 +231,28 @@ export function StudentLessonsPage() {
             <Link
               key={l.id}
               to={`/student/lessons/${l.id}${search}`}
-              className="rounded-xl border border-slate-800 bg-slate-950 p-4 hover:border-slate-700"
+              className="rounded-xl border border-border bg-surface p-4 hover:border-border/80"
             >
               <div className="flex items-start justify-between gap-4">
                 <div>
                   <div className="text-sm font-semibold">{l.title}</div>
-                  <div className="mt-1 text-xs text-slate-400">
+                  <div className="mt-1 text-xs text-muted">
                     {l.subject} • {l.level} • {l.language}
                   </div>
                   <div className="mt-2 flex flex-wrap items-center gap-2">
-                    <span className="rounded bg-slate-900 px-2 py-1 text-xs text-slate-300">{learningStateLabel}</span>
-                    <span className="text-xs text-sky-300">{callToAction}</span>
+                    <span className="rounded bg-surface2 px-2 py-1 text-xs text-muted">{learningStateLabel}</span>
+                    <span className="text-xs text-link">{callToAction}</span>
                   </div>
-                  <div className="mt-2 text-sm text-slate-300">{l.description}</div>
+                  <div className="mt-2 text-sm text-muted">{l.description}</div>
                 </div>
-                <div className={`rounded px-2 py-1 text-xs ${access.allowed ? "bg-emerald-950 text-emerald-200" : "bg-amber-950 text-amber-200"}`}>
+                <div className={`rounded px-2 py-1 text-xs ${access.allowed ? "bg-success-surface text-success-text" : "bg-warning-surface text-warning-text"}`}>
                   {access.allowed ? "Available" : "Locked"}
                 </div>
               </div>
             </Link>
           );
         })}
-        {filtered.length === 0 ? <div className="text-sm text-slate-400">No lessons found.</div> : null}
+        {filtered.length === 0 ? <div className="text-sm text-muted">No lessons found.</div> : null}
       </div>
     </div>
   );

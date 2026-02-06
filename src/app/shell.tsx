@@ -99,10 +99,11 @@ export function AppShell() {
                   <span className="inline-flex items-center gap-2">
                     Notifications
                     {unreadCount > 0 ? (
-                      <span className="rounded bg-brand px-2 py-0.5 text-xs text-surface">{unreadCount}</span>
+                      <span className="rounded bg-brand px-2 py-0.5 text-xs text-brand-contrast">{unreadCount}</span>
                     ) : null}
                   </span>
                 </NavLink>
+                <NavLink to="/settings/appearance">Appearance</NavLink>
                 <button
                   className="rounded bg-surface2 px-3 py-2 text-sm hover:bg-surface2/80"
                   onClick={logout}

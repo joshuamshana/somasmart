@@ -18,7 +18,8 @@ const groups = [
     items: [
       { label: "Support inbox", to: "/teacher/support" },
       { label: "Alerts", to: "/notifications" },
-      { label: "Sync status", to: "/sync" }
+      { label: "Sync status", to: "/sync" },
+      { label: "Appearance", to: "/settings/appearance" }
     ]
   }
 ] as const;
@@ -64,7 +65,7 @@ export function TeacherLayout() {
               leaveFrom="opacity-100"
               leaveTo="opacity-0"
             >
-              <div className="fixed inset-0 bg-black/60" />
+              <div className="fixed inset-0 bg-overlay/60" />
             </Transition.Child>
             <div className="fixed inset-0 overflow-y-auto">
               <div className="flex min-h-full items-start justify-center p-4">
