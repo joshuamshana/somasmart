@@ -53,6 +53,19 @@ export function TeacherLessonsPage() {
     await refresh();
   }
 
+  async function submit(lessonId: string) {
+    const l = await db.lessons.get(lessonId);
+    if (!l) return;
+    await db.lessons.put({
+      ...l,
+      status: "pending_approval",
+      adminFeedback: undefined,
+      updatedAt: new Date().toISOString()
+    });
+    await enqueueOutboxEvent({ type: "lesson_submit", payload: { lessonId } });
+    await refresh();
+  }
+
   async function remove(lessonId: string) {
     const l = await db.lessons.get(lessonId);
     if (!l) return;
@@ -153,6 +166,21 @@ export function TeacherLessonsPage() {
                     <Link to={`/teacher/lessons/${l.id}/edit`}>
                       <Button variant="secondary">Open</Button>
                     </Link>
+                    {l.status === "draft" ? (
+                      <Button
+                        variant="secondary"
+                        onClick={() =>
+                          setConfirm({
+                            title: "Submit lesson for approval?",
+                            description: "This will send your draft to admin for review.",
+                            confirmLabel: "Submit",
+                            run: async () => submit(l.id)
+                          })
+                        }
+                      >
+                        Submit
+                      </Button>
+                    ) : null}
                     {l.status === "rejected" || l.status === "unpublished" ? (
                       <Button
                         variant="secondary"

@@ -8,16 +8,34 @@ import { Select } from "@/shared/ui/Select";
 import { Input } from "@/shared/ui/Input";
 import { Button } from "@/shared/ui/Button";
 import { db } from "@/shared/db/db";
-import type { LicenseGrant, LicenseScope, Payment, User } from "@/shared/types";
+import type {
+  CurriculumClass,
+  CurriculumLevel,
+  CurriculumSubject,
+  LicenseGrant,
+  LicenseScope,
+  Payment,
+  User
+} from "@/shared/types";
 import { enqueueOutboxEvent } from "@/shared/offline/outbox";
 
-const schema = z.object({
-  studentId: z.string().min(1, "Select a student"),
-  scopeType: z.enum(["full", "level", "subject"]),
-  level: z.enum(["Preschool", "Primary", "Secondary", "Vocational"]).optional(),
-  subject: z.string().optional(),
-  daysValid: z.coerce.number().int().min(1).max(365)
-});
+const schema = z
+  .object({
+    studentId: z.string().min(1, "Select a student"),
+    scopeType: z.enum(["full", "level", "subject", "curriculum_subject"]),
+    level: z.enum(["Preschool", "Primary", "Secondary", "Vocational"]).optional(),
+    subject: z.string().optional(),
+    curriculumSubjectId: z.string().optional(),
+    daysValid: z.coerce.number().int().min(1).max(365)
+  })
+  .superRefine((v, ctx) => {
+    if (v.scopeType === "subject" && !(v.subject ?? "").trim()) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["subject"], message: "Enter subject" });
+    }
+    if (v.scopeType === "curriculum_subject" && !(v.curriculumSubjectId ?? "").trim()) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["curriculumSubjectId"], message: "Select subject" });
+    }
+  });
 
 type FormValues = z.infer<typeof schema>;
 
@@ -38,6 +56,9 @@ export function SchoolLicensesPage() {
   const [students, setStudents] = useState<User[]>([]);
   const [grants, setGrants] = useState<LicenseGrant[]>([]);
   const [msg, setMsg] = useState<string | null>(null);
+  const [levels, setLevels] = useState<CurriculumLevel[]>([]);
+  const [classes, setClasses] = useState<CurriculumClass[]>([]);
+  const [subjects, setSubjects] = useState<CurriculumSubject[]>([]);
 
   const {
     register,
@@ -47,7 +68,7 @@ export function SchoolLicensesPage() {
     reset
   } = useForm<FormValues>({
     resolver: zodResolver(schema),
-    defaultValues: { scopeType: "full", daysValid: 30, studentId: "" }
+    defaultValues: { scopeType: "full", daysValid: 30, studentId: "", curriculumSubjectId: "" }
   });
 
   const scopeType = watch("scopeType");
@@ -67,6 +88,52 @@ export function SchoolLicensesPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
 
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const lvls = (await db.curriculumLevels.toArray()).filter((l) => !l.deletedAt);
+      const cls = (await db.curriculumClasses.toArray()).filter((c) => !c.deletedAt);
+      const subs = (await db.curriculumSubjects.toArray()).filter((s) => !s.deletedAt);
+      if (cancelled) return;
+      setLevels(lvls);
+      setClasses(cls);
+      setSubjects(subs);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const levelsById = useMemo(() => {
+    const m: Record<string, CurriculumLevel> = {};
+    levels.forEach((l) => (m[l.id] = l));
+    return m;
+  }, [levels]);
+
+  const classesById = useMemo(() => {
+    const m: Record<string, CurriculumClass> = {};
+    classes.forEach((c) => (m[c.id] = c));
+    return m;
+  }, [classes]);
+
+  const curriculumSubjectOptions = useMemo(() => {
+    return subjects
+      .slice()
+      .sort((a, b) => {
+        const ac = classesById[a.classId]?.name ?? "";
+        const bc = classesById[b.classId]?.name ?? "";
+        const al = levelsById[classesById[a.classId]?.levelId ?? ""]?.sortOrder ?? 0;
+        const bl = levelsById[classesById[b.classId]?.levelId ?? ""]?.sortOrder ?? 0;
+        return al - bl || ac.localeCompare(bc) || a.name.localeCompare(b.name);
+      })
+      .map((s) => {
+        const cls = classesById[s.classId];
+        const lvl = cls ? levelsById[cls.levelId] : null;
+        const label = [lvl?.name, cls?.name, s.name].filter(Boolean).join(" / ");
+        return { id: s.id, label: label || s.name };
+      });
+  }, [subjects, classesById, levelsById]);
+
   const grantsForStudent = useMemo(
     () => grants.filter((g) => (studentId ? g.studentId === studentId : true)),
     [grants, studentId]
@@ -84,6 +151,9 @@ export function SchoolLicensesPage() {
             let scope: LicenseScope = { type: "full" };
             if (values.scopeType === "level") scope = { type: "level", level: values.level ?? "Primary" };
             if (values.scopeType === "subject") scope = { type: "subject", subject: (values.subject ?? "").trim() };
+            if (values.scopeType === "curriculum_subject") {
+              scope = { type: "curriculum_subject", curriculumSubjectId: (values.curriculumSubjectId ?? "").trim() };
+            }
 
             const paymentId = newId("pay");
             const payment: Payment = {
@@ -124,6 +194,7 @@ export function SchoolLicensesPage() {
             <option value="full">Full access</option>
             <option value="level">Level</option>
             <option value="subject">Subject</option>
+            <option value="curriculum_subject">Curriculum subject</option>
           </Select>
           {scopeType === "level" ? (
             <Select label="Level" error={errors.level?.message} {...register("level")}>
@@ -134,6 +205,15 @@ export function SchoolLicensesPage() {
             </Select>
           ) : scopeType === "subject" ? (
             <Input label="Subject" error={errors.subject?.message} {...register("subject")} />
+          ) : scopeType === "curriculum_subject" ? (
+            <Select label="Curriculum subject" error={errors.curriculumSubjectId?.message} {...register("curriculumSubjectId")}>
+              <option value="">Select subject…</option>
+              {curriculumSubjectOptions.map((o) => (
+                <option key={o.id} value={o.id}>
+                  {o.label}
+                </option>
+              ))}
+            </Select>
           ) : (
             <div />
           )}
@@ -177,6 +257,6 @@ export function SchoolLicensesPage() {
 function formatScope(scope: LicenseScope) {
   if (scope.type === "full") return "full";
   if (scope.type === "level") return `level:${scope.level}`;
-  return `subject:${scope.subject}`;
+  if (scope.type === "subject") return `subject:${scope.subject}`;
+  return `curriculum_subject:${scope.curriculumSubjectId}`;
 }
-

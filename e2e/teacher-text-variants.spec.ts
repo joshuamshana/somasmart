@@ -13,7 +13,8 @@ test("Teacher lesson creator: text block variants render in preview", async ({ p
   await page.getByLabel("Level").selectOption({ label: "Primary" });
   await page.getByLabel("Class").selectOption({ label: "Class 1" });
   await page.getByLabel("Subject").selectOption({ label: "ICT" });
-  await page.getByLabel("Tags (comma separated; include 'trial' for free lessons)").fill("trial");
+  await page.getByLabel("Access").selectOption({ label: "Free" });
+  await page.getByLabel("Tags (comma separated)").fill("trial");
   await page.getByLabel("Description").fill("Lesson to verify text variants.");
   await page.getByRole("button", { name: "Next" }).click();
 
@@ -32,4 +33,3 @@ test("Teacher lesson creator: text block variants render in preview", async ({ p
   await expect(page.getByRole("heading", { name: "My Lesson Title" })).toBeVisible();
   await expect(page.getByText("This is normal body text.")).toBeVisible();
 });
-

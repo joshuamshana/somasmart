@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 import type {
+  AccessPolicy,
   CurriculumClass,
   CurriculumLevel,
   CurriculumSubject,
@@ -60,7 +61,8 @@ export function TeacherLessonBuilderPage() {
   const [curriculumClassId, setCurriculumClassId] = useState<string>("");
   const [curriculumSubjectId, setCurriculumSubjectId] = useState<string>("");
   const [language, setLanguage] = useState<"en" | "sw">("en");
-  const [tags, setTags] = useState("trial");
+  const [accessPolicy, setAccessPolicy] = useState<AccessPolicy>("coupon");
+  const [tags, setTags] = useState("");
   const [description, setDescription] = useState("");
   const [createdAt, setCreatedAt] = useState(() => nowIso());
 
@@ -72,6 +74,7 @@ export function TeacherLessonBuilderPage() {
   const [levels, setLevels] = useState<CurriculumLevel[]>([]);
   const [classes, setClasses] = useState<CurriculumClass[]>([]);
   const [subjects, setSubjects] = useState<CurriculumSubject[]>([]);
+  const [curriculumReady, setCurriculumReady] = useState(false);
   const [school, setSchool] = useState<School | null>(null);
   const [limitsMb, setLimitsMb] = useState<Record<LessonAsset["kind"], number>>({
     image: 10,
@@ -111,6 +114,7 @@ export function TeacherLessonBuilderPage() {
       setSubjects(subs.sort((a, b) => a.name.localeCompare(b.name)));
       setLimitsMb(nextLimits);
       setSchool(sc ?? null);
+      setCurriculumReady(true);
     })();
     return () => {
       cancelled = true;
@@ -133,6 +137,7 @@ export function TeacherLessonBuilderPage() {
       setTitle(l.title);
       setLanguage((l.language as "en" | "sw") ?? "en");
       setTags((l.tags ?? []).join(", "));
+      setAccessPolicy(l.accessPolicy ?? (l.tags?.includes("trial") ? "free" : "coupon"));
       setDescription(l.description ?? "");
       setCurriculumSubjectId(l.curriculumSubjectId ?? "");
       setCurriculumLevelId(l.curriculumLevelId ?? "");
@@ -236,9 +241,9 @@ export function TeacherLessonBuilderPage() {
         }
         return;
       }
-      const levelRow = levels.find((l) => l.id === curriculumLevelId) ?? null;
-      const classRow = classes.find((c) => c.id === curriculumClassId) ?? null;
-      const subjectRow = subjects.find((s) => s.id === curriculumSubjectId) ?? null;
+      const levelRow = curriculumLevelId ? await db.curriculumLevels.get(curriculumLevelId) : null;
+      const classRow = curriculumClassId ? await db.curriculumClasses.get(curriculumClassId) : null;
+      const subjectRow = curriculumSubjectId ? await db.curriculumSubjects.get(curriculumSubjectId) : null;
       const lesson: Lesson = {
         id: lessonId,
         title: title.trim(),
@@ -250,6 +255,7 @@ export function TeacherLessonBuilderPage() {
         className: classRow?.name ?? "",
         subject: subjectRow?.name ?? "",
         language,
+        accessPolicy,
         tags: tags
           .split(",")
           .map((t) => t.trim())
@@ -317,19 +323,21 @@ export function TeacherLessonBuilderPage() {
   }, [editLessonId, curriculumClassId, curriculumSubjectId, subjectOptions]);
 
   useEffect(() => {
+    if (!curriculumReady) return;
     if (curriculumClassId) {
       const stillValid = classOptions.some((c) => c.id === curriculumClassId);
       if (!stillValid) setCurriculumClassId("");
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [curriculumLevelId]);
+  }, [curriculumReady, curriculumLevelId]);
 
   useEffect(() => {
+    if (!curriculumReady) return;
     if (!curriculumSubjectId) return;
     const stillValid = subjectOptions.some((s) => s.id === curriculumSubjectId);
     if (!stillValid) setCurriculumSubjectId("");
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [curriculumClassId]);
+  }, [curriculumReady, curriculumClassId]);
 
   const valid =
     title.trim() &&
@@ -343,12 +351,13 @@ export function TeacherLessonBuilderPage() {
   // Autosave draft while editing (offline-first).
   useEffect(() => {
     if (!dirty) return;
+    if (!curriculumReady) return;
     const id = window.setInterval(() => {
       void saveDraft("draft", { silent: true, navigateOnSubmit: false });
     }, 7000);
     return () => window.clearInterval(id);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [dirty, title, description, blocks, questions, curriculumLevelId, curriculumClassId, curriculumSubjectId, language, tags]);
+  }, [curriculumReady, dirty, title, description, blocks, questions, curriculumLevelId, curriculumClassId, curriculumSubjectId, language, accessPolicy, tags]);
 
   function moveBlock(id: string, dir: -1 | 1) {
     markDirty();
@@ -577,9 +586,20 @@ export function TeacherLessonBuilderPage() {
                   <option value="en">English</option>
                   <option value="sw">Swahili</option>
                 </Select>
+                <Select
+                  label="Access"
+                  value={accessPolicy}
+                  onChange={(e) => {
+                    setAccessPolicy(e.target.value as AccessPolicy);
+                    markDirty();
+                  }}
+                >
+                  <option value="free">Free</option>
+                  <option value="coupon">Requires coupon</option>
+                </Select>
                 <div className="md:col-span-2">
                   <Input
-                    label="Tags (comma separated; include 'trial' for free lessons)"
+                    label="Tags (comma separated)"
                     value={tags}
                     onChange={(e) => {
                       setTags(e.target.value);

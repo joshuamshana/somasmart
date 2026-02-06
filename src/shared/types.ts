@@ -27,6 +27,8 @@ export type School = {
 
 export type LessonStatus = "draft" | "pending_approval" | "approved" | "rejected" | "unpublished";
 
+export type AccessPolicy = "free" | "coupon";
+
 export type Lesson = {
   id: string;
   title: string;
@@ -39,6 +41,8 @@ export type Lesson = {
   level: Level;
   language: "en" | "sw" | string;
   tags: string[];
+  // Optional override for access rules. If omitted, access is derived from subject defaults or legacy tags.
+  accessPolicy?: AccessPolicy;
   description: string;
   status: LessonStatus;
   createdByUserId: string;
@@ -117,7 +121,8 @@ export type Payment = {
 export type LicenseScope =
   | { type: "full" }
   | { type: "level"; level: Level }
-  | { type: "subject"; subject: string };
+  | { type: "subject"; subject: string }
+  | { type: "curriculum_subject"; curriculumSubjectId: string };
 
 export type LicenseGrant = {
   id: string;

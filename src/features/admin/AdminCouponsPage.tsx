@@ -7,21 +7,31 @@ import { Input } from "@/shared/ui/Input";
 import { Select } from "@/shared/ui/Select";
 import { Button } from "@/shared/ui/Button";
 import { db } from "@/shared/db/db";
-import type { Coupon, Level, LicenseScope } from "@/shared/types";
+import type { Coupon, CurriculumClass, CurriculumLevel, CurriculumSubject, Level, LicenseScope } from "@/shared/types";
 import { ConfirmDialog } from "@/shared/ui/ConfirmDialog";
 import { Modal } from "@/shared/ui/Modal";
 import { enqueueOutboxEvent } from "@/shared/offline/outbox";
 import { DataTable } from "@/shared/ui/DataTable";
 import { formatDateYmd } from "@/shared/format";
 
-const schema = z.object({
-  code: z.string().min(3),
-  scopeType: z.enum(["full", "level", "subject"]),
-  level: z.enum(["Preschool", "Primary", "Secondary", "Vocational"]).optional(),
-  subject: z.string().optional(),
-  daysValid: z.coerce.number().int().min(1).max(365),
-  maxRedemptions: z.coerce.number().int().min(1).max(100000)
-});
+const schema = z
+  .object({
+    code: z.string().min(3),
+    scopeType: z.enum(["full", "level", "subject", "curriculum_subject"]),
+    level: z.enum(["Preschool", "Primary", "Secondary", "Vocational"]).optional(),
+    subject: z.string().optional(),
+    curriculumSubjectId: z.string().optional(),
+    daysValid: z.coerce.number().int().min(1).max(365),
+    maxRedemptions: z.coerce.number().int().min(1).max(100000)
+  })
+  .superRefine((v, ctx) => {
+    if (v.scopeType === "subject" && !(v.subject ?? "").trim()) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["subject"], message: "Enter subject" });
+    }
+    if (v.scopeType === "curriculum_subject" && !(v.curriculumSubjectId ?? "").trim()) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["curriculumSubjectId"], message: "Select subject" });
+    }
+  });
 
 type FormValues = z.infer<typeof schema>;
 
@@ -47,9 +57,10 @@ export function AdminCouponsPage() {
 
   const [editOpen, setEditOpen] = useState(false);
   const [editCode, setEditCode] = useState<string | null>(null);
-  const [editScopeType, setEditScopeType] = useState<"full" | "level" | "subject">("full");
+  const [editScopeType, setEditScopeType] = useState<"full" | "level" | "subject" | "curriculum_subject">("full");
   const [editLevel, setEditLevel] = useState<Level>("Primary");
   const [editSubject, setEditSubject] = useState("");
+  const [editCurriculumSubjectId, setEditCurriculumSubjectId] = useState("");
   const [editValidFrom, setEditValidFrom] = useState("");
   const [editValidUntil, setEditValidUntil] = useState("");
   const [editMaxRedemptions, setEditMaxRedemptions] = useState("1");
@@ -60,10 +71,15 @@ export function AdminCouponsPage() {
   const [bulkCount, setBulkCount] = useState(10);
   const [bulkDaysValid, setBulkDaysValid] = useState(30);
   const [bulkMaxRedemptions, setBulkMaxRedemptions] = useState(1);
-  const [bulkScopeType, setBulkScopeType] = useState<"full" | "level" | "subject">("full");
+  const [bulkScopeType, setBulkScopeType] = useState<"full" | "level" | "subject" | "curriculum_subject">("full");
   const [bulkLevel, setBulkLevel] = useState<Level>("Primary");
   const [bulkSubject, setBulkSubject] = useState("");
+  const [bulkCurriculumSubjectId, setBulkCurriculumSubjectId] = useState("");
   const [bulkMsg, setBulkMsg] = useState<string | null>(null);
+
+  const [levels, setLevels] = useState<CurriculumLevel[]>([]);
+  const [classes, setClasses] = useState<CurriculumClass[]>([]);
+  const [subjects, setSubjects] = useState<CurriculumSubject[]>([]);
 
   const {
     register,
@@ -73,7 +89,7 @@ export function AdminCouponsPage() {
     reset
   } = useForm<FormValues>({
     resolver: zodResolver(schema),
-    defaultValues: { scopeType: "full", daysValid: 30, maxRedemptions: 1000 }
+    defaultValues: { scopeType: "full", daysValid: 30, maxRedemptions: 1000, curriculumSubjectId: "" }
   });
 
   const scopeType = watch("scopeType");
@@ -87,10 +103,57 @@ export function AdminCouponsPage() {
     void refresh();
   }, []);
 
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const lvls = (await db.curriculumLevels.toArray()).filter((l) => !l.deletedAt);
+      const cls = (await db.curriculumClasses.toArray()).filter((c) => !c.deletedAt);
+      const subs = (await db.curriculumSubjects.toArray()).filter((s) => !s.deletedAt);
+      if (cancelled) return;
+      setLevels(lvls);
+      setClasses(cls);
+      setSubjects(subs);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const levelsById = useMemo(() => {
+    const m: Record<string, CurriculumLevel> = {};
+    levels.forEach((l) => (m[l.id] = l));
+    return m;
+  }, [levels]);
+
+  const classesById = useMemo(() => {
+    const m: Record<string, CurriculumClass> = {};
+    classes.forEach((c) => (m[c.id] = c));
+    return m;
+  }, [classes]);
+
+  const curriculumSubjectOptions = useMemo(() => {
+    return subjects
+      .slice()
+      .sort((a, b) => {
+        const ac = classesById[a.classId]?.name ?? "";
+        const bc = classesById[b.classId]?.name ?? "";
+        const al = levelsById[classesById[a.classId]?.levelId ?? ""]?.sortOrder ?? 0;
+        const bl = levelsById[classesById[b.classId]?.levelId ?? ""]?.sortOrder ?? 0;
+        return al - bl || ac.localeCompare(bc) || a.name.localeCompare(b.name);
+      })
+      .map((s) => {
+        const cls = classesById[s.classId];
+        const lvl = cls ? levelsById[cls.levelId] : null;
+        const label = [lvl?.name, cls?.name, s.name].filter(Boolean).join(" / ");
+        return { id: s.id, label: label || s.name };
+      });
+  }, [subjects, classesById, levelsById]);
+
   const scopeHint = useMemo(() => {
     if (scopeType === "full") return "Unlocks all content";
     if (scopeType === "level") return "Unlocks a level";
-    return "Unlocks a subject";
+    if (scopeType === "subject") return "Unlocks a subject (by name)";
+    return "Unlocks a curriculum subject (recommended)";
   }, [scopeType]);
 
   async function deactivate(code: string) {
@@ -114,6 +177,7 @@ export function AdminCouponsPage() {
     setEditScopeType(c.scope.type);
     setEditLevel(c.scope.type === "level" ? c.scope.level : "Primary");
     setEditSubject(c.scope.type === "subject" ? c.scope.subject : "");
+    setEditCurriculumSubjectId(c.scope.type === "curriculum_subject" ? c.scope.curriculumSubjectId : "");
     setEditValidFrom(c.validFrom.slice(0, 10));
     setEditValidUntil(c.validUntil.slice(0, 10));
     setEditMaxRedemptions(String(c.maxRedemptions));
@@ -127,13 +191,14 @@ export function AdminCouponsPage() {
     setEditMsg(null);
     const c = await db.coupons.get(editCode);
     if (!c) return;
-    const scope: LicenseScope =
-      editScopeType === "full"
-        ? { type: "full" }
-        : editScopeType === "level"
-          ? { type: "level", level: editLevel }
-          : { type: "subject", subject: editSubject.trim() };
+    let scope: LicenseScope = { type: "full" };
+    if (editScopeType === "level") scope = { type: "level", level: editLevel };
+    if (editScopeType === "subject") scope = { type: "subject", subject: editSubject.trim() };
+    if (editScopeType === "curriculum_subject") {
+      scope = { type: "curriculum_subject", curriculumSubjectId: editCurriculumSubjectId };
+    }
     if (scope.type === "subject" && !scope.subject) return setEditMsg("Enter subject.");
+    if (scope.type === "curriculum_subject" && !scope.curriculumSubjectId) return setEditMsg("Select subject.");
     const validFromIso = editValidFrom.trim()
       ? new Date(`${editValidFrom.trim()}T00:00:00.000Z`).toISOString()
       : c.validFrom;
@@ -183,7 +248,8 @@ export function AdminCouponsPage() {
   function buildBulkScope(): LicenseScope {
     if (bulkScopeType === "full") return { type: "full" };
     if (bulkScopeType === "level") return { type: "level", level: bulkLevel };
-    return { type: "subject", subject: bulkSubject.trim() };
+    if (bulkScopeType === "subject") return { type: "subject", subject: bulkSubject.trim() };
+    return { type: "curriculum_subject", curriculumSubjectId: bulkCurriculumSubjectId };
   }
 
   return (
@@ -204,6 +270,7 @@ export function AdminCouponsPage() {
             <option value="full">Full access</option>
             <option value="level">Level</option>
             <option value="subject">Subject</option>
+            <option value="curriculum_subject">Curriculum subject</option>
           </Select>
           {editScopeType === "level" ? (
             <Select label="Level" value={editLevel} onChange={(e) => setEditLevel(e.target.value as any)}>
@@ -214,6 +281,19 @@ export function AdminCouponsPage() {
             </Select>
           ) : editScopeType === "subject" ? (
             <Input label="Subject" value={editSubject} onChange={(e) => setEditSubject(e.target.value)} />
+          ) : editScopeType === "curriculum_subject" ? (
+            <Select
+              label="Curriculum subject"
+              value={editCurriculumSubjectId}
+              onChange={(e) => setEditCurriculumSubjectId(e.target.value)}
+            >
+              <option value="">Select subject…</option>
+              {curriculumSubjectOptions.map((o) => (
+                <option key={o.id} value={o.id}>
+                  {o.label}
+                </option>
+              ))}
+            </Select>
           ) : null}
           <div className="grid gap-3 md:grid-cols-2">
             <Input label="Valid from (YYYY-MM-DD)" value={editValidFrom} onChange={(e) => setEditValidFrom(e.target.value)} />
@@ -272,6 +352,9 @@ export function AdminCouponsPage() {
             let scope: LicenseScope = { type: "full" };
             if (values.scopeType === "level") scope = { type: "level", level: (values.level ?? "Primary") as Level };
             if (values.scopeType === "subject") scope = { type: "subject", subject: (values.subject ?? "").trim() };
+            if (values.scopeType === "curriculum_subject") {
+              scope = { type: "curriculum_subject", curriculumSubjectId: (values.curriculumSubjectId ?? "").trim() };
+            }
             const coupon: Coupon = {
               code,
               scope,
@@ -284,7 +367,14 @@ export function AdminCouponsPage() {
             await db.coupons.add(coupon);
             await enqueueOutboxEvent({ type: "coupon_upsert", payload: { code: coupon.code } });
             await refresh();
-            reset({ scopeType: values.scopeType, daysValid: values.daysValid, maxRedemptions: values.maxRedemptions, code: "" });
+            reset({
+              scopeType: values.scopeType,
+              daysValid: values.daysValid,
+              maxRedemptions: values.maxRedemptions,
+              curriculumSubjectId: "",
+              subject: "",
+              code: ""
+            });
             setMsg("Coupon created.");
           })}
         >
@@ -293,6 +383,7 @@ export function AdminCouponsPage() {
             <option value="full">Full access</option>
             <option value="level">Level</option>
             <option value="subject">Subject</option>
+            <option value="curriculum_subject">Curriculum subject</option>
           </Select>
           {scopeType === "level" ? (
             <Select label="Level" error={errors.level?.message} {...register("level")}>
@@ -303,6 +394,15 @@ export function AdminCouponsPage() {
             </Select>
           ) : scopeType === "subject" ? (
             <Input label="Subject" error={errors.subject?.message} {...register("subject")} />
+          ) : scopeType === "curriculum_subject" ? (
+            <Select label="Curriculum subject" error={errors.curriculumSubjectId?.message} {...register("curriculumSubjectId")}>
+              <option value="">Select subject…</option>
+              {curriculumSubjectOptions.map((o) => (
+                <option key={o.id} value={o.id}>
+                  {o.label}
+                </option>
+              ))}
+            </Select>
           ) : (
             <div className="rounded-lg border border-border bg-surface px-3 py-2 text-sm text-muted">
               {scopeHint}
@@ -350,6 +450,7 @@ export function AdminCouponsPage() {
               <option value="full">Full access</option>
               <option value="level">Level</option>
               <option value="subject">Subject</option>
+              <option value="curriculum_subject">Curriculum subject</option>
             </select>
           </label>
           {bulkScopeType === "level" ? (
@@ -368,6 +469,22 @@ export function AdminCouponsPage() {
             </label>
           ) : bulkScopeType === "subject" ? (
             <Input label="Subject" value={bulkSubject} onChange={(e) => setBulkSubject(e.target.value)} />
+          ) : bulkScopeType === "curriculum_subject" ? (
+            <label className="block">
+              <div className="mb-1 text-sm text-muted">Curriculum subject</div>
+              <select
+                className="w-full rounded-lg border border-border bg-surface px-3 py-2 text-sm text-text outline-none focus:border-brand"
+                value={bulkCurriculumSubjectId}
+                onChange={(e) => setBulkCurriculumSubjectId(e.target.value)}
+              >
+                <option value="">Select subject…</option>
+                {curriculumSubjectOptions.map((o) => (
+                  <option key={o.id} value={o.id}>
+                    {o.label}
+                  </option>
+                ))}
+              </select>
+            </label>
           ) : (
             <div />
           )}
@@ -387,6 +504,10 @@ export function AdminCouponsPage() {
                   const scope = buildBulkScope();
                   if (scope.type === "subject" && !scope.subject) {
                     setBulkMsg("Enter subject for subject scope.");
+                    return;
+                  }
+                  if (scope.type === "curriculum_subject" && !scope.curriculumSubjectId) {
+                    setBulkMsg("Select a curriculum subject.");
                     return;
                   }
                   const existing = new Set((await db.coupons.toArray()).map((c) => c.code));
@@ -502,5 +623,6 @@ export function AdminCouponsPage() {
 function formatScope(scope: LicenseScope) {
   if (scope.type === "full") return "full";
   if (scope.type === "level") return `level:${scope.level}`;
-  return `subject:${scope.subject}`;
+  if (scope.type === "subject") return `subject:${scope.subject}`;
+  return `curriculum_subject:${scope.curriculumSubjectId}`;
 }

@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import type { Lesson } from "@/shared/types";
 import { db } from "@/shared/db/db";
 import { Card } from "@/shared/ui/Card";
@@ -7,8 +7,11 @@ import { Input } from "@/shared/ui/Input";
 import { Select } from "@/shared/ui/Select";
 import { useAuth } from "@/features/auth/authContext";
 import { canAccessLesson } from "@/shared/access/accessEngine";
+import { getSubjectAccessDefaultsByCurriculumSubjectId } from "@/shared/db/accessDefaultsRepo";
 
 export function StudentLessonsPage() {
+  const location = useLocation();
+  const search = location.search ?? "";
   const { user } = useAuth();
   const [lessons, setLessons] = useState<Lesson[]>([]);
   const [subject, setSubject] = useState("");
@@ -16,6 +19,7 @@ export function StudentLessonsPage() {
   const [language, setLanguage] = useState("");
   const [q, setQ] = useState("");
   const [grants, setGrants] = useState<import("@/shared/types").LicenseGrant[]>([]);
+  const [subjectDefaults, setSubjectDefaults] = useState<Record<string, import("@/shared/types").AccessPolicy>>({});
 
   useEffect(() => {
     let cancelled = false;
@@ -24,6 +28,18 @@ export function StudentLessonsPage() {
       if (cancelled) return;
       const now = new Date().toISOString();
       setLessons(rows.filter((l) => !l.deletedAt && (!l.expiresAt || l.expiresAt > now)));
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const map = await getSubjectAccessDefaultsByCurriculumSubjectId();
+      if (cancelled) return;
+      setSubjectDefaults(map);
     })();
     return () => {
       cancelled = true;
@@ -103,11 +119,11 @@ export function StudentLessonsPage() {
 
       <div className="grid gap-3">
         {filtered.map((l) => {
-          const access = canAccessLesson({ lesson: l, grants });
+          const access = canAccessLesson({ lesson: l, grants, subjectDefaultsByCurriculumSubjectId: subjectDefaults });
           return (
             <Link
               key={l.id}
-              to={`/student/lessons/${l.id}`}
+              to={`/student/lessons/${l.id}${search}`}
               className="rounded-xl border border-slate-800 bg-slate-950 p-4 hover:border-slate-700"
             >
               <div className="flex items-start justify-between gap-4">

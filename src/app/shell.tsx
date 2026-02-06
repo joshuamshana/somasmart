@@ -69,7 +69,7 @@ export function AppShell() {
               <>
                 {user.role === "student" && (
                   <>
-                    <NavLink to="/student">Dashboard</NavLink>
+                    <NavLink to="/">Dashboard</NavLink>
                     <NavLink to="/student/lessons">Lessons</NavLink>
                     <NavLink to="/student/progress">Progress</NavLink>
                     <NavLink to="/student/payments">Payments</NavLink>

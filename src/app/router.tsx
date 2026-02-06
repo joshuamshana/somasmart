@@ -3,6 +3,7 @@ import { createBrowserRouter, Navigate, RouterProvider } from "react-router-dom"
 import { AppShell } from "@/app/shell";
 import { LoginPage } from "@/features/auth/LoginPage";
 import { RegisterPage } from "@/features/auth/RegisterPage";
+import { StartRedirect } from "@/features/auth/StartRedirect";
 import { RequireRole } from "@/features/auth/RequireRole";
 import { StudentDashboard } from "@/features/student/StudentDashboard";
 import { StudentLessonsPage } from "@/features/student/StudentLessonsPage";
@@ -27,6 +28,7 @@ import { AdminSettingsPage } from "@/features/admin/AdminSettingsPage";
 import { AdminSchoolAdminsPage } from "@/features/admin/AdminSchoolAdminsPage";
 import { AdminAdminsPage } from "@/features/admin/AdminAdminsPage";
 import { AdminSupportPage } from "@/features/admin/AdminSupportPage";
+import { AdminStudentLessonPreviewPage } from "@/features/admin/AdminStudentLessonPreviewPage";
 import { AdminLayout } from "@/features/admin/AdminLayout";
 import { SchoolDashboard } from "@/features/school/SchoolDashboard";
 import { SchoolUsersPage } from "@/features/school/SchoolUsersPage";
@@ -36,20 +38,22 @@ import { StudentSupportPage } from "@/features/messaging/StudentSupportPage";
 import { TeacherSupportPage } from "@/features/messaging/TeacherSupportPage";
 import { SyncPage } from "@/features/sync/SyncPage";
 import { NotificationsPage } from "@/features/notifications/NotificationsPage";
+import { PublicLessonGateRedirect } from "@/features/content/PublicLessonGateRedirect";
 
 const router = createBrowserRouter([
   {
     path: "/",
     element: <AppShell />,
     children: [
-      { index: true, element: <Navigate to="/login" replace /> },
+      { index: true, element: <StartRedirect /> },
       { path: "login", element: <LoginPage /> },
       { path: "register", element: <RegisterPage /> },
+      { path: "learn/lessons/:lessonId", element: <PublicLessonGateRedirect /> },
       {
         path: "student",
         element: (
           <RequireRole roles={["student"]}>
-            <StudentDashboard />
+            <StartRedirect />
           </RequireRole>
         )
       },
@@ -138,6 +142,7 @@ const router = createBrowserRouter([
           { path: "school-admins", element: <AdminSchoolAdminsPage /> },
           { path: "admins", element: <AdminAdminsPage /> },
           { path: "lessons", element: <AdminLessonsPage /> },
+          { path: "lessons/:lessonId/preview", element: <AdminStudentLessonPreviewPage /> },
           { path: "coupons", element: <AdminCouponsPage /> },
           { path: "analytics", element: <AdminAnalyticsPage /> },
           { path: "payments", element: <AdminPaymentsPage /> },

@@ -1,9 +1,11 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "@/features/auth/authContext";
+import { getHomePathForUser } from "@/features/auth/homeRoute";
+import { getSafeNextFromSearch } from "@/features/auth/nextRoute";
 import { Card } from "@/shared/ui/Card";
 import { Input } from "@/shared/ui/Input";
 import { Button } from "@/shared/ui/Button";
@@ -19,13 +21,20 @@ export function LoginPage() {
   const nav = useNavigate();
   const location = useLocation();
   const search = location.search ?? "";
-  const { login } = useAuth();
+  const { user, loading, login } = useAuth();
   const [formError, setFormError] = useState<string | null>(null);
   const {
     register,
     handleSubmit,
     formState: { errors, isSubmitting }
   } = useForm<FormValues>({ resolver: zodResolver(schema) });
+
+  useEffect(() => {
+    if (loading && !user) return;
+    if (!user) return;
+    const next = user.role === "student" ? getSafeNextFromSearch(search) : null;
+    nav(`${next ?? getHomePathForUser(user)}${search}`, { replace: true });
+  }, [loading, nav, search, user]);
 
   return (
     <div className="mx-auto max-w-md">
@@ -39,11 +48,8 @@ export function LoginPage() {
               setFormError(res.error);
               return;
             }
-            if (res.user.role === "student") nav(`/student${search}`, { replace: true });
-            else if (res.user.role === "teacher") nav(`/teacher${search}`, { replace: true });
-            else if (res.user.role === "admin") nav(`/admin${search}`, { replace: true });
-            else if (res.user.role === "school_admin") nav(`/school${search}`, { replace: true });
-            else nav(`/${search}`, { replace: true });
+            const next = res.user.role === "student" ? getSafeNextFromSearch(search) : null;
+            nav(`${next ?? getHomePathForUser(res.user)}${search}`, { replace: true });
           })}
         >
           <Input label="Username" error={errors.username?.message} {...register("username")} />

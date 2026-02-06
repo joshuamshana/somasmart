@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import { db } from "@/shared/db/db";
 import type {
   AppSetting,
+  AccessPolicy,
   CurriculumCategory,
   CurriculumClass,
   CurriculumLevel,
@@ -223,12 +224,15 @@ export function AdminSettingsPage() {
   const [className, setClassName] = useState("");
   const [classSortOrder, setClassSortOrder] = useState("1");
   const [subName, setSubName] = useState("");
-  const [subCategoryId, setSubCategoryId] = useState<string>("");
+  const [subCategoryId, setSubCategoryId] = useState<string | null>(null);
 
   const [selectedLevelId, setSelectedLevelId] = useState<string>("");
   const [selectedClassId, setSelectedClassId] = useState<string>("");
+  const [selectedAccessSubjectId, setSelectedAccessSubjectId] = useState<string>("");
+  const [selectedAccessPolicy, setSelectedAccessPolicy] = useState<AccessPolicy>("coupon");
+  const [accessMsg, setAccessMsg] = useState<string | null>(null);
 
-  async function refresh() {
+  async function refreshSystem() {
     const settings = await db.settings.toArray();
     const get = (k: string) => settings.find((s) => s.key === k)?.value;
     setAutoSyncMinutes(String(get("sync.autoIntervalMinutes") ?? "0"));
@@ -238,7 +242,9 @@ export function AdminSettingsPage() {
     setMaxVideoMb(String(get("media.maxUploadMb.video") ?? "50"));
     setMaxPdfMb(String(get("media.maxUploadMb.pdf") ?? "20"));
     setMaxPptxMb(String(get("media.maxUploadMb.pptx") ?? "20"));
+  }
 
+  async function refreshCurriculum() {
     const cats = (await db.curriculumCategories.toArray()).filter((c) => !c.deletedAt);
     setCategories(cats.sort((a, b) => a.name.localeCompare(b.name)));
     const lvls = (await db.curriculumLevels.toArray()).filter((l) => !l.deletedAt);
@@ -247,19 +253,11 @@ export function AdminSettingsPage() {
     setClasses(cls.sort((a, b) => a.sortOrder - b.sortOrder || a.name.localeCompare(b.name)));
     const subs = (await db.curriculumSubjects.toArray()).filter((s) => !s.deletedAt);
     setSubjects(subs.sort((a, b) => a.name.localeCompare(b.name)));
-
-    if (!subCategoryId && cats.length) setSubCategoryId(cats[0].id);
-    if (!selectedLevelId && lvls.length) setSelectedLevelId(lvls[0].id);
-    const levelId = selectedLevelId || (lvls[0]?.id ?? "");
-    const classesForLevel = levelId ? cls.filter((c) => c.levelId === levelId && !c.deletedAt) : [];
-    if (!selectedClassId && classesForLevel.length) setSelectedClassId(classesForLevel[0].id);
   }
 
   useEffect(() => {
-    void refresh();
-    const id = window.setInterval(() => void refresh(), 2500);
-    return () => window.clearInterval(id);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    void refreshSystem();
+    void refreshCurriculum();
   }, []);
 
   const classesForSelectedLevel = useMemo(
@@ -271,6 +269,47 @@ export function AdminSettingsPage() {
     () => subjects.filter((s) => s.classId === selectedClassId && !s.deletedAt),
     [subjects, selectedClassId]
   );
+
+  useEffect(() => {
+    if (levels.length === 0) return;
+    if (selectedLevelId && levels.some((l) => l.id === selectedLevelId)) return;
+    setSelectedLevelId(levels[0].id);
+  }, [levels, selectedLevelId]);
+
+  useEffect(() => {
+    if (!selectedLevelId) {
+      if (selectedClassId) setSelectedClassId("");
+      return;
+    }
+    if (classesForSelectedLevel.length === 0) {
+      if (selectedClassId) setSelectedClassId("");
+      return;
+    }
+    if (selectedClassId && classesForSelectedLevel.some((c) => c.id === selectedClassId)) return;
+    setSelectedClassId(classesForSelectedLevel[0].id);
+  }, [classesForSelectedLevel, selectedClassId, selectedLevelId]);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      setAccessMsg(null);
+      if (!selectedAccessSubjectId) return;
+      const key = `access.subjectDefault.${selectedAccessSubjectId}`;
+      const row = await db.settings.get(key);
+      const policy = (row?.value as any)?.policy as AccessPolicy | undefined;
+      if (cancelled) return;
+      setSelectedAccessPolicy(policy === "free" || policy === "coupon" ? policy : "coupon");
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [selectedAccessSubjectId]);
+
+  useEffect(() => {
+    if (subCategoryId !== null) return;
+    if (categories.length === 0) return;
+    setSubCategoryId(categories[0].id);
+  }, [categories, subCategoryId]);
 
   return (
     <div className="space-y-4">
@@ -338,7 +377,7 @@ export function AdminSettingsPage() {
                         details: { autoSyncMinutes, notificationsEnabled }
                       });
                     }
-                    await refresh();
+                    await refreshSystem();
                   }
                 })
               }
@@ -394,7 +433,7 @@ export function AdminSettingsPage() {
                       details: { createLevel: { name, sortOrder } }
                     });
                   }
-                  await refresh();
+                  await refreshCurriculum();
                 }}
               >
                 Add level
@@ -458,7 +497,7 @@ export function AdminSettingsPage() {
                     }
                     setSelectedLevelId("");
                     setSelectedClassId("");
-                    await refresh();
+                    await refreshCurriculum();
                   }
                 });
               }}
@@ -520,7 +559,7 @@ export function AdminSettingsPage() {
                       details: { createClass: { levelId: selectedLevelId, name, sortOrder } }
                     });
                   }
-                  await refresh();
+                  await refreshCurriculum();
                 }}
               >
                 Add class
@@ -582,7 +621,7 @@ export function AdminSettingsPage() {
                       });
                     }
                     setSelectedClassId("");
-                    await refresh();
+                    await refreshCurriculum();
                   }
                 });
               }}
@@ -611,7 +650,7 @@ export function AdminSettingsPage() {
               <Input label="Subject name" value={subName} onChange={(e) => setSubName(e.target.value)} />
               <Select
                 label="Category (optional)"
-                value={subCategoryId}
+                value={subCategoryId ?? ""}
                 onChange={(e) => setSubCategoryId(e.target.value)}
               >
                 <option value="">Uncategorized</option>
@@ -628,31 +667,33 @@ export function AdminSettingsPage() {
                   if (!selectedClassId) return;
                   const name = subName.trim();
                   if (!name) return;
-                  const row: CurriculumSubject = {
-                    id: newId("sub"),
-                    classId: selectedClassId,
-                    categoryId: subCategoryId || undefined,
-                    name,
-                    createdAt: nowIso(),
-                    updatedAt: nowIso()
-                  };
+	                  const row: CurriculumSubject = {
+	                    id: newId("sub"),
+	                    classId: selectedClassId,
+	                    categoryId: (subCategoryId ?? "") || undefined,
+	                    name,
+	                    createdAt: nowIso(),
+	                    updatedAt: nowIso()
+	                  };
                   await db.curriculumSubjects.put(row);
                   setSubName("");
                   await enqueueOutboxEvent({ type: "settings_push", payload: {} });
-                  if (user) {
-                    await logAudit({
-                      actorUserId: user.id,
-                      action: "curriculum_update",
-                      entityType: "settings",
-                      entityId: "curriculum",
-                      details: { createSubject: { classId: selectedClassId, name, categoryId: subCategoryId || null } }
-                    });
-                  }
-                  await refresh();
-                }}
-              >
-                Add subject
-              </Button>
+	                  if (user) {
+	                    await logAudit({
+	                      actorUserId: user.id,
+	                      action: "curriculum_update",
+	                      entityType: "settings",
+	                      entityId: "curriculum",
+	                      details: {
+	                        createSubject: { classId: selectedClassId, name, categoryId: (subCategoryId ?? "") || null }
+	                      }
+	                    });
+	                  }
+	                  await refreshCurriculum();
+	                }}
+	              >
+	                Add subject
+	              </Button>
             </div>
 
             <div className="space-y-2">
@@ -681,21 +722,21 @@ export function AdminSettingsPage() {
                           if (!row) return;
                           await db.curriculumSubjects.put({ ...row, deletedAt: nowIso(), updatedAt: nowIso() });
                           await enqueueOutboxEvent({ type: "settings_push", payload: {} });
-                          if (user) {
-                            await logAudit({
-                              actorUserId: user.id,
-                              action: "curriculum_delete",
-                              entityType: "settings",
-                              entityId: "curriculum",
-                              details: { deleteSubjectId: s.id }
-                            });
-                          }
-                          await refresh();
-                        }
-                      })
-                    }
-                  >
-                    Delete
+	                          if (user) {
+	                            await logAudit({
+	                              actorUserId: user.id,
+	                              action: "curriculum_delete",
+	                              entityType: "settings",
+	                              entityId: "curriculum",
+	                              details: { deleteSubjectId: s.id }
+	                            });
+	                          }
+	                          await refreshCurriculum();
+	                        }
+	                      })
+	                    }
+	                  >
+	                    Delete
                   </Button>
                 </div>
               ))}
@@ -725,20 +766,20 @@ export function AdminSettingsPage() {
                 await db.curriculumCategories.put(row);
                 setCatName("");
                 await enqueueOutboxEvent({ type: "settings_push", payload: {} });
-                if (user) {
-                  await logAudit({
-                    actorUserId: user.id,
-                    action: "curriculum_update",
-                    entityType: "settings",
-                    entityId: "curriculum",
-                    details: { createCategory: name }
-                  });
-                }
-                await refresh();
-              }}
-            >
-              Add category
-            </Button>
+	                if (user) {
+	                  await logAudit({
+	                    actorUserId: user.id,
+	                    action: "curriculum_update",
+	                    entityType: "settings",
+	                    entityId: "curriculum",
+	                    details: { createCategory: name }
+	                  });
+	                }
+	                await refreshCurriculum();
+	              }}
+	            >
+	              Add category
+	            </Button>
           </div>
         </div>
 
@@ -760,26 +801,152 @@ export function AdminSettingsPage() {
                       if (!row) return;
                       await db.curriculumCategories.put({ ...row, deletedAt: nowIso(), updatedAt: nowIso() });
                       await enqueueOutboxEvent({ type: "settings_push", payload: {} });
-                      if (user) {
-                        await logAudit({
-                          actorUserId: user.id,
-                          action: "curriculum_delete",
-                          entityType: "settings",
-                          entityId: "curriculum",
-                          details: { deleteCategoryId: c.id }
-                        });
-                      }
-                      await refresh();
-                    }
-                  })
-                }
-              >
-                Delete
+	                      if (user) {
+	                        await logAudit({
+	                          actorUserId: user.id,
+	                          action: "curriculum_delete",
+	                          entityType: "settings",
+	                          entityId: "curriculum",
+	                          details: { deleteCategoryId: c.id }
+	                        });
+	                      }
+	                      await refreshCurriculum();
+	                    }
+	                  })
+	                }
+	              >
+	                Delete
               </Button>
             </div>
           ))}
           {categories.length === 0 ? <div className="text-sm text-muted">No categories yet.</div> : null}
         </div>
+      </Card>
+
+      <Card title="Subject access defaults">
+        <div className="text-sm text-muted">
+          Set the default access policy for a curriculum subject. Individual lessons can still override this.
+        </div>
+
+        <div className="mt-4 grid gap-3 md:grid-cols-4">
+          <Select
+            label="Level"
+            value={selectedLevelId}
+            onChange={(e) => {
+              setSelectedLevelId(e.target.value);
+              setSelectedClassId("");
+              setSelectedAccessSubjectId("");
+              setAccessMsg(null);
+            }}
+          >
+            <option value="">Select level…</option>
+            {levels.map((l) => (
+              <option key={l.id} value={l.id}>
+                {l.name}
+              </option>
+            ))}
+          </Select>
+
+          <Select
+            label="Class"
+            value={selectedClassId}
+            onChange={(e) => {
+              setSelectedClassId(e.target.value);
+              setSelectedAccessSubjectId("");
+              setAccessMsg(null);
+            }}
+            disabled={!selectedLevelId}
+          >
+            <option value="">Select class…</option>
+            {classesForSelectedLevel.map((c) => (
+              <option key={c.id} value={c.id}>
+                {c.name}
+              </option>
+            ))}
+          </Select>
+
+          <Select
+            label="Subject"
+            value={selectedAccessSubjectId}
+            onChange={(e) => setSelectedAccessSubjectId(e.target.value)}
+            disabled={!selectedClassId}
+          >
+            <option value="">Select subject…</option>
+            {subjectsForSelectedClass.map((s) => (
+              <option key={s.id} value={s.id}>
+                {s.name}
+              </option>
+            ))}
+          </Select>
+
+          <Select
+            label="Default access"
+            value={selectedAccessPolicy}
+            onChange={(e) => setSelectedAccessPolicy(e.target.value as AccessPolicy)}
+            disabled={!selectedAccessSubjectId}
+          >
+            <option value="free">Free</option>
+            <option value="coupon">Requires coupon</option>
+          </Select>
+        </div>
+
+        <div className="mt-4 flex flex-wrap gap-2">
+          <Button
+            disabled={!selectedAccessSubjectId}
+            onClick={async () => {
+              if (!selectedAccessSubjectId) return;
+              setAccessMsg(null);
+              const key = `access.subjectDefault.${selectedAccessSubjectId}`;
+              const row: AppSetting = {
+                key,
+                value: { policy: selectedAccessPolicy },
+                updatedAt: nowIso(),
+                updatedByUserId: user?.id
+              };
+              await db.settings.put(row);
+              await enqueueOutboxEvent({ type: "settings_push", payload: {} });
+              if (user) {
+                await logAudit({
+                  actorUserId: user.id,
+                  action: "settings_update",
+                  entityType: "settings",
+                  entityId: key,
+                  details: { policy: selectedAccessPolicy }
+                });
+              }
+              setAccessMsg("Saved subject default access.");
+            }}
+          >
+            Save default
+          </Button>
+
+          <Button
+            variant="secondary"
+            disabled={!selectedAccessSubjectId}
+            onClick={async () => {
+              if (!selectedAccessSubjectId) return;
+              setAccessMsg(null);
+              const key = `access.subjectDefault.${selectedAccessSubjectId}`;
+              await db.settings.delete(key);
+              await enqueueOutboxEvent({ type: "settings_push", payload: {} });
+              if (user) {
+                await logAudit({
+                  actorUserId: user.id,
+                  action: "settings_update",
+                  entityType: "settings",
+                  entityId: key,
+                  details: { cleared: true }
+                });
+              }
+              setSelectedAccessPolicy("coupon");
+              setAccessMsg("Cleared subject default (lessons will fall back to their own overrides).");
+            }}
+          >
+            Clear default
+          </Button>
+        </div>
+
+        {accessMsg ? <div className="mt-3 text-sm text-text">{accessMsg}</div> : null}
       </Card>
 
       <Card title="Backup / restore / reset">

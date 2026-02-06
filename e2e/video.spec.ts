@@ -12,7 +12,8 @@ test("Video block: teacher uploads -> admin approves -> student plays offline", 
   await page.getByLabel("Level").selectOption({ label: "Primary" });
   await page.getByLabel("Class").selectOption({ label: "Class 1" });
   await page.getByLabel("Subject").selectOption({ label: "ICT" });
-  await page.getByLabel("Tags (comma separated; include 'trial' for free lessons)").fill("trial");
+  await page.getByLabel("Access").selectOption({ label: "Free" });
+  await page.getByLabel("Tags (comma separated)").fill("trial");
   await page.getByLabel("Description").fill("Lesson with offline video.");
   await page.getByRole("button", { name: "Next" }).click();
   await page.getByRole("button", { name: "Add text" }).click();

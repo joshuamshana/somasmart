@@ -7,10 +7,9 @@ import { LessonPlayer } from "@/features/content/LessonPlayer";
 import { enqueueOutboxEvent } from "@/shared/offline/outbox";
 import { useAuth } from "@/features/auth/authContext";
 import { logAudit } from "@/shared/audit/audit";
-import { Input } from "@/shared/ui/Input";
-import { Select } from "@/shared/ui/Select";
 import { ConfirmDialog } from "@/shared/ui/ConfirmDialog";
 import { PageHeader } from "@/shared/ui/PageHeader";
+import { Link, useLocation } from "react-router-dom";
 
 function nowIso() {
   return new Date().toISOString();
@@ -30,6 +29,8 @@ function bumpTitle(title: string) {
 }
 
 export function AdminLessonsPage() {
+  const location = useLocation();
+  const search = location.search ?? "";
   const { user } = useAuth();
   const [lessons, setLessons] = useState<Lesson[]>([]);
   const [teachersById, setTeachersById] = useState<Record<string, User>>({});
@@ -37,13 +38,6 @@ export function AdminLessonsPage() {
   const [blocks, setBlocks] = useState<LessonBlock[]>([]);
   const [feedback, setFeedback] = useState("");
   const [selectedLesson, setSelectedLesson] = useState<Lesson | null>(null);
-  const [editTitle, setEditTitle] = useState("");
-  const [editSubject, setEditSubject] = useState("");
-  const [editLevel, setEditLevel] = useState<Lesson["level"]>("Primary");
-  const [editLanguage, setEditLanguage] = useState<Lesson["language"]>("en");
-  const [editTags, setEditTags] = useState("");
-  const [editDescription, setEditDescription] = useState("");
-  const [editExpiresAt, setEditExpiresAt] = useState("");
   const [confirm, setConfirm] = useState<null | {
     title: string;
     description?: string;
@@ -81,13 +75,6 @@ export function AdminLessonsPage() {
       setBlocks(content?.blocks ?? []);
       setFeedback(lesson?.adminFeedback ?? "");
       setSelectedLesson(lesson ?? null);
-      setEditTitle(lesson?.title ?? "");
-      setEditSubject(lesson?.subject ?? "");
-      setEditLevel((lesson?.level ?? "Primary") as Lesson["level"]);
-      setEditLanguage((lesson?.language ?? "en") as Lesson["language"]);
-      setEditTags((lesson?.tags ?? []).join(", "));
-      setEditDescription(lesson?.description ?? "");
-      setEditExpiresAt(lesson?.expiresAt ? lesson.expiresAt.slice(0, 10) : "");
     })();
     return () => {
       cancelled = true;
@@ -101,7 +88,14 @@ export function AdminLessonsPage() {
   async function approve(lessonId: string) {
     const l = await db.lessons.get(lessonId);
     if (!l) return;
-    await db.lessons.put({ ...l, status: "approved", adminFeedback: feedback.trim() || undefined, updatedAt: nowIso() });
+    const next = {
+      ...l,
+      status: "approved" as const,
+      adminFeedback: feedback.trim() || undefined,
+      updatedAt: nowIso()
+    };
+    await db.lessons.put(next);
+    setSelectedLesson((cur) => (cur?.id === lessonId ? next : cur));
     await enqueueOutboxEvent({ type: "lesson_approved", payload: { lessonId } });
     if (user) {
       await logAudit({
@@ -118,7 +112,14 @@ export function AdminLessonsPage() {
   async function reject(lessonId: string) {
     const l = await db.lessons.get(lessonId);
     if (!l) return;
-    await db.lessons.put({ ...l, status: "rejected", adminFeedback: feedback.trim() || "Please revise.", updatedAt: nowIso() });
+    const next = {
+      ...l,
+      status: "rejected" as const,
+      adminFeedback: feedback.trim() || "Please revise.",
+      updatedAt: nowIso()
+    };
+    await db.lessons.put(next);
+    setSelectedLesson((cur) => (cur?.id === lessonId ? next : cur));
     await enqueueOutboxEvent({ type: "lesson_rejected", payload: { lessonId } });
     if (user) {
       await logAudit({
@@ -132,41 +133,12 @@ export function AdminLessonsPage() {
     await refresh();
   }
 
-  async function saveMetadata(lessonId: string) {
-    const l = await db.lessons.get(lessonId);
-    if (!l) return;
-    await db.lessons.put({
-      ...l,
-      title: editTitle.trim() || l.title,
-      subject: editSubject.trim() || l.subject,
-      level: editLevel,
-      language: editLanguage,
-      tags: editTags
-        .split(",")
-        .map((t) => t.trim())
-        .filter(Boolean),
-      description: editDescription.trim() || l.description,
-      expiresAt: editExpiresAt.trim() ? new Date(`${editExpiresAt.trim()}T23:59:59.999Z`).toISOString() : undefined,
-      updatedAt: nowIso()
-    });
-    await enqueueOutboxEvent({ type: "lesson_upsert", payload: { lessonId } });
-    if (user) {
-      await logAudit({
-        actorUserId: user.id,
-        action: "lesson_update",
-        entityType: "lesson",
-        entityId: lessonId,
-        details: { updateMetadata: true }
-      });
-    }
-    await refresh();
-    setSelectedLessonId(lessonId);
-  }
-
   async function unpublish(lessonId: string) {
     const l = await db.lessons.get(lessonId);
     if (!l) return;
-    await db.lessons.put({ ...l, status: "unpublished", updatedAt: nowIso() });
+    const next = { ...l, status: "unpublished" as const, updatedAt: nowIso() };
+    await db.lessons.put(next);
+    setSelectedLesson((cur) => (cur?.id === lessonId ? next : cur));
     await enqueueOutboxEvent({ type: "lesson_upsert", payload: { lessonId } });
     if (user) {
       await logAudit({
@@ -285,7 +257,25 @@ export function AdminLessonsPage() {
         }}
       />
 
-      <PageHeader title="Lessons" description="Approve teacher submissions and manage published lesson content." />
+      <PageHeader
+        title="Lessons"
+        description="Approve teacher submissions and manage published lesson content."
+        actions={
+          <div className="flex flex-wrap gap-2">
+            <Button variant="secondary" onClick={() => void refresh()}>
+              Refresh
+            </Button>
+            <Link to="/sync">
+              <Button variant="secondary">Sync</Button>
+            </Link>
+            {selectedLessonId ? (
+              <Link to={`/admin/lessons/${selectedLessonId}/preview${search}`}>
+                <Button variant="secondary">Preview as student</Button>
+              </Link>
+            ) : null}
+          </div>
+        }
+      />
 
       <div className="grid gap-4 lg:grid-cols-3">
         <div className="space-y-4 lg:col-span-1">
@@ -308,7 +298,11 @@ export function AdminLessonsPage() {
                 </div>
               </button>
             ))}
-            {pending.length === 0 ? <div className="text-sm text-muted">No pending lessons.</div> : null}
+            {pending.length === 0 ? (
+              <div className="text-sm text-muted">
+                No pending lessons. If teachers submitted lessons on another device, run Sync.
+              </div>
+            ) : null}
           </div>
         </Card>
         <Card title="Approved lessons">
@@ -347,39 +341,30 @@ export function AdminLessonsPage() {
             <>
               <LessonPlayer blocks={blocks} />
               {selectedLesson ? (
-                <div className="mt-4 grid gap-3 md:grid-cols-2">
-                  <Input label="Title" value={editTitle} onChange={(e) => setEditTitle(e.target.value)} />
-                  <Input label="Subject" value={editSubject} onChange={(e) => setEditSubject(e.target.value)} />
-                  <Select label="Level" value={editLevel} onChange={(e) => setEditLevel(e.target.value as any)}>
-                    <option value="Preschool">Preschool</option>
-                    <option value="Primary">Primary</option>
-                    <option value="Secondary">Secondary</option>
-                    <option value="Vocational">Vocational</option>
-                  </Select>
-                  <Select label="Language" value={String(editLanguage)} onChange={(e) => setEditLanguage(e.target.value as any)}>
-                    <option value="en">English</option>
-                    <option value="sw">Swahili</option>
-                  </Select>
-                  <Input
-                    label="Tags (comma separated)"
-                    value={editTags}
-                    onChange={(e) => setEditTags(e.target.value)}
-                  />
-                  <Input
-                    label="Expires (YYYY-MM-DD)"
-                    value={editExpiresAt}
-                    onChange={(e) => setEditExpiresAt(e.target.value)}
-                  />
-                  <div className="md:col-span-2">
-                    <label className="block">
-                      <div className="mb-1 text-sm text-muted">Description</div>
-                      <textarea
-                        className="w-full rounded-lg border border-border bg-surface px-3 py-2 text-sm text-text outline-none focus:border-brand"
-                        rows={3}
-                        value={editDescription}
-                        onChange={(e) => setEditDescription(e.target.value)}
-                      />
-                    </label>
+                <div className="mt-4 grid gap-2 text-sm text-text">
+                  <div>
+                    <span className="text-muted">Title:</span> {selectedLesson.title}
+                  </div>
+                  <div>
+                    <span className="text-muted">Curriculum:</span>{" "}
+                    {selectedLesson.level} • {selectedLesson.className ?? "—"} • {selectedLesson.subject}
+                  </div>
+                  <div>
+                    <span className="text-muted">Language:</span> {String(selectedLesson.language)}
+                  </div>
+                  <div>
+                    <span className="text-muted">Access:</span> {selectedLesson.accessPolicy ?? (selectedLesson.tags.includes("trial") ? "free" : "coupon")}
+                  </div>
+                  <div>
+                    <span className="text-muted">Tags:</span> {(selectedLesson.tags ?? []).join(", ") || "—"}
+                  </div>
+                  <div>
+                    <span className="text-muted">Expires:</span>{" "}
+                    {selectedLesson.expiresAt ? new Date(selectedLesson.expiresAt).toLocaleDateString() : "—"}
+                  </div>
+                  <div className="text-muted">Description</div>
+                  <div className="rounded-lg border border-border bg-surface p-3 text-sm text-text">
+                    {selectedLesson.description || "—"}
                   </div>
                 </div>
               ) : null}
@@ -405,9 +390,6 @@ export function AdminLessonsPage() {
                 ) : null}
                 {selectedLesson?.status === "approved" ? (
                   <>
-                    <Button variant="secondary" onClick={() => void saveMetadata(selectedLessonId)}>
-                      Save metadata
-                    </Button>
                     <Button
                       variant="secondary"
                       data-testid="lesson-create-version"

@@ -13,7 +13,8 @@ test("Teacher lessons: delete requires confirmation; cancel keeps lesson", async
   await page.getByLabel("Level").selectOption({ label: "Primary" });
   await page.getByLabel("Class").selectOption({ label: "Class 1" });
   await page.getByLabel("Subject").selectOption({ label: "ICT" });
-  await page.getByLabel("Tags (comma separated; include 'trial' for free lessons)").fill("trial");
+  await page.getByLabel("Access").selectOption({ label: "Free" });
+  await page.getByLabel("Tags (comma separated)").fill("trial");
   await page.getByLabel("Description").fill("Lesson for delete confirmation test.");
   await page.getByRole("button", { name: "Next" }).click();
   await page.getByRole("button", { name: "Add text" }).click();

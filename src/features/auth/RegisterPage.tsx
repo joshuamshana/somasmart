@@ -4,6 +4,7 @@ import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "@/features/auth/authContext";
+import { getSafeNextFromSearch } from "@/features/auth/nextRoute";
 import { Card } from "@/shared/ui/Card";
 import { Input } from "@/shared/ui/Input";
 import { Button } from "@/shared/ui/Button";
@@ -45,7 +46,8 @@ export function RegisterPage() {
               setFormError(res.error);
               return;
             }
-            nav(`/student${search}`, { replace: true });
+            const next = getSafeNextFromSearch(search);
+            nav(`${next ?? "/"}${search}`, { replace: true });
           })}
         >
           <Input label="Full name" error={errors.displayName?.message} {...register("displayName")} />

@@ -18,7 +18,6 @@ test("Admin lessons governance: create new version for teacher; expire approved 
   // Create a new version (draft copy)
   await page.getByTestId("lesson-create-version").click();
   await page.getByRole("dialog").getByRole("button", { name: "Create version" }).click();
-  await expect(page.getByLabel("Title")).toHaveValue(/Introduction to Numbers \(v2\)/);
 
   // Teacher sees the new draft
   await page.getByRole("button", { name: "Logout" }).click();
@@ -30,7 +29,7 @@ test("Admin lessons governance: create new version for teacher; expire approved 
   await page.goto(`/teacher/lessons?device=${device}`);
   await expect(page.getByText(/Introduction to Numbers \(v2\)/)).toBeVisible();
 
-  // Admin expires the original lesson
+  // Admin unpublishes the original lesson
   await page.getByRole("button", { name: "Logout" }).click();
   await page.goto(`/login?device=${device}`);
   await page.getByLabel("Username").fill("admin");
@@ -40,12 +39,10 @@ test("Admin lessons governance: create new version for teacher; expire approved 
   await page.goto(`/admin/lessons?device=${device}`);
   await page.getByTestId("lesson-item-lesson_seed_numbers").click();
 
-  const yesterday = new Date(Date.now() - 24 * 3600 * 1000);
-  const ymd = yesterday.toISOString().slice(0, 10);
-  await page.getByLabel("Expires (YYYY-MM-DD)").fill(ymd);
-  await page.getByRole("button", { name: "Save metadata" }).click();
+  await page.getByRole("button", { name: "Unpublish" }).click();
+  await page.getByRole("dialog").getByRole("button", { name: "Unpublish" }).click();
 
-  // Student should not see expired lesson in catalog
+  // Student should not see unpublished lesson in catalog
   await page.getByRole("button", { name: "Logout" }).click();
   await page.goto(`/register?device=${device}`);
   await page.getByLabel("Full name").fill("Student X");
