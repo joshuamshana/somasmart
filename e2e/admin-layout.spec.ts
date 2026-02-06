@@ -37,6 +37,35 @@ test("Admin layout: mobile drawer navigation works", async ({ page }) => {
   await expect(page.getByRole("dialog")).toHaveCount(0);
 });
 
+test("Admin layout: sidebar scroll is independent from main body", async ({ page }) => {
+  const device = `adminSidebarScroll_${Date.now()}`;
+  await page.setViewportSize({ width: 1280, height: 320 });
+  await loginAsAdmin(page, device);
+
+  const sidebarPanel = page.getByTestId("admin-sidebar-panel");
+  await expect(sidebarPanel).toBeVisible();
+
+  const overflowY = await sidebarPanel.evaluate((el) => getComputedStyle(el).overflowY);
+  expect(overflowY).toBe("auto");
+
+  const canScroll = await sidebarPanel.evaluate((el) => el.scrollHeight > el.clientHeight);
+  expect(canScroll).toBeTruthy();
+
+  await page.evaluate(() => window.scrollTo(0, 0));
+  const beforeWindowY = await page.evaluate(() => window.scrollY);
+  const beforeSidebarY = await sidebarPanel.evaluate((el) => el.scrollTop);
+
+  await sidebarPanel.hover();
+  await page.mouse.wheel(0, 400);
+  await page.waitForTimeout(50);
+
+  const afterSidebarY = await sidebarPanel.evaluate((el) => el.scrollTop);
+  const afterWindowY = await page.evaluate(() => window.scrollY);
+
+  expect(afterSidebarY).toBeGreaterThan(beforeSidebarY);
+  expect(afterWindowY - beforeWindowY).toBeLessThan(50);
+});
+
 test("Admin pages: screenshot smoke checks", async ({ page }) => {
   const device = `adminLayoutShots_${Date.now()}`;
   await loginAsAdmin(page, device);

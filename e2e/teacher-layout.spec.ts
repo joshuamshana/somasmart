@@ -47,6 +47,7 @@ test("Teacher layout: mobile drawer navigation works", async ({ page }) => {
   await page.getByLabel("Password").fill("teacher123");
   await page.getByRole("button", { name: "Login" }).click();
   await expect(page.getByRole("button", { name: "Logout" })).toBeVisible({ timeout: 30_000 });
+  await expect(page.getByRole("link", { name: "My Lessons", exact: true })).toBeHidden();
 
   await page.goto("/teacher");
   await expect(page.getByTestId("teacher-mobile-header")).toBeVisible();
@@ -56,4 +57,43 @@ test("Teacher layout: mobile drawer navigation works", async ({ page }) => {
   await page.getByRole("link", { name: "Lessons", exact: true }).click();
   await expect(page.getByRole("heading", { name: "My lessons" })).toBeVisible();
   await expect(page.getByText("Teacher menu")).toHaveCount(0);
+});
+
+test("Teacher layout: sidebar scroll is independent from main body", async ({ page }) => {
+  const server = `srv_teacher_sidebar_scroll_${Date.now()}`;
+  const device = `teach_scroll_${server}`;
+
+  await page.setViewportSize({ width: 1280, height: 320 });
+
+  await page.goto(`/login?device=${device}&server=${server}`);
+  await page.getByLabel("Username").fill("teacher1");
+  await page.getByLabel("Password").fill("teacher123");
+  await page.getByRole("button", { name: "Login" }).click();
+  await expect(page.getByRole("button", { name: "Logout" })).toBeVisible({ timeout: 30_000 });
+
+  await page.goto(`/teacher?device=${device}&server=${server}`);
+  await expect(page.getByTestId("teacher-layout")).toBeVisible();
+
+  const sidebarPanel = page.getByTestId("teacher-sidebar-panel");
+  await expect(sidebarPanel).toBeVisible();
+
+  const overflowY = await sidebarPanel.evaluate((el) => getComputedStyle(el).overflowY);
+  expect(overflowY).toBe("auto");
+
+  const canScroll = await sidebarPanel.evaluate((el) => el.scrollHeight > el.clientHeight);
+  expect(canScroll).toBeTruthy();
+
+  await page.evaluate(() => window.scrollTo(0, 0));
+  const beforeWindowY = await page.evaluate(() => window.scrollY);
+  const beforeSidebarY = await sidebarPanel.evaluate((el) => el.scrollTop);
+
+  await sidebarPanel.hover();
+  await page.mouse.wheel(0, 400);
+  await page.waitForTimeout(50);
+
+  const afterSidebarY = await sidebarPanel.evaluate((el) => el.scrollTop);
+  const afterWindowY = await page.evaluate(() => window.scrollY);
+
+  expect(afterSidebarY).toBeGreaterThan(beforeSidebarY);
+  expect(afterWindowY - beforeWindowY).toBeLessThan(50);
 });

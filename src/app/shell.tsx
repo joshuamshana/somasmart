@@ -78,13 +78,13 @@ export function AppShell() {
                   </>
                 )}
                 {user.role === "teacher" && (
-                  <>
+                  <div className="hidden lg:flex items-center gap-2">
                     <NavLink to="/teacher">Dashboard</NavLink>
                     <NavLink to="/teacher/lessons">My Lessons</NavLink>
                     <NavLink to="/teacher/lessons/new">Upload Lesson</NavLink>
                     <NavLink to="/teacher/support">Support</NavLink>
                     <NavLink to="/sync">Sync</NavLink>
-                  </>
+                  </div>
                 )}
                 {user.role === "school_admin" && (
                   <>

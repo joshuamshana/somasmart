@@ -36,7 +36,10 @@ export function TeacherLayout() {
     <div className="grid gap-4 lg:grid-cols-[260px_1fr]" data-testid="teacher-layout">
       {/* Desktop sidebar */}
       <aside className="hidden lg:block" data-testid="teacher-sidebar">
-        <div className="sticky top-[72px] rounded-xl border border-border bg-surface p-3 shadow-sm">
+        <div
+          className="sticky top-[72px] h-[calc(100vh-96px)] overflow-y-auto overscroll-contain rounded-xl border border-border bg-surface p-3 shadow-sm"
+          data-testid="teacher-sidebar-panel"
+        >
           <div className="mb-3 px-2 text-sm font-semibold text-text">Teacher</div>
           <SidebarNav groups={groups as any} />
         </div>
@@ -74,7 +77,7 @@ export function TeacherLayout() {
                   leaveFrom="opacity-100 scale-100"
                   leaveTo="opacity-0 scale-95"
                 >
-                  <Dialog.Panel className="w-full max-w-sm rounded-xl border border-border bg-surface p-3 shadow-lg">
+                  <Dialog.Panel className="max-h-[calc(100vh-2rem)] w-full max-w-sm overflow-y-auto overscroll-contain rounded-xl border border-border bg-surface p-3 shadow-lg">
                     <div className="mb-3 flex items-center justify-between gap-3 px-2">
                       <Dialog.Title className="text-sm font-semibold text-text">Teacher menu</Dialog.Title>
                       <button className="text-sm text-muted hover:text-text" onClick={() => setOpen(false)}>
