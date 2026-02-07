@@ -1,5 +1,6 @@
 * {
   -webkit-tap-highlight-color: transparent;
+  box-sizing: border-box;
 }
 
 ::selection {
@@ -13,6 +14,18 @@ body,
 }
 
 body {
+  margin: 0;
+  font-family:
+    "Manrope",
+    "Plus Jakarta Sans",
+    "Avenir Next",
+    "Segoe UI",
+    sans-serif;
+  font-size: var(--font-body);
+  line-height: var(--line-body);
+  color: rgb(var(--text-body));
+  background: radial-gradient(180% 80% at 50% -20%, rgb(var(--surface-inset) / 0.38), transparent),
+    rgb(var(--surface-canvas));
   font-feature-settings: "ss01" 1, "ss02" 1;
 }
 
@@ -25,6 +38,54 @@ html[data-theme="dark"] {
 }
 
 :focus-visible {
-  outline: 2px solid rgb(var(--color-brand) / 0.9);
+  outline: 2px solid rgb(var(--focus-ring) / 0.95);
   outline-offset: 2px;
+}
+
+h1,
+h2,
+h3,
+h4 {
+  margin: 0;
+  color: rgb(var(--text-title));
+}
+
+p {
+  margin: 0;
+}
+
+.paper-canvas {
+  background: rgb(var(--surface-canvas));
+}
+
+.paper-primary {
+  border: 1px solid rgb(var(--border-subtle));
+  border-radius: var(--radius-lg);
+  background: rgb(var(--surface-paper));
+  box-shadow: var(--shadow-sm);
+}
+
+.paper-secondary {
+  border: 1px solid rgb(var(--border-subtle));
+  border-radius: var(--radius-md);
+  background: rgb(var(--surface-paper-2));
+  box-shadow: var(--shadow-sm);
+}
+
+.paper-inset {
+  border: 1px solid rgb(var(--border-subtle));
+  border-radius: var(--radius-md);
+  background: rgb(var(--surface-inset));
+}
+
+.section-rhythm {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+}
+
+@media (max-width: 767px) {
+  .section-rhythm {
+    gap: var(--space-4);
+  }
 }

@@ -21,16 +21,15 @@ export function StatusPill({
   return (
     <span
       className={clsx(
-        "inline-flex items-center rounded-full border px-2.5 py-1 text-xs font-medium",
-        tone === "success" && "border-success/30 bg-success/10 text-success",
-        tone === "warning" && "border-warning/30 bg-warning/10 text-warning",
-        tone === "danger" && "border-danger/30 bg-danger/10 text-danger",
-        tone === "info" && "border-info/30 bg-info/10 text-info",
-        tone === "muted" && "border-border bg-surface2 text-muted"
+        "inline-flex items-center rounded-full border px-2.5 py-1 text-xs font-semibold",
+        tone === "success" && "border-status-success-border bg-status-success-bg text-status-success",
+        tone === "warning" && "border-status-warning-border bg-status-warning-bg text-status-warning",
+        tone === "danger" && "border-status-danger-border bg-status-danger-bg text-status-danger",
+        tone === "info" && "border-status-info-border bg-status-info-bg text-status-info",
+        tone === "muted" && "border-border-subtle bg-paper-2 text-text-subtle"
       )}
     >
       {value}
     </span>
   );
 }
-

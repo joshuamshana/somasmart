@@ -13,7 +13,7 @@ export const Select = forwardRef<
   const selectId = id ?? fallbackId;
   return (
     <div className="block">
-      <label htmlFor={selectId} className="mb-1 block text-sm text-muted">
+      <label htmlFor={selectId} className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-text-subtle">
         {label}
       </label>
       <select
@@ -21,15 +21,16 @@ export const Select = forwardRef<
         ref={ref}
         aria-invalid={error ? true : undefined}
         className={clsx(
-          "w-full rounded-lg border bg-surface px-3 py-2 text-sm text-text outline-none",
-          error ? "border-danger" : "border-border focus:border-brand",
+          "h-11 w-full rounded-md border bg-paper px-3 text-sm text-text-title",
+          "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/70",
+          error ? "border-status-danger" : "border-border-subtle focus-visible:border-brand",
           className
         )}
         {...props}
       >
         {children}
       </select>
-      {error ? <div className="mt-1 text-xs text-danger">{error}</div> : null}
+      {error ? <div className="mt-1 text-caption font-medium text-status-danger">{error}</div> : null}
     </div>
   );
 });

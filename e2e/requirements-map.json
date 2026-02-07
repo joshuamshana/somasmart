@@ -1,0 +1,394 @@
+{
+  "REQ-0001": [
+    "e2e/p0.spec.ts"
+  ],
+  "REQ-0002": [
+    "e2e/sync.spec.ts"
+  ],
+  "REQ-0003": [
+    "e2e/p0.spec.ts"
+  ],
+  "REQ-0004": [
+    "e2e/p0.spec.ts"
+  ],
+  "REQ-0101": [
+    "e2e/p0.spec.ts"
+  ],
+  "REQ-0102": [
+    "e2e/p0.spec.ts",
+    "e2e/sync.spec.ts"
+  ],
+  "REQ-0106": [
+    "e2e/p0.spec.ts"
+  ],
+  "REQ-0107": [
+    "e2e/notifications.spec.ts",
+    "e2e/sync.spec.ts"
+  ],
+  "REQ-0103": [
+    "e2e/accessibility-basics.spec.ts",
+    "e2e/admin-analytics.spec.ts",
+    "e2e/admin-confirmations.spec.ts",
+    "e2e/admin-coupons-edit.spec.ts",
+    "e2e/admin-layout.spec.ts",
+    "e2e/admin-lessons-governance.spec.ts",
+    "e2e/admin-licenses-exports.spec.ts",
+    "e2e/admin-polling-state.spec.ts",
+    "e2e/admin-schools-crud.spec.ts",
+    "e2e/admin-schools.spec.ts",
+    "e2e/admin-settings-backup.spec.ts",
+    "e2e/admin-settings-state.spec.ts",
+    "e2e/admin-student-preview.spec.ts",
+    "e2e/admin-students.spec.ts",
+    "e2e/admin-subject-access-defaults.spec.ts",
+    "e2e/admin-support.spec.ts",
+    "e2e/admin-users-crud.spec.ts",
+    "e2e/auth-redirect.spec.ts",
+    "e2e/badges.spec.ts",
+    "e2e/enrollment-approval-flow.spec.ts",
+    "e2e/learn-filters.spec.ts",
+    "e2e/lesson-composite-v2.spec.ts",
+    "e2e/messaging.spec.ts",
+    "e2e/minors.spec.ts",
+    "e2e/notifications.spec.ts",
+    "e2e/p0.spec.ts",
+    "e2e/payments.spec.ts",
+    "e2e/public-layout.spec.ts",
+    "e2e/public-lesson-login-gate.spec.ts",
+    "e2e/reports.spec.ts",
+    "e2e/school-layout.spec.ts",
+    "e2e/school.spec.ts",
+    "e2e/student-layout.spec.ts",
+    "e2e/student-lesson-stepper.spec.ts",
+    "e2e/student-lessons-filters.spec.ts",
+    "e2e/sync-admin-coupons.spec.ts",
+    "e2e/sync-admin-schools.spec.ts",
+    "e2e/sync-students.spec.ts",
+    "e2e/sync.spec.ts",
+    "e2e/teacher-dashboard.spec.ts",
+    "e2e/teacher-governance.spec.ts",
+    "e2e/teacher-layout.spec.ts",
+    "e2e/teacher-lesson-creator.spec.ts",
+    "e2e/teacher-lessons-actions.spec.ts",
+    "e2e/teacher-nav-active.spec.ts",
+    "e2e/teacher-quiz-authoring.spec.ts",
+    "e2e/teacher-text-variants.spec.ts",
+    "e2e/teacher-upload-ux.spec.ts",
+    "e2e/theme-appearance.spec.ts",
+    "e2e/ui-audit-capture.spec.ts",
+    "e2e/video.spec.ts"
+  ],
+  "REQ-0104": [
+    "e2e/accessibility-basics.spec.ts",
+    "e2e/admin-analytics.spec.ts",
+    "e2e/admin-confirmations.spec.ts",
+    "e2e/admin-coupons-edit.spec.ts",
+    "e2e/admin-layout.spec.ts",
+    "e2e/admin-lessons-governance.spec.ts",
+    "e2e/admin-licenses-exports.spec.ts",
+    "e2e/admin-polling-state.spec.ts",
+    "e2e/admin-schools-crud.spec.ts",
+    "e2e/admin-schools.spec.ts",
+    "e2e/admin-settings-backup.spec.ts",
+    "e2e/admin-settings-state.spec.ts",
+    "e2e/admin-student-preview.spec.ts",
+    "e2e/admin-students.spec.ts",
+    "e2e/admin-subject-access-defaults.spec.ts",
+    "e2e/admin-support.spec.ts",
+    "e2e/admin-users-crud.spec.ts",
+    "e2e/auth-redirect.spec.ts",
+    "e2e/badges.spec.ts",
+    "e2e/enrollment-approval-flow.spec.ts",
+    "e2e/learn-filters.spec.ts",
+    "e2e/lesson-composite-v2.spec.ts",
+    "e2e/messaging.spec.ts",
+    "e2e/minors.spec.ts",
+    "e2e/notifications.spec.ts",
+    "e2e/p0.spec.ts",
+    "e2e/payments.spec.ts",
+    "e2e/public-layout.spec.ts",
+    "e2e/public-lesson-login-gate.spec.ts",
+    "e2e/reports.spec.ts",
+    "e2e/school-layout.spec.ts",
+    "e2e/school.spec.ts",
+    "e2e/student-layout.spec.ts",
+    "e2e/student-lesson-stepper.spec.ts",
+    "e2e/student-lessons-filters.spec.ts",
+    "e2e/sync-admin-coupons.spec.ts",
+    "e2e/sync-admin-schools.spec.ts",
+    "e2e/sync-students.spec.ts",
+    "e2e/sync.spec.ts",
+    "e2e/teacher-dashboard.spec.ts",
+    "e2e/teacher-governance.spec.ts",
+    "e2e/teacher-layout.spec.ts",
+    "e2e/teacher-lesson-creator.spec.ts",
+    "e2e/teacher-lessons-actions.spec.ts",
+    "e2e/teacher-nav-active.spec.ts",
+    "e2e/teacher-quiz-authoring.spec.ts",
+    "e2e/teacher-text-variants.spec.ts",
+    "e2e/teacher-upload-ux.spec.ts",
+    "e2e/theme-appearance.spec.ts",
+    "e2e/ui-audit-capture.spec.ts",
+    "e2e/video.spec.ts"
+  ],
+  "REQ-0105": [
+    "e2e/sync.spec.ts"
+  ],
+  "REQ-0150": [
+    "e2e/auth-redirect.spec.ts"
+  ],
+  "REQ-0151": [
+    "e2e/public-lesson-login-gate.spec.ts"
+  ],
+  "REQ-0152": [
+    "e2e/auth-redirect.spec.ts"
+  ],
+  "REQ-0153": [
+    "e2e/public-lesson-login-gate.spec.ts"
+  ],
+  "REQ-0201": [
+    "e2e/p0.spec.ts"
+  ],
+  "REQ-0202": [
+    "e2e/student-lessons-filters.spec.ts"
+  ],
+  "REQ-0205": [
+    "e2e/learn-filters.spec.ts"
+  ],
+  "REQ-0203": [
+    "e2e/video.spec.ts"
+  ],
+  "REQ-0204": [
+    "e2e/enrollment-approval-flow.spec.ts"
+  ],
+  "REQ-0301": [
+    "e2e/teacher-quiz-authoring.spec.ts"
+  ],
+  "REQ-0302": [
+    "e2e/p0.spec.ts"
+  ],
+  "REQ-0303": [
+    "e2e/student-lesson-stepper.spec.ts"
+  ],
+  "REQ-0401": [
+    "e2e/video.spec.ts"
+  ],
+  "REQ-0402": [
+    "e2e/p0.spec.ts",
+    "e2e/sync.spec.ts"
+  ],
+  "REQ-0501": [
+    "e2e/admin-confirmations.spec.ts",
+    "e2e/p0.spec.ts"
+  ],
+  "REQ-0502": [
+    "e2e/admin-lessons-governance.spec.ts",
+    "e2e/p0.spec.ts"
+  ],
+  "REQ-0503": [
+    "e2e/p0.spec.ts",
+    "e2e/sync.spec.ts"
+  ],
+  "REQ-0504": [
+    "e2e/admin-students.spec.ts"
+  ],
+  "REQ-0505": [
+    "e2e/admin-student-preview.spec.ts"
+  ],
+  "REQ-0506": [
+    "e2e/admin-lessons-governance.spec.ts"
+  ],
+  "REQ-0601": [
+    "e2e/student-lesson-stepper.spec.ts"
+  ],
+  "REQ-0602": [
+    "e2e/reports.spec.ts"
+  ],
+  "REQ-0603": [
+    "e2e/admin-analytics.spec.ts"
+  ],
+  "REQ-0701": [
+    "e2e/payments.spec.ts"
+  ],
+  "REQ-0702": [
+    "e2e/p0.spec.ts",
+    "e2e/sync-admin-coupons.spec.ts"
+  ],
+  "REQ-0703": [
+    "e2e/payments.spec.ts"
+  ],
+  "REQ-0704": [
+    "e2e/enrollment-approval-flow.spec.ts"
+  ],
+  "REQ-0705": [
+    "e2e/admin-subject-access-defaults.spec.ts"
+  ],
+  "REQ-0706": [
+    "e2e/enrollment-approval-flow.spec.ts"
+  ],
+  "REQ-0801": [
+    "e2e/school.spec.ts"
+  ],
+  "REQ-0802": [
+    "e2e/school.spec.ts"
+  ],
+  "REQ-0803": [
+    "e2e/school.spec.ts"
+  ],
+  "REQ-0804": [
+    "e2e/school.spec.ts"
+  ],
+  "REQ-0901": [
+    "e2e/messaging.spec.ts"
+  ],
+  "REQ-0902": [
+    "e2e/messaging.spec.ts"
+  ],
+  "REQ-1001": [
+    "e2e/admin-settings-backup.spec.ts"
+  ],
+  "REQ-1002": [
+    "e2e/accessibility-basics.spec.ts",
+    "e2e/admin-layout.spec.ts"
+  ],
+  "REQ-1101": [
+    "e2e/sync.spec.ts"
+  ],
+  "REQ-1102": [
+    "e2e/sync.spec.ts"
+  ],
+  "REQ-1201": [
+    "e2e/video.spec.ts"
+  ],
+  "REQ-1301": [
+    "e2e/badges.spec.ts"
+  ],
+  "REQ-1401": [
+    "e2e/payments.spec.ts"
+  ],
+  "REQ-1601": [
+    "e2e/reports.spec.ts"
+  ],
+  "REQ-1701": [
+    "e2e/notifications.spec.ts"
+  ],
+  "REQ-1801": [
+    "e2e/admin-users-crud.spec.ts"
+  ],
+  "REQ-1802": [
+    "e2e/minors.spec.ts"
+  ],
+  "REQ-1803": [
+    "e2e/admin-students.spec.ts"
+  ],
+  "REQ-1804": [
+    "e2e/admin-students.spec.ts"
+  ],
+  "REQ-1901": [
+    "e2e/admin-confirmations.spec.ts"
+  ],
+  "REQ-1902": [
+    "e2e/admin-users-crud.spec.ts"
+  ],
+  "REQ-1903": [
+    "e2e/admin-schools-crud.spec.ts",
+    "e2e/sync-admin-schools.spec.ts"
+  ],
+  "REQ-1904": [
+    "e2e/admin-lessons-governance.spec.ts"
+  ],
+  "REQ-1905": [
+    "e2e/admin-coupons-edit.spec.ts",
+    "e2e/sync-admin-coupons.spec.ts"
+  ],
+  "REQ-1906": [
+    "e2e/admin-licenses-exports.spec.ts",
+    "e2e/payments.spec.ts"
+  ],
+  "REQ-1907": [
+    "e2e/admin-settings-backup.spec.ts"
+  ],
+  "REQ-1908": [
+    "e2e/admin-support.spec.ts"
+  ],
+  "REQ-1909": [
+    "e2e/sync-admin-coupons.spec.ts",
+    "e2e/sync-admin-schools.spec.ts",
+    "e2e/sync-students.spec.ts",
+    "e2e/sync.spec.ts"
+  ],
+  "REQ-2001": [
+    "e2e/teacher-dashboard.spec.ts",
+    "e2e/teacher-layout.spec.ts"
+  ],
+  "REQ-2002": [
+    "e2e/teacher-dashboard.spec.ts"
+  ],
+  "REQ-2003": [
+    "e2e/teacher-dashboard.spec.ts"
+  ],
+  "REQ-2004": [
+    "e2e/teacher-dashboard.spec.ts"
+  ],
+  "REQ-2005": [
+    "e2e/sync.spec.ts",
+    "e2e/teacher-dashboard.spec.ts"
+  ],
+  "REQ-2006": [
+    "e2e/teacher-dashboard.spec.ts"
+  ],
+  "REQ-2007": [
+    "e2e/teacher-lessons-actions.spec.ts"
+  ],
+  "REQ-2008": [
+    "e2e/teacher-lessons-actions.spec.ts"
+  ],
+  "REQ-2010": [
+    "e2e/admin-settings-backup.spec.ts",
+    "e2e/p0.spec.ts",
+    "e2e/sync.spec.ts",
+    "e2e/teacher-lesson-creator.spec.ts",
+    "e2e/video.spec.ts"
+  ],
+  "REQ-2011": [
+    "e2e/teacher-text-variants.spec.ts"
+  ],
+  "REQ-2012": [
+    "e2e/teacher-nav-active.spec.ts"
+  ],
+  "REQ-2101": [
+    "e2e/teacher-dashboard.spec.ts",
+    "e2e/teacher-upload-ux.spec.ts"
+  ],
+  "REQ-2102": [
+    "e2e/teacher-dashboard.spec.ts",
+    "e2e/teacher-upload-ux.spec.ts"
+  ],
+  "REQ-2103": [
+    "e2e/teacher-lessons-actions.spec.ts",
+    "e2e/teacher-upload-ux.spec.ts"
+  ],
+  "REQ-2104": [
+    "e2e/teacher-upload-ux.spec.ts"
+  ],
+  "REQ-2105": [
+    "e2e/teacher-lesson-creator.spec.ts",
+    "e2e/teacher-upload-ux.spec.ts"
+  ],
+  "REQ-2106": [
+    "e2e/teacher-upload-ux.spec.ts"
+  ],
+  "REQ-2201": [
+    "e2e/theme-appearance.spec.ts"
+  ],
+  "REQ-2202": [
+    "e2e/theme-appearance.spec.ts"
+  ],
+  "REQ-2203": [
+    "e2e/theme-appearance.spec.ts"
+  ],
+  "REQ-2204": [
+    "e2e/admin-layout.spec.ts",
+    "e2e/theme-appearance.spec.ts"
+  ]
+}

@@ -47,7 +47,7 @@ export function SidebarNav({
     <div className="space-y-6">
       {groups.map((g) => (
         <div key={g.label}>
-          <div className="px-2 text-xs font-semibold uppercase tracking-wide text-muted">{g.label}</div>
+          <div className="px-2 text-xs font-semibold uppercase tracking-wide text-text-subtle">{g.label}</div>
           <div className="mt-2 space-y-1">
             {g.items.map((i) => {
               const target = useWithSearch(i.to);
@@ -58,8 +58,10 @@ export function SidebarNav({
                   to={target}
                   onClick={onNavigate}
                   className={clsx(
-                    "block rounded-lg px-3 py-2 text-sm",
-                    active ? "bg-surface2 text-text" : "text-muted hover:bg-surface2/60 hover:text-text"
+                    "block rounded-md px-3 py-2 text-sm font-medium transition-colors duration-base",
+                    active
+                      ? "bg-surface2 bg-action-secondary text-action-secondary-fg shadow-sm"
+                      : "text-text-body hover:bg-paper-2 hover:text-text-title"
                   )}
                 >
                   {i.label}

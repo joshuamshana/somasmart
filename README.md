@@ -24,7 +24,10 @@ Students can self-register. Teachers self-register as **pending** until approved
 
 ## Tests
 - Unit/component: `npm test`
+- Unit/component coverage (100% gated scope): `npm run test:coverage:ci`
+- Journey + requirements matrix validation: `npm run test:journeys:matrix`
 - E2E: `npm run test:e2e`
+- Full CI order locally: `npm run ci`
 
 ## Docs
 - `docs/requirements.md`

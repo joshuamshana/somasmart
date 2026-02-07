@@ -8,3 +8,5 @@ test-results
 coverage
 .npm-cache
 .idea
+# Local Netlify folder
+.netlify

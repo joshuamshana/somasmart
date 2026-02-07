@@ -301,7 +301,7 @@ export function AdminLessonsPage() {
   }
 
   return (
-    <div className="space-y-4">
+    <div className="section-rhythm">
       <ConfirmDialog
         open={Boolean(confirm)}
         title={confirm?.title ?? ""}
@@ -322,15 +322,16 @@ export function AdminLessonsPage() {
         description="Approve teacher submissions and manage published lesson content."
         actions={
           <div className="flex flex-wrap gap-2">
-            <Button variant="secondary" onClick={() => void refresh()}>
+            <Button variant="secondary" tone="neutral" onClick={() => void refresh()}>
               Refresh
             </Button>
             <Link to="/sync">
-              <Button variant="secondary">Sync</Button>
+              <Button variant="secondary" tone="neutral">Sync</Button>
             </Link>
             {selectedLessonId ? (
               <Button
                 variant="secondary"
+                tone="neutral"
                 onClick={() => nav(`/admin/lessons/${selectedLessonId}/preview${search}`)}
               >
                 Preview as student
@@ -340,66 +341,66 @@ export function AdminLessonsPage() {
         }
       />
 
-      <div className="grid gap-4 lg:grid-cols-3">
+      <div className="grid gap-4 lg:grid-cols-[360px_minmax(0,1fr)]">
         <div className="space-y-4 lg:col-span-1">
-        <Card title="Pending lessons">
+        <Card title="Pending lessons" paper="secondary">
           <div className="space-y-2">
             {pending.map((l) => (
               <button
                 key={l.id}
                 data-testid={`lesson-item-${l.id}`}
-                className={`w-full rounded-lg border px-3 py-2 text-left text-sm ${
+                className={`w-full rounded-md border px-3 py-2 text-left text-sm ${
                   selectedLessonId === l.id
-                    ? "border-brand bg-surface2"
-                    : "border-border bg-surface hover:border-border/80"
+                    ? "border-action-primary bg-action-primary/10"
+                    : "border-border-subtle bg-paper hover:border-border-strong"
                 }`}
                 onClick={() => setSelectedLessonId(l.id)}
               >
-                <div className="font-semibold">{l.title}</div>
-                <div className="mt-1 text-xs text-muted">
+                <div className="font-semibold text-text-title">{l.title}</div>
+                <div className="mt-1 text-xs text-text-subtle">
                   {teachersById[l.createdByUserId]?.displayName ?? "Unknown"} • {l.subject} • {l.level}
                 </div>
               </button>
             ))}
             {pending.length === 0 ? (
-              <div className="text-sm text-muted">
+              <div className="text-sm text-text-subtle">
                 No pending lessons. If teachers submitted lessons on another device, run Sync.
               </div>
             ) : null}
           </div>
         </Card>
-        <Card title="Approved lessons">
+        <Card title="Approved lessons" paper="secondary">
           <div className="space-y-2">
             {approved.map((l) => (
               <button
                 key={l.id}
                 data-testid={`lesson-item-${l.id}`}
-                className={`w-full rounded-lg border px-3 py-2 text-left text-sm ${
+                className={`w-full rounded-md border px-3 py-2 text-left text-sm ${
                   selectedLessonId === l.id
-                    ? "border-brand bg-surface2"
-                    : "border-border bg-surface hover:border-border/80"
+                    ? "border-action-primary bg-action-primary/10"
+                    : "border-border-subtle bg-paper hover:border-border-strong"
                 }`}
                 onClick={() => setSelectedLessonId(l.id)}
               >
-                <div className="font-semibold">{l.title}</div>
-                <div className="mt-1 text-xs text-muted">
+                <div className="font-semibold text-text-title">{l.title}</div>
+                <div className="mt-1 text-xs text-text-subtle">
                   {teachersById[l.createdByUserId]?.displayName ?? "Unknown"} • {l.subject} • {l.level}
                 </div>
               </button>
             ))}
-            {approved.length === 0 ? <div className="text-sm text-muted">No approved lessons.</div> : null}
+            {approved.length === 0 ? <div className="text-sm text-text-subtle">No approved lessons.</div> : null}
           </div>
         </Card>
-        <Card title="Summary">
-          <div className="text-sm text-muted">Approved: {approved.length}</div>
-          <div className="text-sm text-muted">Rejected: {rejected.length}</div>
+        <Card title="Summary" paper="secondary">
+          <div className="text-sm text-text-subtle">Approved: {approved.length}</div>
+          <div className="text-sm text-text-subtle">Rejected: {rejected.length}</div>
         </Card>
       </div>
 
       <div className="space-y-4 lg:col-span-2">
         <Card title="Lesson review">
           {!selectedLessonId ? (
-            <div className="text-sm text-muted">Select a pending lesson to preview and approve/reject.</div>
+            <div className="text-sm text-text-subtle">Select a pending lesson to preview and approve/reject.</div>
           ) : (
             <>
               <LessonStepperPlayer
@@ -419,38 +420,38 @@ export function AdminLessonsPage() {
                 }}
               />
               {selectedLesson ? (
-                <div className="mt-4 grid gap-2 text-sm text-text">
+                <div className="mt-4 grid gap-2 text-sm text-text-body">
                   <div>
-                    <span className="text-muted">Title:</span> {selectedLesson.title}
+                    <span className="text-text-subtle">Title:</span> {selectedLesson.title}
                   </div>
                   <div>
-                    <span className="text-muted">Curriculum:</span>{" "}
+                    <span className="text-text-subtle">Curriculum:</span>{" "}
                     {selectedLesson.level} • {selectedLesson.className ?? "—"} • {selectedLesson.subject}
                   </div>
                   <div>
-                    <span className="text-muted">Language:</span> {String(selectedLesson.language)}
+                    <span className="text-text-subtle">Language:</span> {String(selectedLesson.language)}
                   </div>
                   <div>
-                    <span className="text-muted">Access:</span> {selectedLesson.accessPolicy ?? (selectedLesson.tags.includes("trial") ? "free" : "coupon")}
+                    <span className="text-text-subtle">Access:</span> {selectedLesson.accessPolicy ?? (selectedLesson.tags.includes("trial") ? "free" : "coupon")}
                   </div>
                   <div>
-                    <span className="text-muted">Tags:</span> {(selectedLesson.tags ?? []).join(", ") || "—"}
+                    <span className="text-text-subtle">Tags:</span> {(selectedLesson.tags ?? []).join(", ") || "—"}
                   </div>
                   <div>
-                    <span className="text-muted">Expires:</span>{" "}
+                    <span className="text-text-subtle">Expires:</span>{" "}
                     {selectedLesson.expiresAt ? new Date(selectedLesson.expiresAt).toLocaleDateString() : "—"}
                   </div>
-                  <div className="text-muted">Description</div>
-                  <div className="rounded-lg border border-border bg-surface p-3 text-sm text-text">
+                  <div className="text-text-subtle">Description</div>
+                  <div className="rounded-md border border-border-subtle bg-paper-2 p-3 text-sm text-text-body">
                     {selectedLesson.description || "—"}
                   </div>
                 </div>
               ) : null}
               <div className="mt-4">
                 <label className="block">
-                  <div className="mb-1 text-sm text-muted">Feedback to teacher</div>
+                  <div className="mb-1 text-sm text-text-subtle">Feedback to teacher</div>
                   <textarea
-                    className="w-full rounded-lg border border-border bg-surface px-3 py-2 text-sm text-text outline-none focus:border-brand"
+                    className="w-full rounded-md border border-border-subtle bg-paper px-3 py-2 text-sm text-text-title outline-none focus:border-brand"
                     rows={3}
                     value={feedback}
                     onChange={(e) => setFeedback(e.target.value)}

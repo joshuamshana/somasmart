@@ -1,72 +1,142 @@
 :root,
 :root[data-theme="dark"] {
-  --color-bg: 2 6 23;
-  --color-surface: 2 6 23;
-  --color-surface-2: 15 23 42;
-  --color-border: 30 41 59;
-  --color-text: 248 250 252;
-  --color-text-muted: 148 163 184;
-  --color-brand: 14 165 233;
-  --color-brand-contrast: 2 6 23;
-  --color-link: 56 189 248;
-  --color-link-hover: 125 211 252;
-  --color-overlay: 2 6 23;
-  --color-danger: 251 113 133;
-  --color-success: 74 222 128;
-  --color-warning: 251 191 36;
-  --color-info: 96 165 250;
-  --color-danger-surface: 76 5 25;
-  --color-danger-border: 159 18 57;
-  --color-danger-text: 251 113 133;
-  --color-success-surface: 5 46 22;
-  --color-success-border: 22 101 52;
-  --color-success-text: 134 239 172;
-  --color-warning-surface: 69 26 3;
-  --color-warning-border: 146 64 14;
-  --color-warning-text: 252 211 77;
-  --color-info-surface: 30 58 138;
-  --color-info-border: 29 78 216;
-  --color-info-text: 147 197 253;
-  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.25);
-  --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.35);
-  --shadow-lg: 0 16px 48px rgba(0, 0, 0, 0.45);
+  --surface-canvas: 2 8 23;
+  --surface-paper: 13 21 43;
+  --surface-paper-2: 18 29 58;
+  --surface-inset: 24 36 67;
+  --border-subtle: 45 62 92;
+  --border-strong: 73 93 130;
+
+  --text-title: 241 245 249;
+  --text-body: 203 213 225;
+  --text-subtle: 148 163 184;
+  --text-inverse: 2 8 23;
+
+  --action-primary-bg: 56 189 248;
+  --action-primary-hover: 14 165 233;
+  --action-primary-active: 2 132 199;
+  --action-primary-fg: 2 8 23;
+  --action-secondary-bg: 24 36 67;
+  --action-secondary-hover: 32 48 88;
+  --action-secondary-active: 41 61 110;
+  --action-secondary-fg: 226 232 240;
+  --focus-ring: 56 189 248;
+
+  --status-danger: 251 113 133;
+  --status-danger-bg: 82 15 40;
+  --status-danger-border: 159 18 57;
+  --status-success: 74 222 128;
+  --status-success-bg: 7 53 33;
+  --status-success-border: 21 128 61;
+  --status-warning: 251 191 36;
+  --status-warning-bg: 77 42 12;
+  --status-warning-border: 180 83 9;
+  --status-info: 147 197 253;
+  --status-info-bg: 30 58 138;
+  --status-info-border: 29 78 216;
+
+  --shadow-sm: 0 1px 2px rgb(0 0 0 / 0.25);
+  --shadow-md: 0 10px 26px rgb(2 8 23 / 0.45);
+  --shadow-lg: 0 20px 52px rgb(2 8 23 / 0.55);
 }
 
 :root[data-theme="light"] {
-  --color-bg: 248 250 252;
-  --color-surface: 255 255 255;
-  --color-surface-2: 241 245 249;
-  --color-border: 203 213 225;
-  --color-text: 15 23 42;
-  --color-text-muted: 71 85 105;
-  --color-brand: 2 132 199;
-  --color-brand-contrast: 255 255 255;
-  --color-link: 3 105 161;
-  --color-link-hover: 14 116 144;
-  --color-overlay: 15 23 42;
-  --color-danger: 225 29 72;
-  --color-success: 22 163 74;
-  --color-warning: 217 119 6;
-  --color-info: 37 99 235;
-  --color-danger-surface: 255 241 242;
-  --color-danger-border: 254 205 211;
-  --color-danger-text: 190 18 60;
-  --color-success-surface: 240 253 244;
-  --color-success-border: 187 247 208;
-  --color-success-text: 21 128 61;
-  --color-warning-surface: 255 251 235;
-  --color-warning-border: 254 240 138;
-  --color-warning-text: 161 98 7;
-  --color-info-surface: 239 246 255;
-  --color-info-border: 191 219 254;
-  --color-info-text: 30 64 175;
-  --shadow-sm: 0 1px 2px rgba(2, 6, 23, 0.08);
-  --shadow-md: 0 8px 24px rgba(2, 6, 23, 0.12);
-  --shadow-lg: 0 16px 48px rgba(2, 6, 23, 0.15);
+  --surface-canvas: 245 247 251;
+  --surface-paper: 255 255 255;
+  --surface-paper-2: 248 250 254;
+  --surface-inset: 238 244 252;
+  --border-subtle: 202 213 230;
+  --border-strong: 158 177 204;
+
+  --text-title: 15 23 42;
+  --text-body: 45 65 96;
+  --text-subtle: 88 104 132;
+  --text-inverse: 255 255 255;
+
+  --action-primary-bg: 14 165 233;
+  --action-primary-hover: 2 132 199;
+  --action-primary-active: 3 105 161;
+  --action-primary-fg: 255 255 255;
+  --action-secondary-bg: 241 245 249;
+  --action-secondary-hover: 226 232 240;
+  --action-secondary-active: 203 213 225;
+  --action-secondary-fg: 30 41 59;
+  --focus-ring: 14 165 233;
+
+  --status-danger: 190 18 60;
+  --status-danger-bg: 255 241 242;
+  --status-danger-border: 253 164 175;
+  --status-success: 22 163 74;
+  --status-success-bg: 240 253 244;
+  --status-success-border: 134 239 172;
+  --status-warning: 180 83 9;
+  --status-warning-bg: 255 251 235;
+  --status-warning-border: 253 224 71;
+  --status-info: 30 64 175;
+  --status-info-bg: 239 246 255;
+  --status-info-border: 147 197 253;
+
+  --shadow-sm: 0 1px 2px rgb(2 8 23 / 0.08);
+  --shadow-md: 0 10px 26px rgb(2 8 23 / 0.12);
+  --shadow-lg: 0 20px 52px rgb(2 8 23 / 0.18);
 }
 
 :root {
-  --radius-sm: 8px;
-  --radius-md: 12px;
-  --radius-lg: 16px;
+  --radius-sm: 10px;
+  --radius-md: 14px;
+  --radius-lg: 20px;
+  --radius-xl: 26px;
+
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-7: 32px;
+  --space-8: 40px;
+
+  --font-display: 2rem;
+  --font-h1: 1.625rem;
+  --font-h2: 1.25rem;
+  --font-h3: 1.0625rem;
+  --font-body: 0.9375rem;
+  --font-caption: 0.75rem;
+  --line-tight: 1.2;
+  --line-body: 1.55;
+
+  --motion-fast: 120ms;
+  --motion-base: 220ms;
+  --motion-slow: 340ms;
+  --ease-standard: cubic-bezier(0.2, 0.7, 0, 1);
+  --ease-emphasis: cubic-bezier(0.16, 1, 0.3, 1);
+
+  /* Backward compatibility aliases for existing utility usage. */
+  --color-bg: var(--surface-canvas);
+  --color-surface: var(--surface-paper);
+  --color-surface-2: var(--surface-paper-2);
+  --color-border: var(--border-subtle);
+  --color-text: var(--text-title);
+  --color-text-muted: var(--text-subtle);
+  --color-brand: var(--action-primary-bg);
+  --color-brand-contrast: var(--action-primary-fg);
+  --color-link: var(--action-primary-active);
+  --color-link-hover: var(--action-primary-hover);
+  --color-overlay: var(--surface-canvas);
+  --color-danger: var(--status-danger);
+  --color-success: var(--status-success);
+  --color-warning: var(--status-warning);
+  --color-info: var(--status-info);
+  --color-danger-surface: var(--status-danger-bg);
+  --color-danger-border: var(--status-danger-border);
+  --color-danger-text: var(--status-danger);
+  --color-success-surface: var(--status-success-bg);
+  --color-success-border: var(--status-success-border);
+  --color-success-text: var(--status-success);
+  --color-warning-surface: var(--status-warning-bg);
+  --color-warning-border: var(--status-warning-border);
+  --color-warning-text: var(--status-warning);
+  --color-info-surface: var(--status-info-bg);
+  --color-info-border: var(--status-info-border);
+  --color-info-text: var(--status-info);
 }

@@ -9,8 +9,8 @@ Trace requirements to implementation and tests. Status meanings:
 |---|---|---|---|
 | REQ-0001 | `src/main.tsx`, `src/app/router.tsx` | `e2e/p0.spec.ts` | done |
 | REQ-0002 | `src/shared/offline/OfflineBanner.tsx` | `e2e/sync.spec.ts` | done |
-| REQ-0003 | `vitest`, `src/**/*.test.ts` | `npm test` | done |
-| REQ-0004 | `playwright.config.ts`, `e2e/*` | `npm run test:e2e` | done |
+| REQ-0003 | `vitest`, `src/**/*.test.ts` | `npm test`, `e2e/p0.spec.ts` | done |
+| REQ-0004 | `playwright.config.ts`, `e2e/*` | `npm run test:e2e`, `e2e/p0.spec.ts` | done |
 | REQ-0101 | `src/features/auth/*` | `e2e/p0.spec.ts` | done |
 | REQ-0102 | `src/features/auth/RegisterPage.tsx`, `src/features/school/SchoolUsersPage.tsx`, `src/features/admin/AdminTeachersPage.tsx` | `e2e/p0.spec.ts`, `e2e/sync.spec.ts` | done |
 | REQ-0106 | `src/features/auth/RegisterPage.tsx`, `src/features/auth/authContext.tsx` | `e2e/p0.spec.ts` | done |
@@ -29,7 +29,7 @@ Trace requirements to implementation and tests. Status meanings:
 | REQ-0204 | `src/shared/access/accessEngine.ts`, `src/features/student/StudentLessonsPage.tsx` | `src/shared/access/accessEngine.test.ts`, `e2e/enrollment-approval-flow.spec.ts` | done |
 | REQ-0301 | `src/features/teacher/TeacherLessonBuilderPage.tsx` | `e2e/teacher-quiz-authoring.spec.ts` | done |
 | REQ-0302 | `src/features/student/QuizRunner.tsx`, `src/features/student/quizEngine.ts` | `src/features/student/quizEngine.test.ts`, `e2e/p0.spec.ts` | done |
-| REQ-0303 | `src/features/student/quizEngine.ts` | `src/features/student/quizEngine.test.ts` | done |
+| REQ-0303 | `src/features/student/quizEngine.ts` | `src/features/student/quizEngine.test.ts`, `e2e/student-lesson-stepper.spec.ts` | done |
 | REQ-0401 | `src/features/teacher/TeacherLessonBuilderPage.tsx` | `e2e/video.spec.ts` | done |
 | REQ-0402 | `src/features/teacher/TeacherLessonBuilderPage.tsx`, `src/shared/offline/outbox.ts` | `e2e/p0.spec.ts`, `e2e/sync.spec.ts` | done |
 | REQ-0501 | `src/features/admin/AdminTeachersPage.tsx` | `e2e/p0.spec.ts`, `e2e/admin-confirmations.spec.ts` | done |
@@ -62,7 +62,7 @@ Trace requirements to implementation and tests. Status meanings:
 | REQ-1401 | `src/features/admin/AdminPaymentsPage.tsx` | `e2e/payments.spec.ts` | done |
 | REQ-1601 | `src/features/student/StudentProgressPage.tsx` | `e2e/reports.spec.ts` | done |
 | REQ-1701 | `src/features/notifications/NotificationsPage.tsx` | `e2e/notifications.spec.ts` | done |
-| REQ-1801 | `src/shared/security/password.ts` | `src/shared/security/password.test.ts` | done |
+| REQ-1801 | `src/shared/security/password.ts` | `src/shared/security/password.test.ts`, `e2e/admin-users-crud.spec.ts` | done |
 | REQ-1802 | `src/shared/settings/*`, `src/features/school/*` | `e2e/minors.spec.ts` | done |
 | REQ-1803 | `src/shared/audit/audit.ts` | `e2e/admin-students.spec.ts` | done |
 | REQ-1804 | `src/features/admin/AdminAuditPage.tsx` | `e2e/admin-students.spec.ts` | done |
@@ -76,7 +76,7 @@ Trace requirements to implementation and tests. Status meanings:
 | REQ-1908 | `src/features/admin/AdminSupportPage.tsx` | `e2e/admin-support.spec.ts` | done |
 | REQ-1909 | `src/shared/sync/*` | `e2e/sync.spec.ts`, `e2e/sync-students.spec.ts`, `e2e/sync-admin-coupons.spec.ts`, `e2e/sync-admin-schools.spec.ts` | done |
 | REQ-2001 | `src/features/teacher/TeacherLayout.tsx`, `src/features/teacher/TeacherDashboard.tsx` | `e2e/teacher-layout.spec.ts`, `e2e/teacher-dashboard.spec.ts` | done |
-| REQ-2002 | `src/features/teacher/TeacherDashboard.tsx`, `src/features/teacher/lessonStatusStats.ts` | `src/features/teacher/lessonStatusStats.test.ts` | done |
+| REQ-2002 | `src/features/teacher/TeacherDashboard.tsx`, `src/features/teacher/lessonStatusStats.ts` | `src/features/teacher/lessonStatusStats.test.ts`, `e2e/teacher-dashboard.spec.ts` | done |
 | REQ-2003 | `src/features/teacher/TeacherDashboard.tsx`, `src/features/teacher/teacherDashboardMetrics.ts` | `src/features/teacher/teacherDashboardMetrics.test.ts`, `e2e/teacher-dashboard.spec.ts` | done |
 | REQ-2004 | `src/features/teacher/TeacherDashboard.tsx`, `src/features/teacher/teacherDashboardMetrics.ts` | `src/features/teacher/teacherDashboardMetrics.test.ts`, `e2e/teacher-dashboard.spec.ts` | done |
 | REQ-2005 | `src/features/teacher/TeacherDashboard.tsx`, `src/shared/sync/SyncContext.tsx` | `e2e/sync.spec.ts`, `e2e/teacher-dashboard.spec.ts` | done |
@@ -95,4 +95,4 @@ Trace requirements to implementation and tests. Status meanings:
 | REQ-2201 | `src/styles/tokens.css`, `tailwind.config.ts` | `src/shared/theme/ThemeProvider.test.tsx`, `e2e/theme-appearance.spec.ts` | done |
 | REQ-2202 | `src/shared/theme/ThemeProvider.tsx`, `src/app/providers.tsx` | `src/shared/theme/ThemeProvider.test.tsx`, `src/features/settings/AppearanceSettingsPage.test.tsx`, `e2e/theme-appearance.spec.ts` | done |
 | REQ-2203 | `src/features/settings/AppearanceSettingsPage.tsx`, `src/app/router.tsx`, `src/app/shell.tsx`, `src/features/teacher/TeacherLayout.tsx`, `src/features/admin/AdminLayout.tsx` | `src/features/settings/AppearanceSettingsPage.test.tsx`, `e2e/theme-appearance.spec.ts` | done |
-| REQ-2204 | `src/**/*.tsx` (semantic token class migration), `src/styles/tokens.css` | `npm run typecheck`, `npm test`, `npm run test:e2e -- e2e/theme-appearance.spec.ts e2e/admin-layout.spec.ts` | done |
+| REQ-2204 | `src/**/*.tsx` (semantic token class migration), `src/styles/tokens.css` | `npm run typecheck`, `npm test`, `e2e/theme-appearance.spec.ts`, `e2e/admin-layout.spec.ts` | done |

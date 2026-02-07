@@ -26,5 +26,14 @@ describe("password hashing", () => {
       expect("upgradedHash" in res ? res.upgradedHash : undefined).toBeTruthy();
     }
   });
-});
 
+  it("rejects wrong legacy password and malformed PBKDF2 hashes", async () => {
+    const legacy = await sha256Hex("pw");
+    await expect(verifyPassword("wrong", legacy)).resolves.toEqual({ ok: false });
+
+    await expect(verifyPassword("pw", "pbkdf2$60000$only_three_parts")).resolves.toEqual({ ok: false });
+    await expect(verifyPassword("pw", "pbkdf2$nope$AA==$AA==")).resolves.toEqual({ ok: false });
+    await expect(verifyPassword("pw", "pbkdf2$9999$AA==$AA==")).resolves.toEqual({ ok: false });
+    await expect(verifyPassword("pw", "pbkdf2$60000$AA==$AAA=")).resolves.toEqual({ ok: false });
+  });
+});

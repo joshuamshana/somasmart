@@ -181,55 +181,91 @@ export function LearnLandingPage() {
     });
 
   const isStudent = Boolean(user && user.role === "student");
+  const featured = filtered.slice(0, 3);
+  const newest = filtered;
 
   return (
-    <div className="space-y-4">
-      <Card title={isStudent ? "Learn" : "Learn (Public)"}>
-        <div className="text-sm text-muted">
-          {isStudent
-            ? "Continue learning and discover new lessons."
-            : "Browse lessons. Sign in to open any lesson."}
+    <div className="section-rhythm">
+      <Card className="overflow-hidden" density="comfortable">
+        <div className="grid gap-5 lg:grid-cols-[1.2fr_1fr]">
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <div className="inline-flex rounded-full bg-action-primary/15 px-3 py-1 text-caption font-semibold uppercase tracking-wide text-action-primary-active">
+                SomaSmart Learning Hub
+              </div>
+              <div className="text-h3 text-text-title">{isStudent ? "Learn" : "Learn (Public)"}</div>
+              <h2 className="text-display text-text-title">
+                {isStudent ? "Keep momentum in your lessons." : "A modern way to learn anywhere."}
+              </h2>
+              <p className="max-w-2xl text-body text-text-subtle">
+                {isStudent
+                  ? "Continue your learning journey with structured lessons, progress cues, and guided next steps."
+                  : "Browse curriculum-aligned lessons, discover what to learn next, and sign in when you are ready to start."}
+              </p>
+            </div>
+            {!loading && !user ? (
+              <div className="flex flex-wrap gap-3">
+                <Link to={`/register${search}`}>
+                  <span className="inline-flex h-10 items-center rounded-md bg-action-primary px-5 text-sm font-semibold text-action-primary-fg transition-colors hover:bg-action-primary-hover">
+                    Start as a student
+                  </span>
+                </Link>
+                <Link to={`/login${search}`}>
+                  <span className="inline-flex h-10 items-center rounded-md bg-action-secondary px-5 text-sm font-semibold text-action-secondary-fg transition-colors hover:bg-action-secondary-hover">
+                    Login
+                  </span>
+                </Link>
+              </div>
+            ) : null}
+            {isStudent ? (
+              <div className="flex flex-wrap gap-3">
+                <Link to={`/student/lessons${search}`} className="text-sm font-semibold text-link hover:underline">
+                  Browse lessons
+                </Link>
+                <Link to={`/student/progress${search}`} className="text-sm font-semibold text-link hover:underline">
+                  Track progress
+                </Link>
+                <Link to={`/student/payments${search}`} className="text-sm font-semibold text-link hover:underline">
+                  Access and payments
+                </Link>
+              </div>
+            ) : null}
+          </div>
+          <div className="grid gap-3 sm:grid-cols-3 lg:grid-cols-1">
+            <div className="paper-secondary p-4">
+              <div className="text-caption font-semibold uppercase tracking-wide text-text-subtle">Lessons</div>
+              <div className="mt-2 text-h2 text-text-title">{lessons.length}</div>
+              <div className="text-xs text-text-subtle">Available in catalog</div>
+            </div>
+            <div className="paper-secondary p-4">
+              <div className="text-caption font-semibold uppercase tracking-wide text-text-subtle">Languages</div>
+              <div className="mt-2 text-h2 text-text-title">{languages.length}</div>
+              <div className="text-xs text-text-subtle">Learning options</div>
+            </div>
+            <div className="paper-secondary p-4">
+              <div className="text-caption font-semibold uppercase tracking-wide text-text-subtle">Subjects</div>
+              <div className="mt-2 text-h2 text-text-title">{subjects.length}</div>
+              <div className="text-xs text-text-subtle">Curriculum mapped</div>
+            </div>
+          </div>
         </div>
-        {!loading && !user ? (
-          <div className="mt-3 flex flex-wrap gap-3 text-sm">
-            <Link className="text-link hover:underline" to={`/login${search}`}>
-              Login
-            </Link>
-            <Link className="text-link hover:underline" to={`/register${search}`}>
-              Register (Student)
-            </Link>
-          </div>
-        ) : null}
-        {isStudent ? (
-          <div className="mt-3 flex flex-wrap gap-3 text-sm">
-            <Link className="text-link hover:underline" to={`/student/lessons${search}`}>
-              Browse lessons
-            </Link>
-            <Link className="text-link hover:underline" to={`/student/progress${search}`}>
-              Progress
-            </Link>
-            <Link className="text-link hover:underline" to={`/student/payments${search}`}>
-              Enroll / Payments
-            </Link>
-          </div>
-        ) : null}
       </Card>
 
       {isStudent ? (
-        <div className="grid gap-4 md:grid-cols-4">
-          <Card title="Continue learning">
+        <div className="grid gap-4 lg:grid-cols-4">
+          <Card title="Continue learning" paper="secondary">
             {continueLessons.length === 0 ? (
-              <div className="text-sm text-muted">Start a lesson to see it here.</div>
+              <div className="text-sm text-text-subtle">Start a lesson to see recommendations here.</div>
             ) : (
-              <div className="space-y-3">
+              <div className="space-y-2">
                 {continueLessons.map((l) => (
                   <Link
                     key={l.id}
                     to={`/student/lessons/${l.id}${search}`}
-                    className="block rounded-lg border border-border bg-surface p-3 hover:border-border/80"
+                    className="block rounded-md border border-border-subtle bg-paper px-3 py-2 hover:border-border-strong"
                   >
-                    <div className="text-sm font-semibold text-text">{l.title}</div>
-                    <div className="mt-1 text-xs text-muted">
+                    <div className="truncate text-sm font-semibold text-text-title">{l.title}</div>
+                    <div className="mt-1 text-xs text-text-subtle">
                       Last seen: {new Date(progressByLessonId[l.id]!.lastSeenAt).toLocaleString()}
                     </div>
                   </Link>
@@ -237,44 +273,98 @@ export function LearnLandingPage() {
               </div>
             )}
           </Card>
-          <Card title="Completed lessons">
-            <div className="text-2xl font-semibold">
-              {progress.filter((p) => Boolean(p.completedAt)).length}
-            </div>
-            <div className="text-xs text-muted">Keep going.</div>
+          <Card title="Completed" paper="secondary">
+            <div className="text-h1 text-text-title">{progress.filter((p) => Boolean(p.completedAt)).length}</div>
+            <div className="text-xs text-text-subtle">Lessons finished</div>
           </Card>
-          <Card title="Quiz attempts">
-            <div className="text-2xl font-semibold">{attempts.length}</div>
-            <div className="text-xs text-muted">Self tests taken.</div>
+          <Card title="Quiz attempts" paper="secondary">
+            <div className="text-h1 text-text-title">{attempts.length}</div>
+            <div className="text-xs text-text-subtle">Self assessments taken</div>
           </Card>
-          <Card title="Streak">
-            <div className="text-2xl font-semibold">{streakDays}</div>
-            <div className="text-xs text-muted">Days active in a row</div>
-            <div className="mt-2 text-xs text-muted">Complete lessons or quizzes to keep it going.</div>
+          <Card title="Streak" paper="secondary">
+            <div className="text-h1 text-text-title">{streakDays}</div>
+            <div className="text-xs text-text-subtle">Days active in a row</div>
           </Card>
         </div>
       ) : null}
 
+      {featured.length > 0 ? (
+        <Card title="Featured lessons">
+          <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+            {featured.map((l) => {
+              const policy = getLessonEffectiveAccessPolicy({
+                lesson: l,
+                subjectDefaultsByCurriculumSubjectId: subjectDefaults
+              });
+              const lessonPath = `/student/lessons/${l.id}${search}`;
+              const to = isStudent ? lessonPath : buildLoginLink({ search, nextPath: lessonPath });
+              return (
+                <Link
+                  key={l.id}
+                  to={to}
+                  className="paper-secondary flex h-full flex-col gap-2 p-4 transition-colors hover:border-border-strong"
+                >
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="text-sm font-semibold text-text-title">
+                      {isStudent ? l.title : "Recommended lesson"}
+                    </div>
+                    <span
+                      className={`rounded-full px-2 py-1 text-caption font-semibold ${
+                        policy === "free"
+                          ? "bg-status-success-bg text-status-success"
+                          : "bg-status-warning-bg text-status-warning"
+                      }`}
+                    >
+                      {policy === "free" ? "Free" : "Coupon"}
+                    </span>
+                  </div>
+                  <div className="text-xs text-text-subtle">{l.subject} • {l.level} • {l.language}</div>
+                  <div className="text-sm text-text-body">{l.description}</div>
+                  {!isStudent ? <div className="mt-auto text-xs font-semibold text-link">Sign in to start</div> : null}
+                </Link>
+              );
+            })}
+          </div>
+        </Card>
+      ) : null}
+
       {isStudent ? (
-        <Card title="Badges">
-          <div className="text-sm text-muted">{badges.length} earned</div>
-          <div className="mt-2 flex flex-wrap gap-2">
+        <Card title="Badges" paper="secondary">
+          <div className="text-sm text-text-subtle">{badges.length} earned</div>
+          <div className="mt-3 flex flex-wrap gap-2">
             {badges.slice(0, 10).map((b) => (
-              <span key={b.id} className="rounded bg-surface2 px-2 py-1 text-xs text-text">
+              <span key={b.id} className="rounded-full bg-action-secondary px-3 py-1 text-caption font-semibold text-action-secondary-fg">
                 {b.badgeId}
               </span>
             ))}
           </div>
-          {badges.length === 0 ? <div className="mt-2 text-xs text-muted">No badges yet.</div> : null}
+          {badges.length === 0 ? <div className="mt-2 text-xs text-text-subtle">No badges yet.</div> : null}
         </Card>
-      ) : null}
+      ) : (
+        <Card title="Why learners choose SomaSmart" paper="secondary">
+          <div className="grid gap-3 md:grid-cols-3">
+            <div className="paper-primary p-3">
+              <div className="text-sm font-semibold text-text-title">Curriculum aligned</div>
+              <div className="mt-1 text-xs text-text-subtle">Level, class, and subject-based discovery.</div>
+            </div>
+            <div className="paper-primary p-3">
+              <div className="text-sm font-semibold text-text-title">Offline-first</div>
+              <div className="mt-1 text-xs text-text-subtle">Learn with unstable connectivity in mind.</div>
+            </div>
+            <div className="paper-primary p-3">
+              <div className="text-sm font-semibold text-text-title">Progressive learning</div>
+              <div className="mt-1 text-xs text-text-subtle">Structured lessons with outcomes-focused flow.</div>
+            </div>
+          </div>
+        </Card>
+      )}
 
-      <div className="grid gap-4 lg:grid-cols-[320px,1fr]">
-        <div className="lg:sticky lg:top-20 lg:self-start">
+      <div className="grid gap-4 lg:grid-cols-[320px_minmax(0,1fr)]">
+        <div className="lg:sticky lg:top-[88px] lg:self-start">
           <div className="lg:hidden">
-            <details className="rounded-xl border border-border bg-surface p-4">
-              <summary className="cursor-pointer text-sm font-semibold text-text">
-                Filters
+            <details className="paper-secondary p-4">
+              <summary className="cursor-pointer text-sm font-semibold text-text-title">
+                Refine lessons
               </summary>
               <div className="mt-4 grid gap-3">
                 <Input label="Search" value={q} onChange={(e) => setQ(e.target.value)} />
@@ -336,7 +426,7 @@ export function LearnLandingPage() {
           </div>
 
           <div className="hidden lg:block">
-            <Card title="Filters">
+            <Card title="Refine lessons" paper="secondary">
               <div className="grid gap-3">
                 <Input label="Search" value={q} onChange={(e) => setQ(e.target.value)} />
                 <Select
@@ -397,46 +487,53 @@ export function LearnLandingPage() {
           </div>
         </div>
 
-        <div className="space-y-3">
-          {filtered.map((l) => {
-            const policy = getLessonEffectiveAccessPolicy({
-              lesson: l,
-              subjectDefaultsByCurriculumSubjectId: subjectDefaults
-            });
+        <Card
+          title="Discover lessons"
+          actions={<div className="text-xs font-semibold uppercase tracking-wide text-text-subtle">{newest.length} results</div>}
+        >
+          <div className="space-y-3">
+            {newest.map((l) => {
+              const policy = getLessonEffectiveAccessPolicy({
+                lesson: l,
+                subjectDefaultsByCurriculumSubjectId: subjectDefaults
+              });
 
-            const lessonPath = `/student/lessons/${l.id}${search}`;
-            const to = isStudent ? lessonPath : buildLoginLink({ search, nextPath: lessonPath });
+              const lessonPath = `/student/lessons/${l.id}${search}`;
+              const to = isStudent ? lessonPath : buildLoginLink({ search, nextPath: lessonPath });
 
-            return (
-              <Link
-                key={l.id}
-                to={to}
-                className="block rounded-xl border border-border bg-surface p-4 hover:border-border/80"
-              >
-                <div className="flex items-start justify-between gap-4">
-                  <div className="min-w-0">
-                    <div className="truncate text-sm font-semibold">{l.title}</div>
-                    <div className="mt-1 text-xs text-muted">
-                      {l.subject} • {l.level} • {l.language}
+              return (
+                <Link
+                  key={l.id}
+                  to={to}
+                  className="paper-secondary block p-4 transition-colors hover:border-border-strong"
+                >
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="min-w-0">
+                      <div className="truncate text-sm font-semibold text-text-title">{l.title}</div>
+                      <div className="mt-1 text-xs text-text-subtle">
+                        {l.subject} • {l.level} • {l.language}
+                      </div>
+                      <div className="mt-2 text-sm text-text-body">{l.description}</div>
+                      {!isStudent ? (
+                        <div className="mt-3 text-xs font-semibold text-link">Sign in to view</div>
+                      ) : null}
                     </div>
-                    <div className="mt-2 text-sm text-muted">{l.description}</div>
-                    {!isStudent ? (
-                      <div className="mt-3 text-xs text-muted">Sign in to view</div>
-                    ) : null}
+                    <div
+                      className={`shrink-0 rounded-full px-2.5 py-1 text-caption font-semibold ${
+                        policy === "free"
+                          ? "bg-status-success-bg text-status-success"
+                          : "bg-status-warning-bg text-status-warning"
+                      }`}
+                    >
+                      {policy === "free" ? "Free" : "Requires coupon"}
+                    </div>
                   </div>
-                  <div
-                    className={`shrink-0 rounded px-2 py-1 text-xs ${
-                      policy === "free" ? "bg-success-surface text-success-text" : "bg-warning-surface text-warning-text"
-                    }`}
-                  >
-                    {policy === "free" ? "Free" : "Requires coupon"}
-                  </div>
-                </div>
-              </Link>
-            );
-          })}
-          {filtered.length === 0 ? <div className="text-sm text-muted">No lessons found.</div> : null}
-        </div>
+                </Link>
+              );
+            })}
+            {newest.length === 0 ? <div className="text-sm text-text-subtle">No lessons found.</div> : null}
+          </div>
+        </Card>
       </div>
     </div>
   );

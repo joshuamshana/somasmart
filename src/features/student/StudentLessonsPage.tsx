@@ -159,100 +159,155 @@ export function StudentLessonsPage() {
 
   if (!user) return null;
 
+  const accessSummary = filtered.reduce(
+    (acc, lesson) => {
+      const access = canAccessLesson({ lesson, grants, subjectDefaultsByCurriculumSubjectId: subjectDefaults });
+      if (access.allowed) acc.available += 1;
+      else acc.locked += 1;
+      return acc;
+    },
+    { available: 0, locked: 0 }
+  );
+
   return (
-    <div className="space-y-4">
-      <Card title="Lessons">
-        <div className="grid gap-3 md:grid-cols-5">
-          <Input label="Search" value={q} onChange={(e) => setQ(e.target.value)} />
-          <Select
-            label="Level"
-            value={levelId}
-            onChange={(e) => {
-              setLevelId(e.target.value);
-              setClassId("");
-              setSubjectId("");
-            }}
-          >
-            <option value="">All</option>
-            {levels.map((l) => (
-              <option key={l.id} value={l.id}>
-                {l.name}
-              </option>
-            ))}
-          </Select>
-          <Select
-            label="Class"
-            value={classId}
-            onChange={(e) => {
-              setClassId(e.target.value);
-              setSubjectId("");
-            }}
-            disabled={!levelId}
-          >
-            <option value="">All</option>
-            {classesForLevel.map((c) => (
-              <option key={c.id} value={c.id}>
-                {c.name}
-              </option>
-            ))}
-          </Select>
-          <Select
-            label="Subject"
-            value={subjectId}
-            onChange={(e) => setSubjectId(e.target.value)}
-            disabled={!classId}
-          >
-            <option value="">All</option>
-            {subjectsForClass.map((s) => (
-              <option key={s.id} value={s.id}>
-                {s.name}
-              </option>
-            ))}
-          </Select>
-          <Select label="Language" value={language} onChange={(e) => setLanguage(e.target.value)}>
-            <option value="">All</option>
-            {languages.map((lng) => (
-              <option key={lng} value={lng}>
-                {lng}
-              </option>
-            ))}
-          </Select>
+    <div className="section-rhythm">
+      <Card>
+        <div className="grid gap-4 lg:grid-cols-[1.4fr_1fr]">
+          <div>
+            <h2 className="text-h1 text-text-title">Find and continue lessons</h2>
+            <p className="mt-2 text-body text-text-subtle">
+              Discover lessons by curriculum and keep learning from where you left off.
+            </p>
+          </div>
+          <div className="grid gap-3 sm:grid-cols-3 lg:grid-cols-1">
+            <div className="paper-secondary p-3">
+              <div className="text-caption font-semibold uppercase tracking-wide text-text-subtle">Results</div>
+              <div className="mt-1 text-h2 text-text-title">{filtered.length}</div>
+            </div>
+            <div className="paper-secondary p-3">
+              <div className="text-caption font-semibold uppercase tracking-wide text-text-subtle">Available</div>
+              <div className="mt-1 text-h2 text-status-success">{accessSummary.available}</div>
+            </div>
+            <div className="paper-secondary p-3">
+              <div className="text-caption font-semibold uppercase tracking-wide text-text-subtle">Locked</div>
+              <div className="mt-1 text-h2 text-status-warning">{accessSummary.locked}</div>
+            </div>
+          </div>
         </div>
       </Card>
 
-      <div className="grid gap-3">
-        {filtered.map((l) => {
-          const access = canAccessLesson({ lesson: l, grants, subjectDefaultsByCurriculumSubjectId: subjectDefaults });
-          const learningState = getLessonLearningState(progressByLessonId[l.id]);
-          const learningStateLabel =
-            learningState === "completed" ? "Completed" : learningState === "in_progress" ? "In progress" : "New";
-          const callToAction = learningState === "completed" ? "Replay" : learningState === "in_progress" ? "Continue" : "Start";
-          return (
-            <Link
-              key={l.id}
-              to={`/student/lessons/${l.id}${search}`}
-              className="rounded-xl border border-border bg-surface p-4 hover:border-border/80"
-            >
-              <div className="flex items-start justify-between gap-4">
-                <div>
-                  <div className="text-sm font-semibold">{l.title}</div>
-                  <div className="mt-1 text-xs text-muted">
-                    {l.subject} • {l.level} • {l.language}
+      <div className="grid gap-4 lg:grid-cols-[320px_minmax(0,1fr)]">
+        <aside className="lg:sticky lg:top-[88px] lg:self-start">
+          <Card title="Filters" paper="secondary">
+            <div className="grid gap-3">
+              <Input label="Search" value={q} onChange={(e) => setQ(e.target.value)} />
+              <Select
+                label="Level"
+                value={levelId}
+                onChange={(e) => {
+                  setLevelId(e.target.value);
+                  setClassId("");
+                  setSubjectId("");
+                }}
+              >
+                <option value="">All</option>
+                {levels.map((l) => (
+                  <option key={l.id} value={l.id}>
+                    {l.name}
+                  </option>
+                ))}
+              </Select>
+              <Select
+                label="Class"
+                value={classId}
+                onChange={(e) => {
+                  setClassId(e.target.value);
+                  setSubjectId("");
+                }}
+                disabled={!levelId}
+              >
+                <option value="">All</option>
+                {classesForLevel.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.name}
+                  </option>
+                ))}
+              </Select>
+              <Select
+                label="Subject"
+                value={subjectId}
+                onChange={(e) => setSubjectId(e.target.value)}
+                disabled={!classId}
+              >
+                <option value="">All</option>
+                {subjectsForClass.map((s) => (
+                  <option key={s.id} value={s.id}>
+                    {s.name}
+                  </option>
+                ))}
+              </Select>
+              <Select label="Language" value={language} onChange={(e) => setLanguage(e.target.value)}>
+                <option value="">All</option>
+                {languages.map((lng) => (
+                  <option key={lng} value={lng}>
+                    {lng}
+                  </option>
+                ))}
+              </Select>
+            </div>
+          </Card>
+        </aside>
+
+        <Card
+          title="Lesson results"
+          actions={<div className="text-caption font-semibold uppercase tracking-wide text-text-subtle">{filtered.length} shown</div>}
+        >
+          <div className="grid gap-3">
+            {filtered.map((l) => {
+              const access = canAccessLesson({
+                lesson: l,
+                grants,
+                subjectDefaultsByCurriculumSubjectId: subjectDefaults
+              });
+              const learningState = getLessonLearningState(progressByLessonId[l.id]);
+              const learningStateLabel =
+                learningState === "completed" ? "Completed" : learningState === "in_progress" ? "In progress" : "New";
+              const callToAction =
+                learningState === "completed" ? "Replay" : learningState === "in_progress" ? "Continue" : "Start";
+              return (
+                <Link
+                  key={l.id}
+                  to={`/student/lessons/${l.id}${search}`}
+                  className="paper-secondary rounded-lg p-4 transition-colors hover:border-border-strong"
+                >
+                  <div className="flex items-start justify-between gap-4">
+                    <div>
+                      <div className="text-sm font-semibold text-text-title">{l.title}</div>
+                      <div className="mt-1 text-xs text-text-subtle">
+                        {l.subject} • {l.level} • {l.language}
+                      </div>
+                      <div className="mt-2 flex flex-wrap items-center gap-2">
+                        <span className="rounded-full bg-paper px-2.5 py-1 text-caption font-semibold text-text-subtle">{learningStateLabel}</span>
+                        <span className="text-xs font-semibold text-link">{callToAction}</span>
+                      </div>
+                      <div className="mt-2 text-sm text-text-body">{l.description}</div>
+                    </div>
+                    <div
+                      className={`rounded-full px-2.5 py-1 text-caption font-semibold ${
+                        access.allowed
+                          ? "bg-status-success-bg text-status-success"
+                          : "bg-status-warning-bg text-status-warning"
+                      }`}
+                    >
+                      {access.allowed ? "Available" : "Locked"}
+                    </div>
                   </div>
-                  <div className="mt-2 flex flex-wrap items-center gap-2">
-                    <span className="rounded bg-surface2 px-2 py-1 text-xs text-muted">{learningStateLabel}</span>
-                    <span className="text-xs text-link">{callToAction}</span>
-                  </div>
-                  <div className="mt-2 text-sm text-muted">{l.description}</div>
-                </div>
-                <div className={`rounded px-2 py-1 text-xs ${access.allowed ? "bg-success-surface text-success-text" : "bg-warning-surface text-warning-text"}`}>
-                  {access.allowed ? "Available" : "Locked"}
-                </div>
-              </div>
-            </Link>
-          );
-        })}
-        {filtered.length === 0 ? <div className="text-sm text-muted">No lessons found.</div> : null}
+                </Link>
+              );
+            })}
+            {filtered.length === 0 ? <div className="text-sm text-text-subtle">No lessons found.</div> : null}
+          </div>
+        </Card>
       </div>
     </div>
   );

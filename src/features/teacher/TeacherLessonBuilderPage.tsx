@@ -20,6 +20,7 @@ import { Select } from "@/shared/ui/Select";
 import { Button } from "@/shared/ui/Button";
 import { enqueueOutboxEvent } from "@/shared/offline/outbox";
 import { PageHeader } from "@/shared/ui/PageHeader";
+import { ActionBar } from "@/shared/ui/ActionBar";
 import { toast } from "@/shared/ui/toastStore";
 import { buildLessonSteps } from "@/features/content/lessonSteps";
 import { LessonStepperPlayer } from "@/features/content/LessonStepperPlayer";
@@ -516,13 +517,13 @@ export function TeacherLessonBuilderPage() {
   const previewSteps = useMemo(() => buildLessonSteps({ blocksV2, assetsById, quizzesById }), [assetsById, blocksV2, quizzesById]);
 
   return (
-    <div className="space-y-4">
+    <div className="section-rhythm">
       <PageHeader
         title={editLessonId ? "Edit lesson (v2)" : "Create lesson (v2)"}
         description="Build composite blocks (text + optional media) and optional quiz gates."
         actions={
           <div className="flex flex-wrap gap-2">
-            <Button variant="secondary" disabled={saving || !valid} onClick={() => void saveDraft("draft")}>
+            <Button variant="secondary" tone="neutral" disabled={saving || !valid} onClick={() => void saveDraft("draft")}>
               Save draft
             </Button>
             <Button disabled={saving || !valid} onClick={() => void saveDraft("pending_approval")}>
@@ -532,35 +533,37 @@ export function TeacherLessonBuilderPage() {
         }
       />
 
-      <div className="grid gap-4 lg:grid-cols-[260px_1fr]">
+      <div className="grid gap-4 lg:grid-cols-[300px_minmax(0,1fr)] xl:gap-5">
         <aside className="space-y-3">
-          <Card title="Workflow">
+          <Card title="Workflow" paper="secondary" className="lg:sticky lg:top-[88px]">
             <div className="space-y-2">
               {steps.map((item, idx) => (
                 <button
                   key={item.id}
                   type="button"
                   onClick={() => setStep(item.id)}
-                  className={`w-full rounded-lg border px-3 py-2 text-left text-sm ${
-                    step === item.id ? "border-brand bg-surface2" : "border-border bg-surface hover:border-border/80"
+                  className={`w-full rounded-md border px-3 py-2 text-left text-sm ${
+                    step === item.id
+                      ? "border-action-primary bg-action-primary/10"
+                      : "border-border-subtle bg-paper hover:border-border-strong"
                   }`}
                 >
-                  <div className="font-semibold text-text">
+                  <div className="font-semibold text-text-title">
                     {idx + 1}. {item.label}
                   </div>
-                  <div className="mt-1 text-xs text-muted">{item.description}</div>
+                  <div className="mt-1 text-xs text-text-subtle">{item.description}</div>
                 </button>
               ))}
             </div>
-          </Card>
-          <Card title="Autosave">
-            <div className="text-sm text-muted">
-              Status: <span className="font-semibold text-text">{saving ? "Saving…" : dirty ? "Unsaved changes" : "Saved"}</span>
-            </div>
-            <div className="mt-2 text-xs text-muted">
-              {lastSavedAt ? `Last saved: ${new Date(lastSavedAt).toLocaleString()}` : "Not saved yet."}
-            </div>
-            {statusMessage ? <div className="mt-2 text-sm text-text">{statusMessage}</div> : null}
+            <Card title="Autosave" paper="inset" density="compact" className="mt-4">
+              <div className="text-sm text-text-subtle">
+                Status: <span className="font-semibold text-text-title">{saving ? "Saving…" : dirty ? "Unsaved changes" : "Saved"}</span>
+              </div>
+              <div className="mt-2 text-xs text-text-subtle">
+                {lastSavedAt ? `Last saved: ${new Date(lastSavedAt).toLocaleString()}` : "Not saved yet."}
+              </div>
+              {statusMessage ? <div className="mt-2 text-sm text-text-title">{statusMessage}</div> : null}
+            </Card>
           </Card>
         </aside>
 
@@ -866,9 +869,10 @@ export function TeacherLessonBuilderPage() {
             </Card>
           ) : null}
 
-          <div className="flex items-center justify-between">
+          <ActionBar stickyOnSmall className="mb-2">
             <Button
               variant="secondary"
+              tone="neutral"
               onClick={() => setStep((current) => steps[Math.max(0, steps.findIndex((s) => s.id === current) - 1)]!.id)}
               disabled={step === "metadata"}
             >
@@ -880,7 +884,7 @@ export function TeacherLessonBuilderPage() {
             >
               Next
             </Button>
-          </div>
+          </ActionBar>
         </section>
       </div>
     </div>

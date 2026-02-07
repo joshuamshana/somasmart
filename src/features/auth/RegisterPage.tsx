@@ -35,10 +35,27 @@ export function RegisterPage() {
   });
 
   return (
-    <div className="mx-auto max-w-md">
+    <div className="grid gap-4 lg:grid-cols-[1fr_460px]">
+      <Card className="hidden lg:block" paper="secondary">
+        <div className="space-y-4">
+          <div className="inline-flex rounded-full bg-action-primary/15 px-3 py-1 text-caption font-semibold uppercase tracking-wide text-action-primary-active">
+            Student onboarding
+          </div>
+          <h2 className="text-display text-text-title">Create your SomaSmart account.</h2>
+          <p className="text-body text-text-subtle">
+            Start learning with curriculum-structured lessons, progress tracking, and offline-first access.
+          </p>
+          <div className="paper-primary p-4">
+            <div className="text-sm font-semibold text-text-title">Need teacher access?</div>
+            <div className="mt-1 text-xs text-text-subtle">
+              Teachers are created by School Admins and approved by System Admins.
+            </div>
+          </div>
+        </div>
+      </Card>
       <Card title="Register">
         <form
-          className="space-y-3"
+          className="space-y-4"
           onSubmit={handleSubmit(async (values) => {
             setFormError(null);
             const res = await doRegister(values);
@@ -63,16 +80,16 @@ export function RegisterPage() {
             error={errors.schoolCode?.message}
             {...register("schoolCode")}
           />
-          <label className="flex items-center gap-2 text-sm text-muted">
+          <label className="flex items-center gap-2 rounded-md border border-border-subtle bg-paper-2 px-3 py-2 text-sm text-text-body">
             <input type="checkbox" className="h-4 w-4" {...register("isMinor")} />
             Student is a minor (parental controls)
           </label>
-          {formError ? <div className="text-sm text-danger-text">{formError}</div> : null}
+          {formError ? <div className="rounded-md bg-status-danger-bg px-3 py-2 text-sm text-status-danger">{formError}</div> : null}
           <Button type="submit" disabled={isSubmitting} className="w-full">
             {isSubmitting ? "Creating…" : "Register"}
           </Button>
         </form>
-        <div className="mt-4 text-xs text-muted">
+        <div className="mt-4 text-xs text-text-subtle">
           Teachers are created by your School Admin and approved by the System Admin.
         </div>
       </Card>

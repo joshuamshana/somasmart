@@ -54,6 +54,17 @@ describe("touchProgress", () => {
     expect(awardBadgeMock).not.toHaveBeenCalled();
   });
 
+  it("creates progress as completed when requested", async () => {
+    const result = await touchProgress({
+      studentId: "student_1",
+      lessonId: "lesson_completed",
+      markComplete: true
+    });
+
+    expect(result.completedAt).toBeTruthy();
+    expect(awardBadgeMock).toHaveBeenCalledTimes(1);
+  });
+
   it("increments existing progress and marks completion once", async () => {
     rows.push({
       id: "prog_1",
@@ -101,6 +112,26 @@ describe("touchProgress", () => {
     });
 
     expect(result.completedAt).toBe("2026-02-06T10:05:00.000Z");
+    expect(awardBadgeMock).not.toHaveBeenCalled();
+  });
+
+  it("keeps existing in-progress state when markComplete is false", async () => {
+    rows.push({
+      id: "prog_3",
+      studentId: "student_1",
+      lessonId: "lesson_3",
+      timeSpentSec: 10,
+      lastSeenAt: "2026-02-06T10:00:00.000Z"
+    });
+
+    const result = await touchProgress({
+      studentId: "student_1",
+      lessonId: "lesson_3",
+      additionalTimeSec: 0,
+      markComplete: false
+    });
+
+    expect(result.completedAt).toBeUndefined();
     expect(awardBadgeMock).not.toHaveBeenCalled();
   });
 });

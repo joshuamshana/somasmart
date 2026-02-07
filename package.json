@@ -12,9 +12,14 @@
     "lint": "eslint .",
     "format": "prettier -w .",
     "test": "vitest run",
+    "test:coverage": "vitest run --coverage",
+    "test:coverage:ci": "vitest run --coverage",
+    "test:journeys:sync-map": "node scripts/sync-e2e-requirements-map.mjs",
+    "test:journeys:matrix": "node scripts/validate-coverage-matrix.mjs",
     "test:watch": "vitest",
     "test:e2e": "playwright test",
-    "test:e2e:ui": "playwright test --ui"
+    "test:e2e:ui": "playwright test --ui",
+    "ci": "npm run typecheck && npm run test:coverage:ci && npm run test:journeys:matrix && npm run test:e2e -- --reporter=line"
   },
   "dependencies": {
     "@headlessui/react": "^2.2.7",
@@ -32,12 +37,13 @@
     "react-i18next": "^14.1.3",
     "react-router-dom": "^6.29.0",
     "recharts": "^2.14.2",
-    "vite-plugin-pwa": "^0.20.5",
+    "vite-plugin-pwa": "^1.2.0",
     "zod": "^3.24.1"
   },
   "devDependencies": {
     "@eslint/js": "^9.17.0",
     "@playwright/test": "^1.50.0",
+    "@vitest/coverage-v8": "^2.1.9",
     "@testing-library/jest-dom": "^6.6.3",
     "@testing-library/react": "^16.1.0",
     "@testing-library/user-event": "^14.5.2",
