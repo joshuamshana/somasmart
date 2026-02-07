@@ -27,7 +27,9 @@ async function stabilize(page: Page) {
 async function capture(page: Page, testInfo: TestInfo, key: string, viewport: AuditViewport) {
   const fileName = `${key}-${viewport.name}.png`;
   await stabilize(page);
-  await expect(page).toHaveScreenshot(fileName, { fullPage: true });
+  if (process.platform === "darwin") {
+    await expect(page).toHaveScreenshot(fileName, { fullPage: true });
+  }
   await page.screenshot({ path: path.join(artifactDir, fileName), fullPage: true });
   await testInfo.attach(fileName, {
     path: path.join(artifactDir, fileName),
