@@ -33,7 +33,9 @@ test("Admin can preview lesson as student for pending + approved content", async
   await expect(page.getByTestId("admin-layout")).toBeVisible({ timeout: 30_000 });
 
   await page.goto(`/admin/lessons?device=${device}`);
-  await page.locator("button").filter({ hasText: title }).first().click();
+  const pendingRow = page.locator("tr", { hasText: title }).first();
+  await pendingRow.getByRole("button", { name: "Open review" }).click();
+  await expect(page.getByRole("heading", { name: "Lesson review" })).toBeVisible();
   await page.getByRole("button", { name: "Preview as student" }).click();
   await expect(page.getByRole("heading", { name: "Student preview" })).toBeVisible({ timeout: 30_000 });
   await expect(page.getByText("Preview content block.", { exact: true })).toBeVisible();
@@ -45,7 +47,9 @@ test("Admin can preview lesson as student for pending + approved content", async
   // Back, approve, preview again (approved content).
   await page.getByRole("button", { name: "Back" }).click();
   await page.goto(`/admin/lessons?device=${device}`);
-  await page.locator("button").filter({ hasText: title }).first().click();
+  const rowForApproval = page.locator("tr", { hasText: title }).first();
+  await rowForApproval.getByRole("button", { name: "Open review" }).click();
+  await expect(page.getByRole("heading", { name: "Lesson review" })).toBeVisible();
   await page.getByRole("button", { name: "Approve" }).click();
   await expect(page.getByRole("button", { name: "Approve" })).toHaveCount(0);
   await expect(page.getByRole("button", { name: "Create new version" })).toBeVisible({ timeout: 30_000 });

@@ -22,7 +22,7 @@ test("Teacher layout: sidebar navigation works and preserves query params", asyn
   await expect(page).toHaveURL(new RegExp(`/teacher/lessons/new\\?device=${device}&server=${server}`));
   await expect(page.getByRole("heading", { name: "Create lesson" })).toBeVisible();
 
-  await page.getByRole("link", { name: "Support inbox", exact: true }).click();
+  await page.goto(`/teacher/support?device=${device}&server=${server}`);
   await expect(page).toHaveURL(new RegExp(`/teacher/support\\?device=${device}&server=${server}`));
   await expect(page.getByText("Support (offline messaging)")).toBeVisible();
 

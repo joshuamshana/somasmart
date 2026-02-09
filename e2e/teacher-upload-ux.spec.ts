@@ -17,6 +17,10 @@ test("Teacher upload UX: responsive layouts and predictive guidance", async ({ p
   await expect(page.getByRole("button", { name: /^All \(/ })).toBeVisible();
 
   await page.goto("/teacher/lessons/new");
+  await expect(page.getByTestId("teacher-sidebar")).toBeHidden();
+  await expect(page.getByTestId("teacher-mobile-header")).toBeVisible();
+  await expect(page.getByRole("heading", { name: /Create lesson/ })).toBeVisible();
+  await expect(page.getByTestId("lesson-section-tabs")).toBeVisible();
   await page.getByLabel("Title").fill(`UX Lesson ${Date.now()}`);
   await page.getByLabel("Level").selectOption({ label: "Primary" });
   await page.getByLabel("Class").selectOption({ label: "Class 1" });
@@ -26,7 +30,8 @@ test("Teacher upload UX: responsive layouts and predictive guidance", async ({ p
   await page.getByLabel("Description").fill("Responsive upload experience check.");
   await page.getByRole("button", { name: "Next" }).click();
 
-  await expect(page.getByText("Quick templates")).toBeVisible();
+  await expect(page).toHaveURL(/step=blocks/);
+  await expect(page.getByTestId("lesson-context-action-strip")).toBeVisible();
   await expect(page.getByText("Predictive hint")).toBeVisible();
   await expect(page.getByRole("button", { name: "Add text" })).toBeVisible();
   await expect(page.getByRole("button", { name: "Upload + Quiz" })).toBeVisible();

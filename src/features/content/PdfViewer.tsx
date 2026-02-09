@@ -1,8 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
-import * as pdfjs from "pdfjs-dist";
-import pdfWorker from "pdfjs-dist/build/pdf.worker.min?url";
-
-pdfjs.GlobalWorkerOptions.workerSrc = pdfWorker as string;
+import type { PDFDocumentProxy } from "pdfjs-dist";
+import { loadPdfJs } from "@/shared/content/pdfRuntime";
 
 export function PdfViewer({
   blob,
@@ -20,7 +18,7 @@ export function PdfViewer({
   const page = controlledPage ?? internalPage;
   const [numPages, setNumPages] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const docRef = useRef<pdfjs.PDFDocumentProxy | null>(null);
+  const docRef = useRef<PDFDocumentProxy | null>(null);
   const blobRef = useRef<Blob | null>(null);
 
   useEffect(() => {
@@ -34,6 +32,7 @@ export function PdfViewer({
       }
 
       if (!docRef.current) {
+        const pdfjs = await loadPdfJs();
         const ab = await blob.arrayBuffer();
         docRef.current = await pdfjs.getDocument({ data: ab }).promise;
       }

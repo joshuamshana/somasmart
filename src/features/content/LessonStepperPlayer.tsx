@@ -1,12 +1,15 @@
-import React, { useMemo, useState } from "react";
+import React, { Suspense, lazy, useMemo, useState } from "react";
 import type { LessonAsset, Quiz, QuizAttempt } from "@/shared/types";
 import { LessonPlayer } from "@/features/content/LessonPlayer";
 import type { LessonStep } from "@/features/content/lessonSteps";
-import { PdfViewer } from "@/features/content/PdfViewer";
 import { QuizRunner } from "@/features/student/QuizRunner";
 import { QuizPreview } from "@/features/teacher/QuizPreview";
 import { canAdvance, isStepComplete } from "@/features/student/lessonProgressEngine";
 import { Button } from "@/shared/ui/Button";
+
+const PdfViewer = lazy(async () => ({
+  default: (await import("@/features/content/PdfViewer")).PdfViewer
+}));
 
 export function LessonStepperPlayer({
   steps,
@@ -75,11 +78,13 @@ export function LessonStepperPlayer({
           {!asset ? (
             <div className="text-sm text-muted">Loading PDF…</div>
           ) : (
-            <PdfViewer
-              blob={asset.blob}
-              page={activeStep.page}
-              onNumPages={(n) => onPdfNumPages?.(activeStep.assetId, n)}
-            />
+            <Suspense fallback={<div className="text-sm text-muted">Loading PDF viewer…</div>}>
+              <PdfViewer
+                blob={asset.blob}
+                page={activeStep.page}
+                onNumPages={(n) => onPdfNumPages?.(activeStep.assetId, n)}
+              />
+            </Suspense>
           )}
           <QuizGate
             step={activeStep}

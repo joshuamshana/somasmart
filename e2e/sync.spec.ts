@@ -26,6 +26,7 @@ test("Sync: teacher approval and lesson approval propagate across devices", asyn
   await expect(page.getByText("Teacher created (pending admin approval).")).toBeVisible();
 
   await page.goto(`/sync?device=${deviceTeacherA}&server=${server}`);
+  await expect(page.getByRole("button", { name: "Sync now" })).toBeVisible();
   await context.setOffline(true);
   await page.getByRole("button", { name: "Sync now" }).click();
   await expect(page.getByText(/You are offline/i)).toBeVisible();
@@ -107,7 +108,7 @@ test("Sync: teacher approval and lesson approval propagate across devices", asyn
   await expect(page.getByRole("row", { name: /lesson_submit.*synced/i })).toBeVisible({ timeout: 30_000 });
 
   // Device B: admin pulls lesson and approves it
-  const syncedLessonButton = adminPage.getByRole("button", { name: /Synced Lesson 1/i }).first();
+  const syncedLessonRow = adminPage.locator("tr", { hasText: "Synced Lesson 1" }).first();
   for (let i = 0; i < 20; i++) {
     await adminPage.goto(`/sync?device=${deviceAdminB}&server=${server}`);
     await adminPage.getByRole("button", { name: "Sync now" }).click();
@@ -115,11 +116,11 @@ test("Sync: teacher approval and lesson approval propagate across devices", asyn
     await expect(adminPage.getByTestId("sync-failed")).toContainText("0");
     await adminPage.goto(`/admin/lessons?device=${deviceAdminB}&server=${server}`);
     await expect(adminPage.getByRole("heading", { name: "Lessons" })).toBeVisible();
-    const count = await syncedLessonButton.count();
+    const count = await syncedLessonRow.count();
     if (count > 0) break;
   }
-  await expect(syncedLessonButton).toBeVisible({ timeout: 60_000 });
-  await syncedLessonButton.click();
+  await expect(syncedLessonRow).toBeVisible({ timeout: 60_000 });
+  await syncedLessonRow.getByRole("button", { name: "Open review" }).click();
   await adminPage.getByRole("button", { name: "Approve" }).click();
 
   await adminPage.goto(`/sync?device=${deviceAdminB}&server=${server}`);

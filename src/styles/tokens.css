@@ -38,6 +38,16 @@
   --shadow-sm: 0 1px 2px rgb(0 0 0 / 0.25);
   --shadow-md: 0 10px 26px rgb(2 8 23 / 0.45);
   --shadow-lg: 0 20px 52px rgb(2 8 23 / 0.55);
+  --collection-hover: 24 36 67;
+  --collection-selected: 16 33 61;
+  --collection-selected-border: 56 189 248;
+  --collection-muted: 18 29 58;
+  --section-tab-bg: 18 29 58;
+  --section-tab-hover: 24 36 67;
+  --section-tab-active-bg: 16 33 61;
+  --section-tab-active-border: 56 189 248;
+  --context-strip-bg: 18 29 58;
+  --rail-surface: 18 29 58;
 }
 
 :root[data-theme="light"] {
@@ -79,6 +89,16 @@
   --shadow-sm: 0 1px 2px rgb(2 8 23 / 0.08);
   --shadow-md: 0 10px 26px rgb(2 8 23 / 0.12);
   --shadow-lg: 0 20px 52px rgb(2 8 23 / 0.18);
+  --collection-hover: 241 245 249;
+  --collection-selected: 232 244 255;
+  --collection-selected-border: 14 165 233;
+  --collection-muted: 248 250 254;
+  --section-tab-bg: 248 250 254;
+  --section-tab-hover: 241 245 249;
+  --section-tab-active-bg: 232 244 255;
+  --section-tab-active-border: 14 165 233;
+  --context-strip-bg: 248 250 254;
+  --rail-surface: 248 250 254;
 }
 
 :root {

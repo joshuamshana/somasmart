@@ -1,9 +1,15 @@
-import React, { useEffect, useState } from "react";
+import React, { Suspense, lazy, useEffect, useState } from "react";
 import type { LessonAsset, LessonBlock } from "@/shared/types";
 import { db } from "@/shared/db/db";
-import { PdfViewer } from "@/features/content/PdfViewer";
-import { PptxViewer } from "@/features/content/PptxViewer";
 import { useAssetObjectUrl } from "@/shared/content/assetUrl";
+
+const PdfViewer = lazy(async () => ({
+  default: (await import("@/features/content/PdfViewer")).PdfViewer
+}));
+
+const PptxViewer = lazy(async () => ({
+  default: (await import("@/features/content/PptxViewer")).PptxViewer
+}));
 
 function useAsset(assetId: string | null) {
   const [asset, setAsset] = useState<LessonAsset | null>(null);
@@ -49,10 +55,18 @@ function AssetBlock({ block }: { block: Extract<LessonBlock, { assetId: string }
     );
   }
   if (block.type === "pdf") {
-    return <PdfViewer blob={asset.blob} />;
+    return (
+      <Suspense fallback={<div className="text-sm text-muted">Loading PDF viewer…</div>}>
+        <PdfViewer blob={asset.blob} />
+      </Suspense>
+    );
   }
   if (block.type === "pptx") {
-    return <PptxViewer blob={asset.blob} name={asset.name} />;
+    return (
+      <Suspense fallback={<div className="text-sm text-muted">Loading PPTX viewer…</div>}>
+        <PptxViewer blob={asset.blob} name={asset.name} />
+      </Suspense>
+    );
   }
   return null;
 }

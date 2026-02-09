@@ -25,7 +25,7 @@ test("Video block: teacher uploads -> admin approves -> student plays offline", 
     mimeType: "video/webm",
     buffer: Buffer.from([0x1a, 0x45, 0xdf, 0xa3, 0x00, 0x00, 0x00, 0x00])
   });
-  await expect(page.getByText(/\(VIDEO\)/)).toBeVisible();
+  await expect(page.getByText("sample.webm").first()).toBeVisible();
 
   await page.getByRole("button", { name: "Next" }).click();
   await page.getByRole("button", { name: "Next" }).click();
@@ -39,8 +39,9 @@ test("Video block: teacher uploads -> admin approves -> student plays offline", 
   await page.getByRole("button", { name: "Login" }).click();
   await expect(page.getByRole("link", { name: "Lessons", exact: true })).toBeVisible({ timeout: 30_000 });
   await page.goto("/admin/lessons");
-  await expect(page.getByText("Video Lesson 1").first()).toBeVisible();
-  await page.getByText("Video Lesson 1").first().click();
+  const videoRow = page.locator("tr", { hasText: "Video Lesson 1" }).first();
+  await expect(videoRow).toBeVisible();
+  await videoRow.getByRole("button", { name: /Review/ }).click();
   await page.getByRole("button", { name: "Approve" }).click();
   await page.getByRole("button", { name: "Logout" }).click();
 

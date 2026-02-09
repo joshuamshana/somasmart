@@ -41,9 +41,9 @@ test("End-to-end: teacher submits lesson; admin approves; student enrolls via co
   await page.goto(`/admin/lessons?device=${device}`);
   await page.getByRole("button", { name: "Refresh" }).click();
 
-  const pendingListItem = page.locator("button").filter({ hasText: title }).first();
-  await expect(pendingListItem).toBeVisible({ timeout: 30_000 });
-  await pendingListItem.click();
+  const pendingRow = page.locator("tr", { hasText: title }).first();
+  await expect(pendingRow).toBeVisible({ timeout: 30_000 });
+  await pendingRow.getByRole("button", { name: "Open review" }).click();
 
   await page.getByRole("button", { name: "Approve" }).click();
   await expect(page.getByRole("button", { name: "Approve" })).toHaveCount(0);

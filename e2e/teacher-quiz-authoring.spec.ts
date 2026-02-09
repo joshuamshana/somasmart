@@ -11,6 +11,7 @@ test("Teacher can author quiz blocks and questions in lesson builder", async ({ 
   await expect(page.getByTestId("teacher-sidebar-logout")).toBeVisible({ timeout: 30_000 });
 
   await page.goto(`/teacher/lessons/new?device=${device}`);
+  await expect(page.getByTestId("teacher-sidebar")).toBeVisible();
   await page.getByLabel("Title").fill(title);
   await page.getByLabel("Level").selectOption({ label: "Primary" });
   await page.getByLabel("Class").selectOption({ label: "Class 1" });
@@ -18,6 +19,7 @@ test("Teacher can author quiz blocks and questions in lesson builder", async ({ 
   await page.getByLabel("Access").selectOption({ label: "Free" });
   await page.getByLabel("Description").fill("Lesson with teacher-authored quiz.");
   await page.getByRole("button", { name: "Next" }).click();
+  await expect(page).toHaveURL(/step=blocks/);
 
   await page.getByRole("button", { name: "Add text" }).click();
   await page.getByLabel("Text block 1").fill("Quiz content intro.");

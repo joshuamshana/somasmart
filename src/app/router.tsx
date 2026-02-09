@@ -1,69 +1,128 @@
-import React from "react";
+import React, { Suspense, lazy } from "react";
 import { createBrowserRouter, Navigate, RouterProvider } from "react-router-dom";
 import { AppShell } from "@/app/shell";
-import { LoginPage } from "@/features/auth/LoginPage";
-import { RegisterPage } from "@/features/auth/RegisterPage";
-import { StartRedirect } from "@/features/auth/StartRedirect";
 import { RequireRole } from "@/features/auth/RequireRole";
-import { StudentDashboard } from "@/features/student/StudentDashboard";
-import { StudentLessonsPage } from "@/features/student/StudentLessonsPage";
-import { StudentLessonPage } from "@/features/student/StudentLessonPage";
-import { StudentProgressPage } from "@/features/student/StudentProgressPage";
-import { StudentPaymentsPage } from "@/features/student/StudentPaymentsPage";
-import { TeacherDashboard } from "@/features/teacher/TeacherDashboard";
-import { TeacherLessonsPage } from "@/features/teacher/TeacherLessonsPage";
-import { TeacherLessonBuilderPage } from "@/features/teacher/TeacherLessonBuilderPage";
-import { TeacherLayout } from "@/features/teacher/TeacherLayout";
-import { AdminDashboard } from "@/features/admin/AdminDashboard";
-import { AdminTeachersPage } from "@/features/admin/AdminTeachersPage";
-import { AdminStudentsPage } from "@/features/admin/AdminStudentsPage";
-import { AdminLessonsPage } from "@/features/admin/AdminLessonsPage";
-import { AdminCouponsPage } from "@/features/admin/AdminCouponsPage";
-import { AdminAnalyticsPage } from "@/features/admin/AdminAnalyticsPage";
-import { AdminPaymentsPage } from "@/features/admin/AdminPaymentsPage";
-import { AdminSchoolsPage } from "@/features/admin/AdminSchoolsPage";
-import { AdminAuditPage } from "@/features/admin/AdminAuditPage";
-import { AdminLicensesPage } from "@/features/admin/AdminLicensesPage";
-import { AdminSettingsPage } from "@/features/admin/AdminSettingsPage";
-import { AdminSchoolAdminsPage } from "@/features/admin/AdminSchoolAdminsPage";
-import { AdminAdminsPage } from "@/features/admin/AdminAdminsPage";
-import { AdminSupportPage } from "@/features/admin/AdminSupportPage";
-import { AdminStudentLessonPreviewPage } from "@/features/admin/AdminStudentLessonPreviewPage";
-import { AdminLayout } from "@/features/admin/AdminLayout";
-import { SchoolDashboard } from "@/features/school/SchoolDashboard";
-import { SchoolUsersPage } from "@/features/school/SchoolUsersPage";
-import { SchoolLicensesPage } from "@/features/school/SchoolLicensesPage";
-import { SchoolAnalyticsPage } from "@/features/school/SchoolAnalyticsPage";
-import { StudentSupportPage } from "@/features/messaging/StudentSupportPage";
-import { TeacherSupportPage } from "@/features/messaging/TeacherSupportPage";
-import { SyncPage } from "@/features/sync/SyncPage";
-import { NotificationsPage } from "@/features/notifications/NotificationsPage";
-import { PublicLessonGateRedirect } from "@/features/content/PublicLessonGateRedirect";
-import { RouteErrorPage } from "@/app/RouteErrorPage";
-import { AppearanceSettingsPage } from "@/features/settings/AppearanceSettingsPage";
-import { StudentLayout } from "@/features/student/StudentLayout";
-import { PublicLayout } from "@/features/public/PublicLayout";
-import { SchoolLayout } from "@/features/school/SchoolLayout";
-import { RoleScopedLayout } from "@/app/RoleScopedLayout";
+
+const LoginPage = lazy(() => import("@/features/auth/LoginPage").then((module) => ({ default: module.LoginPage })));
+const RegisterPage = lazy(() => import("@/features/auth/RegisterPage").then((module) => ({ default: module.RegisterPage })));
+const StartRedirect = lazy(() => import("@/features/auth/StartRedirect").then((module) => ({ default: module.StartRedirect })));
+const StudentLessonsPage = lazy(() =>
+  import("@/features/student/StudentLessonsPage").then((module) => ({ default: module.StudentLessonsPage }))
+);
+const StudentLessonPage = lazy(() =>
+  import("@/features/student/StudentLessonPage").then((module) => ({ default: module.StudentLessonPage }))
+);
+const StudentProgressPage = lazy(() =>
+  import("@/features/student/StudentProgressPage").then((module) => ({ default: module.StudentProgressPage }))
+);
+const StudentPaymentsPage = lazy(() =>
+  import("@/features/student/StudentPaymentsPage").then((module) => ({ default: module.StudentPaymentsPage }))
+);
+const TeacherDashboard = lazy(() =>
+  import("@/features/teacher/TeacherDashboard").then((module) => ({ default: module.TeacherDashboard }))
+);
+const TeacherLessonsPage = lazy(() =>
+  import("@/features/teacher/TeacherLessonsPage").then((module) => ({ default: module.TeacherLessonsPage }))
+);
+const TeacherLessonBuilderPage = lazy(() =>
+  import("@/features/teacher/TeacherLessonBuilderPage").then((module) => ({ default: module.TeacherLessonBuilderPage }))
+);
+const TeacherLayout = lazy(() => import("@/features/teacher/TeacherLayout").then((module) => ({ default: module.TeacherLayout })));
+const AdminDashboard = lazy(() => import("@/features/admin/AdminDashboard").then((module) => ({ default: module.AdminDashboard })));
+const AdminTeachersPage = lazy(() =>
+  import("@/features/admin/AdminTeachersPage").then((module) => ({ default: module.AdminTeachersPage }))
+);
+const AdminStudentsPage = lazy(() =>
+  import("@/features/admin/AdminStudentsPage").then((module) => ({ default: module.AdminStudentsPage }))
+);
+const AdminLessonsPage = lazy(() =>
+  import("@/features/admin/AdminLessonsPage").then((module) => ({ default: module.AdminLessonsPage }))
+);
+const AdminLessonReviewPage = lazy(() =>
+  import("@/features/admin/AdminLessonReviewPage").then((module) => ({ default: module.AdminLessonReviewPage }))
+);
+const AdminCouponsPage = lazy(() =>
+  import("@/features/admin/AdminCouponsPage").then((module) => ({ default: module.AdminCouponsPage }))
+);
+const AdminAnalyticsPage = lazy(() =>
+  import("@/features/admin/AdminAnalyticsPage").then((module) => ({ default: module.AdminAnalyticsPage }))
+);
+const AdminPaymentsPage = lazy(() =>
+  import("@/features/admin/AdminPaymentsPage").then((module) => ({ default: module.AdminPaymentsPage }))
+);
+const AdminSchoolsPage = lazy(() => import("@/features/admin/AdminSchoolsPage").then((module) => ({ default: module.AdminSchoolsPage })));
+const AdminAuditPage = lazy(() => import("@/features/admin/AdminAuditPage").then((module) => ({ default: module.AdminAuditPage })));
+const AdminLicensesPage = lazy(() =>
+  import("@/features/admin/AdminLicensesPage").then((module) => ({ default: module.AdminLicensesPage }))
+);
+const AdminSettingsPage = lazy(() =>
+  import("@/features/admin/AdminSettingsPage").then((module) => ({ default: module.AdminSettingsPage }))
+);
+const AdminSchoolAdminsPage = lazy(() =>
+  import("@/features/admin/AdminSchoolAdminsPage").then((module) => ({ default: module.AdminSchoolAdminsPage }))
+);
+const AdminAdminsPage = lazy(() => import("@/features/admin/AdminAdminsPage").then((module) => ({ default: module.AdminAdminsPage })));
+const AdminSupportPage = lazy(() =>
+  import("@/features/admin/AdminSupportPage").then((module) => ({ default: module.AdminSupportPage }))
+);
+const AdminStudentLessonPreviewPage = lazy(() =>
+  import("@/features/admin/AdminStudentLessonPreviewPage").then((module) => ({ default: module.AdminStudentLessonPreviewPage }))
+);
+const AdminLayout = lazy(() => import("@/features/admin/AdminLayout").then((module) => ({ default: module.AdminLayout })));
+const SchoolDashboard = lazy(() =>
+  import("@/features/school/SchoolDashboard").then((module) => ({ default: module.SchoolDashboard }))
+);
+const SchoolUsersPage = lazy(() => import("@/features/school/SchoolUsersPage").then((module) => ({ default: module.SchoolUsersPage })));
+const SchoolLicensesPage = lazy(() =>
+  import("@/features/school/SchoolLicensesPage").then((module) => ({ default: module.SchoolLicensesPage }))
+);
+const SchoolAnalyticsPage = lazy(() =>
+  import("@/features/school/SchoolAnalyticsPage").then((module) => ({ default: module.SchoolAnalyticsPage }))
+);
+const StudentSupportPage = lazy(() =>
+  import("@/features/messaging/StudentSupportPage").then((module) => ({ default: module.StudentSupportPage }))
+);
+const TeacherSupportPage = lazy(() =>
+  import("@/features/messaging/TeacherSupportPage").then((module) => ({ default: module.TeacherSupportPage }))
+);
+const SyncPage = lazy(() => import("@/features/sync/SyncPage").then((module) => ({ default: module.SyncPage })));
+const NotificationsPage = lazy(() =>
+  import("@/features/notifications/NotificationsPage").then((module) => ({ default: module.NotificationsPage }))
+);
+const PublicLessonGateRedirect = lazy(() =>
+  import("@/features/content/PublicLessonGateRedirect").then((module) => ({ default: module.PublicLessonGateRedirect }))
+);
+const RouteErrorPage = lazy(() => import("@/app/RouteErrorPage").then((module) => ({ default: module.RouteErrorPage })));
+const AppearanceSettingsPage = lazy(() =>
+  import("@/features/settings/AppearanceSettingsPage").then((module) => ({ default: module.AppearanceSettingsPage }))
+);
+const StudentLayout = lazy(() => import("@/features/student/StudentLayout").then((module) => ({ default: module.StudentLayout })));
+const PublicLayout = lazy(() => import("@/features/public/PublicLayout").then((module) => ({ default: module.PublicLayout })));
+const SchoolLayout = lazy(() => import("@/features/school/SchoolLayout").then((module) => ({ default: module.SchoolLayout })));
+const RoleScopedLayout = lazy(() => import("@/app/RoleScopedLayout").then((module) => ({ default: module.RoleScopedLayout })));
+
+function lazyPage(element: React.ReactElement) {
+  return <Suspense fallback={<div className="p-4 text-sm text-muted">Loading...</div>}>{element}</Suspense>;
+}
 
 const router = createBrowserRouter([
   {
     path: "/",
     element: <AppShell />,
-    errorElement: <RouteErrorPage />,
+    errorElement: lazyPage(<RouteErrorPage />),
     children: [
-      { index: true, element: <StartRedirect /> },
+      { index: true, element: lazyPage(<StartRedirect />) },
       {
-        element: <PublicLayout />,
+        element: lazyPage(<PublicLayout />),
         children: [
-          { path: "login", element: <LoginPage /> },
-          { path: "register", element: <RegisterPage /> },
-          { path: "learn/lessons/:lessonId", element: <PublicLessonGateRedirect /> }
+          { path: "login", element: lazyPage(<LoginPage />) },
+          { path: "register", element: lazyPage(<RegisterPage />) },
+          { path: "learn/lessons/:lessonId", element: lazyPage(<PublicLessonGateRedirect />) }
         ]
       },
       {
         path: "student",
-        element: (
+        element: lazyPage(
           <RequireRole roles={["student"]}>
             <StudentLayout />
           </RequireRole>
@@ -75,41 +134,41 @@ const router = createBrowserRouter([
           },
           {
             path: "lessons",
-            element: <StudentLessonsPage />
+            element: lazyPage(<StudentLessonsPage />)
           },
           {
             path: "lessons/:lessonId",
-            element: <StudentLessonPage />
+            element: lazyPage(<StudentLessonPage />)
           },
           {
             path: "progress",
-            element: <StudentProgressPage />
+            element: lazyPage(<StudentProgressPage />)
           },
           {
             path: "payments",
-            element: <StudentPaymentsPage />
+            element: lazyPage(<StudentPaymentsPage />)
           },
           {
             path: "support",
-            element: <StudentSupportPage />
+            element: lazyPage(<StudentSupportPage />)
           },
           {
             path: "sync",
-            element: <SyncPage />
+            element: lazyPage(<SyncPage />)
           },
           {
             path: "notifications",
-            element: <NotificationsPage />
+            element: lazyPage(<NotificationsPage />)
           },
           {
             path: "appearance",
-            element: <AppearanceSettingsPage />
+            element: lazyPage(<AppearanceSettingsPage />)
           }
         ]
       },
       {
         path: "sync",
-        element: (
+        element: lazyPage(
           <RequireRole roles={["student", "teacher", "admin", "school_admin"]}>
             <RoleScopedLayout>
               <SyncPage />
@@ -119,7 +178,7 @@ const router = createBrowserRouter([
       },
       {
         path: "notifications",
-        element: (
+        element: lazyPage(
           <RequireRole roles={["student", "teacher", "admin", "school_admin"]}>
             <RoleScopedLayout>
               <NotificationsPage />
@@ -129,7 +188,7 @@ const router = createBrowserRouter([
       },
       {
         path: "settings/appearance",
-        element: (
+        element: lazyPage(
           <RequireRole roles={["student", "teacher", "admin", "school_admin"]}>
             <RoleScopedLayout>
               <AppearanceSettingsPage />
@@ -139,56 +198,57 @@ const router = createBrowserRouter([
       },
       {
         path: "teacher",
-        element: (
+        element: lazyPage(
           <RequireRole roles={["teacher"]} requireApproved>
             <TeacherLayout />
           </RequireRole>
         ),
         children: [
-          { index: true, element: <TeacherDashboard /> },
-          { path: "lessons", element: <TeacherLessonsPage /> },
-          { path: "lessons/new", element: <TeacherLessonBuilderPage /> },
-          { path: "lessons/:lessonId/edit", element: <TeacherLessonBuilderPage /> },
-          { path: "support", element: <TeacherSupportPage /> }
+          { index: true, element: lazyPage(<TeacherDashboard />) },
+          { path: "lessons", element: lazyPage(<TeacherLessonsPage />) },
+          { path: "lessons/new", element: lazyPage(<TeacherLessonBuilderPage />) },
+          { path: "lessons/:lessonId/edit", element: lazyPage(<TeacherLessonBuilderPage />) },
+          { path: "support", element: lazyPage(<TeacherSupportPage />) }
         ]
       },
       {
         path: "admin",
-        element: (
+        element: lazyPage(
           <RequireRole roles={["admin"]}>
             <AdminLayout />
           </RequireRole>
         ),
         children: [
-          { index: true, element: <AdminDashboard /> },
-          { path: "teachers", element: <AdminTeachersPage /> },
-          { path: "students", element: <AdminStudentsPage /> },
-          { path: "school-admins", element: <AdminSchoolAdminsPage /> },
-          { path: "admins", element: <AdminAdminsPage /> },
-          { path: "lessons", element: <AdminLessonsPage /> },
-          { path: "lessons/:lessonId/preview", element: <AdminStudentLessonPreviewPage /> },
-          { path: "coupons", element: <AdminCouponsPage /> },
-          { path: "analytics", element: <AdminAnalyticsPage /> },
-          { path: "payments", element: <AdminPaymentsPage /> },
-          { path: "licenses", element: <AdminLicensesPage /> },
-          { path: "schools", element: <AdminSchoolsPage /> },
-          { path: "audit", element: <AdminAuditPage /> },
-          { path: "settings", element: <AdminSettingsPage /> },
-          { path: "support", element: <AdminSupportPage /> }
+          { index: true, element: lazyPage(<AdminDashboard />) },
+          { path: "teachers", element: lazyPage(<AdminTeachersPage />) },
+          { path: "students", element: lazyPage(<AdminStudentsPage />) },
+          { path: "school-admins", element: lazyPage(<AdminSchoolAdminsPage />) },
+          { path: "admins", element: lazyPage(<AdminAdminsPage />) },
+          { path: "lessons", element: lazyPage(<AdminLessonsPage />) },
+          { path: "lessons/:lessonId/review", element: lazyPage(<AdminLessonReviewPage />) },
+          { path: "lessons/:lessonId/preview", element: lazyPage(<AdminStudentLessonPreviewPage />) },
+          { path: "coupons", element: lazyPage(<AdminCouponsPage />) },
+          { path: "analytics", element: lazyPage(<AdminAnalyticsPage />) },
+          { path: "payments", element: lazyPage(<AdminPaymentsPage />) },
+          { path: "licenses", element: lazyPage(<AdminLicensesPage />) },
+          { path: "schools", element: lazyPage(<AdminSchoolsPage />) },
+          { path: "audit", element: lazyPage(<AdminAuditPage />) },
+          { path: "settings", element: lazyPage(<AdminSettingsPage />) },
+          { path: "support", element: lazyPage(<AdminSupportPage />) }
         ]
       },
       {
         path: "school",
-        element: (
+        element: lazyPage(
           <RequireRole roles={["school_admin"]}>
             <SchoolLayout />
           </RequireRole>
         ),
         children: [
-          { index: true, element: <SchoolDashboard /> },
-          { path: "users", element: <SchoolUsersPage /> },
-          { path: "licenses", element: <SchoolLicensesPage /> },
-          { path: "analytics", element: <SchoolAnalyticsPage /> }
+          { index: true, element: lazyPage(<SchoolDashboard />) },
+          { path: "users", element: lazyPage(<SchoolUsersPage />) },
+          { path: "licenses", element: lazyPage(<SchoolLicensesPage />) },
+          { path: "analytics", element: lazyPage(<SchoolAnalyticsPage />) }
         ]
       }
     ]

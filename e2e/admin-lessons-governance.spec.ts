@@ -13,7 +13,8 @@ test("Admin lessons governance: create new version for teacher; expire approved 
 
   await page.goto(`/admin/lessons?device=${device}`);
   await page.getByTestId("lesson-item-lesson_seed_numbers").click();
-  await expect(page.getByText("Title: Introduction to Numbers")).toBeVisible({ timeout: 30_000 });
+  await expect(page).toHaveURL(/\/admin\/lessons\/lesson_seed_numbers\/review/);
+  await expect(page.getByRole("heading", { name: "Lesson review" })).toBeVisible({ timeout: 30_000 });
 
   // Create a new version (draft copy)
   await page.getByTestId("lesson-create-version").click();
@@ -38,6 +39,7 @@ test("Admin lessons governance: create new version for teacher; expire approved 
   await expect(page.getByRole("link", { name: "Lessons", exact: true })).toBeVisible({ timeout: 30_000 });
   await page.goto(`/admin/lessons?device=${device}`);
   await page.getByTestId("lesson-item-lesson_seed_numbers").click();
+  await expect(page).toHaveURL(/\/admin\/lessons\/lesson_seed_numbers\/review/);
 
   await page.getByRole("button", { name: "Unpublish" }).click();
   await page.getByRole("dialog").getByRole("button", { name: "Unpublish" }).click();

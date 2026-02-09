@@ -102,7 +102,7 @@ test("UI audit capture: teacher builder", async ({ page }, testInfo) => {
     await expect(page.getByRole("heading", { name: /Create lesson/i })).toBeVisible();
     await capture(page, testInfo, "teacher-builder-metadata", viewport);
 
-    await page.getByRole("button", { name: "2. Blocks" }).click();
+    await page.getByRole("tab", { name: "2. Blocks" }).click();
     await expect(page.getByText("Block editor")).toBeVisible();
     await capture(page, testInfo, "teacher-builder-blocks", viewport);
   }
@@ -120,9 +120,10 @@ test("UI audit capture: admin lessons", async ({ page }, testInfo) => {
     await expect(page.getByRole("heading", { name: "Lessons" })).toBeVisible();
     await capture(page, testInfo, "admin-lessons", viewport);
 
-    const selectable = page.locator('[data-testid^="lesson-item-"]').first();
+    const selectable = page.locator('[data-testid^="lesson-item"]:visible').first();
     if ((await selectable.count()) > 0) {
       await selectable.click();
+      await expect(page.getByRole("heading", { name: "Lesson review" })).toBeVisible();
       await capture(page, testInfo, "admin-lessons-selected", viewport);
     }
   }

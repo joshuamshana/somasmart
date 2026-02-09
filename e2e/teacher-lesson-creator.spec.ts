@@ -8,6 +8,8 @@ test("Teacher lesson creator: metadata gating -> blocks -> submit", async ({ pag
   await expect(page.getByRole("button", { name: "Logout" })).toBeVisible({ timeout: 30_000 });
 
   await page.goto("/teacher/lessons/new");
+  await expect(page.getByTestId("teacher-sidebar")).toBeVisible();
+  await expect(page.getByTestId("lesson-section-tabs")).toBeVisible();
   const next = page.getByRole("button", { name: "Next" });
   await expect(next).toBeDisabled();
 
@@ -22,6 +24,7 @@ test("Teacher lesson creator: metadata gating -> blocks -> submit", async ({ pag
 
   await expect(next).toBeEnabled();
   await next.click();
+  await expect(page).toHaveURL(/step=blocks/);
 
   await page.getByRole("button", { name: "Add text" }).click();
   await page.getByLabel("Text block 1").fill("Lesson content from the wizard.");
