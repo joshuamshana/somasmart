@@ -23,6 +23,11 @@ test("Admin: create school and school admin", async ({ page }) => {
   await page.getByLabel("Admin name").fill("School Admin X");
   await page.getByLabel("Admin username").fill(schoolAdminUsername);
   await page.getByLabel("Temp password").fill("school123");
+  await page.getByLabel("Mobile").fill("+255700999001");
+  await page.getByLabel("Country").fill("Tanzania");
+  await page.getByLabel("Region").fill("Arusha");
+  await page.getByLabel("Street").fill("School Rd 2");
+  await page.getByLabel("Date of birth").fill("1990-01-01");
   await page.getByRole("button", { name: "Create school admin" }).click();
   await expect(page.getByText("School admin created.")).toBeVisible();
 

@@ -2,6 +2,27 @@ export type Role = "student" | "teacher" | "admin" | "school_admin";
 export type UserStatus = "active" | "pending" | "suspended";
 // Levels are admin-defined. We keep this as a string type for flexibility and offline governance.
 export type Level = string;
+export type Gender = "male" | "female" | "other" | "prefer_not_to_say";
+export type StudentLevel = "primary" | "secondary" | "high" | "college" | "uni" | "other";
+
+export type UserKycAddress = {
+  country: string;
+  region: string;
+  street: string;
+};
+
+export type UserKycProfile = {
+  mobile: string;
+  address: UserKycAddress;
+  dateOfBirth: string;
+  gender?: Gender;
+  schoolName?: string;
+  studentLevel?: StudentLevel;
+  studentLevelOther?: string;
+  guardianName?: string;
+  guardianMobile?: string;
+  updatedAt: string;
+};
 
 export type User = {
   id: string;
@@ -12,6 +33,7 @@ export type User = {
   passwordHash: string;
   schoolId?: string;
   isMinor?: boolean;
+  kyc?: UserKycProfile;
   deletedAt?: string;
   createdAt: string;
 };

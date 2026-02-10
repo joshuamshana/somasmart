@@ -1,4 +1,5 @@
 import { test, expect } from "@playwright/test";
+import { fillStudentRegisterKyc } from "./helpers/kyc";
 
 test("Auth redirect: already-logged-in admin visiting /login or / goes to /admin", async ({ page }) => {
   const device = `authRedirectAdmin_${Date.now()}`;
@@ -56,6 +57,7 @@ test("Auth redirect: already-logged-in student visiting /login or / stays on /",
   await page.getByLabel("Full name").fill("Redirect Student");
   await page.getByLabel("Username").fill(username);
   await page.getByLabel("Password").fill("password123");
+  await fillStudentRegisterKyc(page);
   await page.getByRole("button", { name: "Register" }).click();
   await expect(page.getByRole("link", { name: "Browse lessons" })).toBeVisible({ timeout: 30_000 });
 

@@ -1,4 +1,5 @@
 import { test, expect } from "@playwright/test";
+import { fillStudentRegisterKyc } from "./helpers/kyc";
 import type { Page } from "@playwright/test";
 
 function visibleSelectByLabel(page: Page, label: string) {
@@ -12,6 +13,7 @@ test("Student lessons filters: level → class → subject cascade filters lesso
   await page.getByLabel("Full name").fill("Student Filters");
   await page.getByLabel("Username").fill(`student_${Date.now()}`);
   await page.getByLabel("Password").fill("password123");
+  await fillStudentRegisterKyc(page);
   await page.getByRole("button", { name: "Register" }).click();
   await expect(page.getByRole("button", { name: "Logout" })).toBeVisible({ timeout: 30_000 });
 

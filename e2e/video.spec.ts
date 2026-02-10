@@ -1,4 +1,5 @@
 import { test, expect } from "@playwright/test";
+import { fillStudentRegisterKyc } from "./helpers/kyc";
 
 test("Video block: teacher uploads -> admin approves -> student plays offline", async ({ page }) => {
   await page.goto("/login");
@@ -50,6 +51,7 @@ test("Video block: teacher uploads -> admin approves -> student plays offline", 
   await page.getByLabel("Full name").fill("Video Student");
   await page.getByLabel("Username").fill(studentUsername);
   await page.getByLabel("Password").fill("password123");
+  await fillStudentRegisterKyc(page);
   await page.getByRole("button", { name: "Register" }).click();
   await expect(page.getByRole("link", { name: "Lessons", exact: true })).toBeVisible();
 

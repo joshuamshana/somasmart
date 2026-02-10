@@ -11,12 +11,48 @@ import { db } from "@/shared/db/db";
 import type { User, UserStatus } from "@/shared/types";
 import { hashPassword } from "@/shared/security/password";
 import { enqueueOutboxEvent } from "@/shared/offline/outbox";
+import {
+  applyStudentKycRules,
+  baseKycDefaultValues,
+  baseKycSchema,
+  genderSchema,
+  studentLevelSchema
+} from "@/shared/kyc/schema";
+import { isDobInRangeForRole, normalizeMobile } from "@/shared/kyc/kyc";
 
 const schema = z.object({
   role: z.enum(["student", "teacher"]),
   displayName: z.string().min(1, "Required"),
   username: z.string().min(3, "Min 3 characters"),
-  password: z.string().min(6, "Min 6 characters")
+  password: z.string().min(6, "Min 6 characters"),
+  isMinor: z.boolean().optional(),
+  kyc: baseKycSchema.extend({
+    gender: z.preprocess((value) => (value === "" ? undefined : value), genderSchema.optional()),
+    studentLevel: studentLevelSchema.optional(),
+    studentLevelOther: z.string().trim().optional(),
+    guardianName: z.string().trim().optional(),
+    guardianMobile: z.string().trim().optional()
+  })
+}).superRefine((values, ctx) => {
+  if (!isDobInRangeForRole(values.role, values.kyc.dateOfBirth)) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ["kyc", "dateOfBirth"],
+      message: values.role === "student" ? "Student age must be at least 3 years." : "Must be at least 18 years."
+    });
+  }
+  if (values.role === "student") {
+    applyStudentKycRules(
+      {
+        studentLevel: values.kyc.studentLevel,
+        studentLevelOther: values.kyc.studentLevelOther,
+        guardianName: values.kyc.guardianName,
+        guardianMobile: values.kyc.guardianMobile,
+        isMinor: values.isMinor
+      },
+      ctx
+    );
+  }
 });
 
 type FormValues = z.infer<typeof schema>;
@@ -38,12 +74,23 @@ export function SchoolUsersPage() {
   const {
     register,
     handleSubmit,
+    watch,
     formState: { errors, isSubmitting },
     reset
   } = useForm<FormValues>({
     resolver: zodResolver(schema),
-    defaultValues: { role: "student" }
+    defaultValues: {
+      role: "student",
+      isMinor: false,
+      kyc: {
+        ...baseKycDefaultValues,
+        studentLevel: "primary"
+      }
+    }
   });
+  const role = watch("role");
+  const isMinor = watch("isMinor");
+  const studentLevel = watch("kyc.studentLevel");
 
   async function refresh() {
     if (!user?.schoolId) return;
@@ -75,6 +122,7 @@ export function SchoolUsersPage() {
   if (!user?.schoolId) {
     return <Card title="School users">This account is not linked to a school.</Card>;
   }
+  const schoolId = user.schoolId;
 
   return (
     <div className="space-y-4">
@@ -91,6 +139,7 @@ export function SchoolUsersPage() {
               return;
             }
             const passwordHash = await hashPassword(values.password);
+            const linkedSchool = await db.schools.get(schoolId);
             const created: User = {
               id: newId("user"),
               role: values.role,
@@ -98,7 +147,31 @@ export function SchoolUsersPage() {
               displayName: values.displayName.trim(),
               username: values.username.trim(),
               passwordHash,
-              schoolId: user.schoolId,
+              schoolId,
+              isMinor: values.role === "student" ? Boolean(values.isMinor) : undefined,
+              kyc: {
+                mobile: normalizeMobile(values.kyc.mobile),
+                address: {
+                  country: values.kyc.address.country.trim(),
+                  region: values.kyc.address.region.trim(),
+                  street: values.kyc.address.street.trim()
+                },
+                dateOfBirth: values.kyc.dateOfBirth.trim(),
+                gender: values.kyc.gender || undefined,
+                studentLevel: values.role === "student" ? values.kyc.studentLevel : undefined,
+                studentLevelOther:
+                  values.role === "student" && values.kyc.studentLevel === "other"
+                    ? values.kyc.studentLevelOther?.trim() || undefined
+                    : undefined,
+                schoolName: values.role === "student" ? linkedSchool?.name : undefined,
+                guardianName:
+                  values.role === "student" && values.isMinor ? values.kyc.guardianName?.trim() || undefined : undefined,
+                guardianMobile:
+                  values.role === "student" && values.isMinor
+                    ? normalizeMobile(values.kyc.guardianMobile ?? "") || undefined
+                    : undefined,
+                updatedAt: nowIso()
+              },
               createdAt: nowIso()
             };
             await db.users.add(created);
@@ -107,7 +180,17 @@ export function SchoolUsersPage() {
               await enqueueOutboxEvent({ type: "teacher_register", payload: { userId: created.id } });
             }
             await refresh();
-            reset({ role: values.role, displayName: "", username: "", password: "" });
+            reset({
+              role: values.role,
+              displayName: "",
+              username: "",
+              password: "",
+              isMinor: false,
+              kyc: {
+                ...baseKycDefaultValues,
+                studentLevel: "primary"
+              }
+            });
             setMsg(values.role === "teacher" ? "Teacher created (pending admin approval)." : "Student created.");
           })}
         >
@@ -118,6 +201,60 @@ export function SchoolUsersPage() {
           <Input label="Full name" error={errors.displayName?.message} {...register("displayName")} />
           <Input label="Username" error={errors.username?.message} {...register("username")} />
           <Input label="Password" type="password" error={errors.password?.message} {...register("password")} />
+          <Input label="Mobile" error={errors.kyc?.mobile?.message} {...register("kyc.mobile")} />
+          <Input label="Country" error={errors.kyc?.address?.country?.message} {...register("kyc.address.country")} />
+          <Input label="Region" error={errors.kyc?.address?.region?.message} {...register("kyc.address.region")} />
+          <Input label="Street" error={errors.kyc?.address?.street?.message} {...register("kyc.address.street")} />
+          <Input
+            label="Date of birth"
+            type="date"
+            error={errors.kyc?.dateOfBirth?.message}
+            {...register("kyc.dateOfBirth")}
+          />
+          <Select label="Gender (optional)" error={errors.kyc?.gender?.message} {...register("kyc.gender")}>
+            <option value="">Prefer not to say</option>
+            <option value="male">Male</option>
+            <option value="female">Female</option>
+            <option value="other">Other</option>
+            <option value="prefer_not_to_say">Prefer not to say</option>
+          </Select>
+          {role === "student" ? (
+            <>
+              <Select label="Level" error={errors.kyc?.studentLevel?.message} {...register("kyc.studentLevel")}>
+                <option value="primary">Primary</option>
+                <option value="secondary">Secondary</option>
+                <option value="high">High</option>
+                <option value="college">College</option>
+                <option value="uni">Uni</option>
+                <option value="other">Others</option>
+              </Select>
+              {studentLevel === "other" ? (
+                <Input
+                  label="Other level"
+                  error={errors.kyc?.studentLevelOther?.message}
+                  {...register("kyc.studentLevelOther")}
+                />
+              ) : null}
+              <label className="flex items-center gap-2 rounded-md border border-border-subtle bg-paper-2 px-3 py-2 text-sm text-text-body self-end">
+                <input type="checkbox" className="h-4 w-4" {...register("isMinor")} />
+                Student is a minor
+              </label>
+              {isMinor ? (
+                <>
+                  <Input
+                    label="Guardian full name"
+                    error={errors.kyc?.guardianName?.message}
+                    {...register("kyc.guardianName")}
+                  />
+                  <Input
+                    label="Guardian mobile"
+                    error={errors.kyc?.guardianMobile?.message}
+                    {...register("kyc.guardianMobile")}
+                  />
+                </>
+              ) : null}
+            </>
+          ) : null}
           <div className="md:col-span-4 flex items-center gap-3">
             <Button type="submit" disabled={isSubmitting}>
               {isSubmitting ? "Creating…" : "Create"}

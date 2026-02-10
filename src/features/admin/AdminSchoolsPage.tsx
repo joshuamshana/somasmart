@@ -4,6 +4,7 @@ import { db } from "@/shared/db/db";
 import { Card } from "@/shared/ui/Card";
 import { Input } from "@/shared/ui/Input";
 import { Button } from "@/shared/ui/Button";
+import { Select } from "@/shared/ui/Select";
 import { useAuth } from "@/features/auth/authContext";
 import { logAudit } from "@/shared/audit/audit";
 import { hashPassword } from "@/shared/security/password";
@@ -11,6 +12,7 @@ import { ConfirmDialog } from "@/shared/ui/ConfirmDialog";
 import { enqueueOutboxEvent } from "@/shared/offline/outbox";
 import { PageHeader } from "@/shared/ui/PageHeader";
 import { DataTable } from "@/shared/ui/DataTable";
+import { isDobInRangeForRole, isValidMobile, normalizeMobile } from "@/shared/kyc/kyc";
 
 function nowIso() {
   return new Date().toISOString();
@@ -25,6 +27,19 @@ function generateSchoolCode() {
   let s = "SOMA";
   for (let i = 0; i < 4; i++) s += letters[Math.floor(Math.random() * letters.length)];
   return s;
+}
+
+type BaseKycDraft = {
+  mobile: string;
+  country: string;
+  region: string;
+  street: string;
+  dateOfBirth: string;
+  gender: "" | "male" | "female" | "other" | "prefer_not_to_say";
+};
+
+function blankBaseKycDraft(): BaseKycDraft {
+  return { mobile: "", country: "", region: "", street: "", dateOfBirth: "", gender: "" };
 }
 
 export function AdminSchoolsPage() {
@@ -53,6 +68,7 @@ export function AdminSchoolsPage() {
   const [adminName, setAdminName] = useState("");
   const [adminUsername, setAdminUsername] = useState("");
   const [adminPassword, setAdminPassword] = useState("password123");
+  const [adminKyc, setAdminKyc] = useState<BaseKycDraft>(() => blankBaseKycDraft());
   const [msgCreate, setMsgCreate] = useState<string | null>(null);
   const [msgDetails, setMsgDetails] = useState<string | null>(null);
 
@@ -244,6 +260,12 @@ export function AdminSchoolsPage() {
     const username = adminUsername.trim();
     if (!displayName) return setMsgDetails("Enter school admin name.");
     if (!username) return setMsgDetails("Enter school admin username.");
+    if (!adminKyc.mobile.trim() || !isValidMobile(adminKyc.mobile)) return setMsgDetails("Enter a valid mobile number.");
+    if (!adminKyc.country.trim()) return setMsgDetails("Enter country.");
+    if (!adminKyc.region.trim()) return setMsgDetails("Enter region.");
+    if (!adminKyc.street.trim()) return setMsgDetails("Enter street.");
+    if (!adminKyc.dateOfBirth.trim()) return setMsgDetails("Enter date of birth.");
+    if (!isDobInRangeForRole("school_admin", adminKyc.dateOfBirth.trim())) return setMsgDetails("School admin must be at least 18 years old.");
     const existingUser = (await db.users.toArray()).find(
       (u) => !u.deletedAt && u.username.toLowerCase() === username.toLowerCase()
     );
@@ -258,6 +280,17 @@ export function AdminSchoolsPage() {
       username,
       passwordHash,
       schoolId: selected.id,
+      kyc: {
+        mobile: normalizeMobile(adminKyc.mobile),
+        address: {
+          country: adminKyc.country.trim(),
+          region: adminKyc.region.trim(),
+          street: adminKyc.street.trim()
+        },
+        dateOfBirth: adminKyc.dateOfBirth.trim(),
+        gender: adminKyc.gender || undefined,
+        updatedAt: nowIso()
+      },
       createdAt: nowIso()
     };
     await db.users.add(schoolAdmin);
@@ -273,6 +306,7 @@ export function AdminSchoolsPage() {
     }
     setAdminName("");
     setAdminUsername("");
+    setAdminKyc(blankBaseKycDraft());
     await refresh();
     setMsgDetails("School admin created.");
   }
@@ -430,6 +464,43 @@ export function AdminSchoolsPage() {
                       value={adminPassword}
                       onChange={(e) => setAdminPassword(e.target.value)}
                     />
+                    <Input
+                      label="Mobile"
+                      value={adminKyc.mobile}
+                      onChange={(e) => setAdminKyc((prev) => ({ ...prev, mobile: e.target.value }))}
+                    />
+                    <Input
+                      label="Country"
+                      value={adminKyc.country}
+                      onChange={(e) => setAdminKyc((prev) => ({ ...prev, country: e.target.value }))}
+                    />
+                    <Input
+                      label="Region"
+                      value={adminKyc.region}
+                      onChange={(e) => setAdminKyc((prev) => ({ ...prev, region: e.target.value }))}
+                    />
+                    <Input
+                      label="Street"
+                      value={adminKyc.street}
+                      onChange={(e) => setAdminKyc((prev) => ({ ...prev, street: e.target.value }))}
+                    />
+                    <Input
+                      label="Date of birth"
+                      type="date"
+                      value={adminKyc.dateOfBirth}
+                      onChange={(e) => setAdminKyc((prev) => ({ ...prev, dateOfBirth: e.target.value }))}
+                    />
+                    <Select
+                      label="Gender (optional)"
+                      value={adminKyc.gender}
+                      onChange={(e) => setAdminKyc((prev) => ({ ...prev, gender: e.target.value as BaseKycDraft["gender"] }))}
+                    >
+                      <option value="">Prefer not to say</option>
+                      <option value="male">Male</option>
+                      <option value="female">Female</option>
+                      <option value="other">Other</option>
+                      <option value="prefer_not_to_say">Prefer not to say</option>
+                    </Select>
                   </div>
                   <div className="mt-3">
                     <Button variant="secondary" onClick={() => void createSchoolAdmin()}>

@@ -1,4 +1,5 @@
 import { test, expect } from "@playwright/test";
+import { fillSchoolUserKyc } from "./helpers/kyc";
 
 test.setTimeout(120_000);
 
@@ -22,6 +23,7 @@ test("Sync: teacher approval and lesson approval propagate across devices", asyn
   await page.getByLabel("Full name").fill("Sync Teacher");
   await page.getByLabel("Username").fill(teacherUsername);
   await page.getByLabel("Password").fill("password123");
+  await fillSchoolUserKyc(page, { role: "teacher" });
   await page.getByRole("button", { name: "Create" }).click();
   await expect(page.getByText("Teacher created (pending admin approval).")).toBeVisible();
 

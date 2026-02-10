@@ -1,5 +1,6 @@
 import path from "node:path";
 import { test, expect } from "@playwright/test";
+import { fillStudentRegisterKyc } from "./helpers/kyc";
 
 test("Lesson creator v2: composite blocks + inline quiz gate + PDF pages", async ({ page }) => {
   const title = `Composite V2 ${Date.now()}`;
@@ -71,6 +72,7 @@ test("Lesson creator v2: composite blocks + inline quiz gate + PDF pages", async
   await page.getByLabel("Full name").fill("Composite Student");
   await page.getByLabel("Username").fill(studentUsername);
   await page.getByLabel("Password").fill("password123");
+  await fillStudentRegisterKyc(page);
   await page.getByRole("button", { name: "Register" }).click();
   await expect(page).not.toHaveURL(/\/register$/);
   if (/\/login$/.test(page.url())) {

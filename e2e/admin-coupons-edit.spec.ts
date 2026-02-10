@@ -1,4 +1,5 @@
 import { test, expect } from "@playwright/test";
+import { fillStudentRegisterKyc } from "./helpers/kyc";
 
 test("Admin coupons: edit scope/limits and deactivate; student redemption shows inactive error", async ({ page }) => {
   const device = `adminCouponsEdit_${Date.now()}`;
@@ -35,6 +36,7 @@ test("Admin coupons: edit scope/limits and deactivate; student redemption shows 
   await page.getByLabel("Full name").fill("Student Y");
   await page.getByLabel("Username").fill(`s_${Date.now()}`);
   await page.getByLabel("Password").fill("pass123");
+  await fillStudentRegisterKyc(page);
   await page.getByRole("button", { name: "Register" }).click();
   await expect(page.getByRole("link", { name: "Payments", exact: true })).toBeVisible({ timeout: 30_000 });
 

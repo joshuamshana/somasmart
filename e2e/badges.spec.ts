@@ -1,10 +1,12 @@
 import { test, expect } from "@playwright/test";
+import { fillStudentRegisterKyc } from "./helpers/kyc";
 
 test("Badges + streak: student earns first badges", async ({ page }) => {
   await page.goto("/register");
   await page.getByLabel("Full name").fill("Badge Student");
   await page.getByLabel("Username").fill(`badge_student_${Date.now()}`);
   await page.getByLabel("Password").fill("password123");
+  await fillStudentRegisterKyc(page);
   await page.getByRole("button", { name: "Register" }).click();
   await expect(page.getByRole("link", { name: "Lessons", exact: true })).toBeVisible();
 

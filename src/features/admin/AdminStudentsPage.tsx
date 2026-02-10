@@ -16,6 +16,7 @@ import { Toolbar } from "@/shared/ui/Toolbar";
 import { DataTable } from "@/shared/ui/DataTable";
 import { StatusPill } from "@/shared/ui/StatusPill";
 import { formatDateYmd } from "@/shared/format";
+import { deriveAgeFromDob, isDobInRangeForRole, isValidMobile, normalizeMobile } from "@/shared/kyc/kyc";
 
 function nowIso() {
   return new Date().toISOString();
@@ -23,6 +24,53 @@ function nowIso() {
 
 function newId(prefix: string) {
   return `${prefix}_${crypto.randomUUID()}`;
+}
+
+type StudentKycDraft = {
+  mobile: string;
+  country: string;
+  region: string;
+  street: string;
+  dateOfBirth: string;
+  gender: "" | "male" | "female" | "other" | "prefer_not_to_say";
+  studentLevel: "primary" | "secondary" | "high" | "college" | "uni" | "other";
+  studentLevelOther: string;
+  schoolName: string;
+  guardianName: string;
+  guardianMobile: string;
+};
+
+function blankStudentKycDraft(): StudentKycDraft {
+  return {
+    mobile: "",
+    country: "",
+    region: "",
+    street: "",
+    dateOfBirth: "",
+    gender: "",
+    studentLevel: "primary",
+    studentLevelOther: "",
+    schoolName: "",
+    guardianName: "",
+    guardianMobile: ""
+  };
+}
+
+function validateStudentKycDraft(input: StudentKycDraft, isMinor: boolean, hasLinkedSchool: boolean) {
+  if (!input.mobile.trim() || !isValidMobile(input.mobile)) return "Enter a valid mobile number.";
+  if (!input.country.trim()) return "Enter country.";
+  if (!input.region.trim()) return "Enter region.";
+  if (!input.street.trim()) return "Enter street.";
+  if (!input.dateOfBirth.trim()) return "Enter date of birth.";
+  if (!isDobInRangeForRole("student", input.dateOfBirth.trim())) return "Student age must be at least 3 years.";
+  if (!input.studentLevel) return "Select student level.";
+  if (input.studentLevel === "other" && !input.studentLevelOther.trim()) return "Enter other student level.";
+  if (!hasLinkedSchool && !input.schoolName.trim()) return "Enter school name when no school is linked.";
+  if (isMinor && !input.guardianName.trim()) return "Enter guardian full name for minor student.";
+  if (isMinor && (!input.guardianMobile.trim() || !isValidMobile(input.guardianMobile))) {
+    return "Enter a valid guardian mobile for minor student.";
+  }
+  return null;
 }
 
 export function AdminStudentsPage() {
@@ -46,6 +94,7 @@ export function AdminStudentsPage() {
   const [createPassword, setCreatePassword] = useState("student123");
   const [createSchoolId, setCreateSchoolId] = useState<string>("");
   const [createIsMinor, setCreateIsMinor] = useState(false);
+  const [createKyc, setCreateKyc] = useState<StudentKycDraft>(() => blankStudentKycDraft());
   const [msgCreate, setMsgCreate] = useState<string | null>(null);
 
   const [editOpen, setEditOpen] = useState(false);
@@ -53,6 +102,8 @@ export function AdminStudentsPage() {
   const [editName, setEditName] = useState("");
   const [editSchoolId, setEditSchoolId] = useState<string>("");
   const [editIsMinor, setEditIsMinor] = useState(false);
+  const [editKyc, setEditKyc] = useState<StudentKycDraft>(() => blankStudentKycDraft());
+  const [editError, setEditError] = useState<string | null>(null);
 
   const [resetOpen, setResetOpen] = useState(false);
   const [resetUserId, setResetUserId] = useState<string | null>(null);
@@ -127,8 +178,11 @@ export function AdminStudentsPage() {
     const username = createUsername.trim();
     if (!displayName) return setMsgCreate("Enter student name.");
     if (!username) return setMsgCreate("Enter username.");
+    const createValidation = validateStudentKycDraft(createKyc, createIsMinor, Boolean(createSchoolId));
+    if (createValidation) return setMsgCreate(createValidation);
     const existing = (await db.users.toArray()).find((u) => !u.deletedAt && u.username.toLowerCase() === username.toLowerCase());
     if (existing) return setMsgCreate("Username already exists.");
+    const linkedSchoolName = createSchoolId ? schoolsById[createSchoolId]?.name : undefined;
     const row: User = {
       id: newId("user"),
       role: "student",
@@ -138,6 +192,22 @@ export function AdminStudentsPage() {
       passwordHash: await hashPassword(createPassword),
       schoolId: createSchoolId || undefined,
       isMinor: createIsMinor || undefined,
+      kyc: {
+        mobile: normalizeMobile(createKyc.mobile),
+        address: {
+          country: createKyc.country.trim(),
+          region: createKyc.region.trim(),
+          street: createKyc.street.trim()
+        },
+        dateOfBirth: createKyc.dateOfBirth.trim(),
+        gender: createKyc.gender || undefined,
+        studentLevel: createKyc.studentLevel,
+        studentLevelOther: createKyc.studentLevel === "other" ? createKyc.studentLevelOther.trim() || undefined : undefined,
+        schoolName: linkedSchoolName ?? (createKyc.schoolName.trim() || undefined),
+        guardianName: createIsMinor ? createKyc.guardianName.trim() || undefined : undefined,
+        guardianMobile: createIsMinor ? normalizeMobile(createKyc.guardianMobile) : undefined,
+        updatedAt: nowIso()
+      },
       createdAt: nowIso()
     };
     await db.users.put(row);
@@ -152,6 +222,8 @@ export function AdminStudentsPage() {
     }
     setCreateName("");
     setCreateUsername("");
+    setCreateKyc(blankStudentKycDraft());
+    setCreateIsMinor(false);
     setMsgCreate("Student created.");
     await refresh();
   }
@@ -161,18 +233,55 @@ export function AdminStudentsPage() {
     setEditName(s.displayName);
     setEditSchoolId(s.schoolId ?? "");
     setEditIsMinor(Boolean(s.isMinor));
+    setEditKyc({
+      mobile: s.kyc?.mobile ?? "",
+      country: s.kyc?.address.country ?? "",
+      region: s.kyc?.address.region ?? "",
+      street: s.kyc?.address.street ?? "",
+      dateOfBirth: s.kyc?.dateOfBirth ?? "",
+      gender: s.kyc?.gender ?? "",
+      studentLevel: s.kyc?.studentLevel ?? "primary",
+      studentLevelOther: s.kyc?.studentLevelOther ?? "",
+      schoolName: s.kyc?.schoolName ?? "",
+      guardianName: s.kyc?.guardianName ?? "",
+      guardianMobile: s.kyc?.guardianMobile ?? ""
+    });
+    setEditError(null);
     setEditOpen(true);
   }
 
   async function saveEdit() {
-    if (!editUserId) return;
+    if (!editUserId) return false;
     const row = await db.users.get(editUserId);
-    if (!row) return;
+    if (!row) return false;
+    const editValidation = validateStudentKycDraft(editKyc, editIsMinor, Boolean(editSchoolId));
+    if (editValidation) {
+      setEditError(editValidation);
+      return false;
+    }
+    setEditError(null);
+    const linkedSchoolName = editSchoolId ? schoolsById[editSchoolId]?.name : undefined;
     await db.users.put({
       ...row,
       displayName: editName.trim() || row.displayName,
       schoolId: editSchoolId || undefined,
-      isMinor: editIsMinor || undefined
+      isMinor: editIsMinor || undefined,
+      kyc: {
+        mobile: normalizeMobile(editKyc.mobile),
+        address: {
+          country: editKyc.country.trim(),
+          region: editKyc.region.trim(),
+          street: editKyc.street.trim()
+        },
+        dateOfBirth: editKyc.dateOfBirth.trim(),
+        gender: editKyc.gender || undefined,
+        studentLevel: editKyc.studentLevel,
+        studentLevelOther: editKyc.studentLevel === "other" ? editKyc.studentLevelOther.trim() || undefined : undefined,
+        schoolName: linkedSchoolName ?? (editKyc.schoolName.trim() || undefined),
+        guardianName: editIsMinor ? editKyc.guardianName.trim() || undefined : undefined,
+        guardianMobile: editIsMinor ? normalizeMobile(editKyc.guardianMobile) : undefined,
+        updatedAt: nowIso()
+      }
     });
     await enqueueOutboxEvent({ type: "user_update", payload: { userId: editUserId } });
     if (user) {
@@ -184,6 +293,7 @@ export function AdminStudentsPage() {
       });
     }
     await refresh();
+    return true;
   }
 
   function openReset(s: User) {
@@ -218,10 +328,51 @@ export function AdminStudentsPage() {
         onClose={() => {
           setEditOpen(false);
           setEditUserId(null);
+          setEditError(null);
         }}
       >
         <div className="space-y-3">
           <Input label="Name" value={editName} onChange={(e) => setEditName(e.target.value)} />
+          <Input label="Mobile" value={editKyc.mobile} onChange={(e) => setEditKyc((prev) => ({ ...prev, mobile: e.target.value }))} />
+          <Input label="Country" value={editKyc.country} onChange={(e) => setEditKyc((prev) => ({ ...prev, country: e.target.value }))} />
+          <Input label="Region" value={editKyc.region} onChange={(e) => setEditKyc((prev) => ({ ...prev, region: e.target.value }))} />
+          <Input label="Street" value={editKyc.street} onChange={(e) => setEditKyc((prev) => ({ ...prev, street: e.target.value }))} />
+          <Input
+            label="Date of birth"
+            type="date"
+            value={editKyc.dateOfBirth}
+            onChange={(e) => setEditKyc((prev) => ({ ...prev, dateOfBirth: e.target.value }))}
+          />
+          <Select
+            label="Gender (optional)"
+            value={editKyc.gender}
+            onChange={(e) => setEditKyc((prev) => ({ ...prev, gender: e.target.value as StudentKycDraft["gender"] }))}
+          >
+            <option value="">Prefer not to say</option>
+            <option value="male">Male</option>
+            <option value="female">Female</option>
+            <option value="other">Other</option>
+            <option value="prefer_not_to_say">Prefer not to say</option>
+          </Select>
+          <Select
+            label="Level"
+            value={editKyc.studentLevel}
+            onChange={(e) => setEditKyc((prev) => ({ ...prev, studentLevel: e.target.value as StudentKycDraft["studentLevel"] }))}
+          >
+            <option value="primary">Primary</option>
+            <option value="secondary">Secondary</option>
+            <option value="high">High</option>
+            <option value="college">College</option>
+            <option value="uni">Uni</option>
+            <option value="other">Others</option>
+          </Select>
+          {editKyc.studentLevel === "other" ? (
+            <Input
+              label="Other level"
+              value={editKyc.studentLevelOther}
+              onChange={(e) => setEditKyc((prev) => ({ ...prev, studentLevelOther: e.target.value }))}
+            />
+          ) : null}
           <Select label="School" value={editSchoolId} onChange={(e) => setEditSchoolId(e.target.value)}>
             <option value="">None</option>
             {schools.map((s) => (
@@ -230,17 +381,40 @@ export function AdminStudentsPage() {
               </option>
             ))}
           </Select>
+          {!editSchoolId ? (
+            <Input
+              label="School name"
+              value={editKyc.schoolName}
+              onChange={(e) => setEditKyc((prev) => ({ ...prev, schoolName: e.target.value }))}
+            />
+          ) : null}
           <label className="flex items-center gap-2 text-sm text-muted">
             <input type="checkbox" className="h-4 w-4" checked={editIsMinor} onChange={(e) => setEditIsMinor(e.target.checked)} />
             Student is a minor
           </label>
+          {editIsMinor ? (
+            <>
+              <Input
+                label="Guardian full name"
+                value={editKyc.guardianName}
+                onChange={(e) => setEditKyc((prev) => ({ ...prev, guardianName: e.target.value }))}
+              />
+              <Input
+                label="Guardian mobile"
+                value={editKyc.guardianMobile}
+                onChange={(e) => setEditKyc((prev) => ({ ...prev, guardianMobile: e.target.value }))}
+              />
+            </>
+          ) : null}
+          {editError ? <div className="rounded-md bg-status-danger-bg px-3 py-2 text-sm text-status-danger">{editError}</div> : null}
           <div className="flex justify-end gap-2">
             <Button variant="secondary" onClick={() => setEditOpen(false)}>
               Cancel
             </Button>
             <Button
               onClick={async () => {
-                await saveEdit();
+                const saved = await saveEdit();
+                if (!saved) return;
                 setEditOpen(false);
               }}
             >
@@ -305,6 +479,46 @@ export function AdminStudentsPage() {
             value={createPassword}
             onChange={(e) => setCreatePassword(e.target.value)}
           />
+          <Input label="Mobile" value={createKyc.mobile} onChange={(e) => setCreateKyc((prev) => ({ ...prev, mobile: e.target.value }))} />
+          <Input label="Country" value={createKyc.country} onChange={(e) => setCreateKyc((prev) => ({ ...prev, country: e.target.value }))} />
+          <Input label="Region" value={createKyc.region} onChange={(e) => setCreateKyc((prev) => ({ ...prev, region: e.target.value }))} />
+          <Input label="Street" value={createKyc.street} onChange={(e) => setCreateKyc((prev) => ({ ...prev, street: e.target.value }))} />
+          <Input
+            label="Date of birth"
+            type="date"
+            value={createKyc.dateOfBirth}
+            onChange={(e) => setCreateKyc((prev) => ({ ...prev, dateOfBirth: e.target.value }))}
+          />
+          <Select
+            label="Gender (optional)"
+            value={createKyc.gender}
+            onChange={(e) => setCreateKyc((prev) => ({ ...prev, gender: e.target.value as StudentKycDraft["gender"] }))}
+          >
+            <option value="">Prefer not to say</option>
+            <option value="male">Male</option>
+            <option value="female">Female</option>
+            <option value="other">Other</option>
+            <option value="prefer_not_to_say">Prefer not to say</option>
+          </Select>
+          <Select
+            label="Level"
+            value={createKyc.studentLevel}
+            onChange={(e) => setCreateKyc((prev) => ({ ...prev, studentLevel: e.target.value as StudentKycDraft["studentLevel"] }))}
+          >
+            <option value="primary">Primary</option>
+            <option value="secondary">Secondary</option>
+            <option value="high">High</option>
+            <option value="college">College</option>
+            <option value="uni">Uni</option>
+            <option value="other">Others</option>
+          </Select>
+          {createKyc.studentLevel === "other" ? (
+            <Input
+              label="Other level"
+              value={createKyc.studentLevelOther}
+              onChange={(e) => setCreateKyc((prev) => ({ ...prev, studentLevelOther: e.target.value }))}
+            />
+          ) : null}
           <Select label="School" value={createSchoolId} onChange={(e) => setCreateSchoolId(e.target.value)}>
             <option value="">None</option>
             {schools.map((s) => (
@@ -313,6 +527,13 @@ export function AdminStudentsPage() {
               </option>
             ))}
           </Select>
+          {!createSchoolId ? (
+            <Input
+              label="School name"
+              value={createKyc.schoolName}
+              onChange={(e) => setCreateKyc((prev) => ({ ...prev, schoolName: e.target.value }))}
+            />
+          ) : null}
           <label className="flex items-center gap-2 text-sm text-muted self-end">
             <input
               type="checkbox"
@@ -322,6 +543,20 @@ export function AdminStudentsPage() {
             />
             Minor
           </label>
+          {createIsMinor ? (
+            <>
+              <Input
+                label="Guardian full name"
+                value={createKyc.guardianName}
+                onChange={(e) => setCreateKyc((prev) => ({ ...prev, guardianName: e.target.value }))}
+              />
+              <Input
+                label="Guardian mobile"
+                value={createKyc.guardianMobile}
+                onChange={(e) => setCreateKyc((prev) => ({ ...prev, guardianMobile: e.target.value }))}
+              />
+            </>
+          ) : null}
           <div className="self-end">
             <Button onClick={() => void createStudent()}>Create</Button>
           </div>
@@ -362,6 +597,9 @@ export function AdminStudentsPage() {
             <th className="px-4 py-3">Name</th>
             <th className="px-4 py-3">Username</th>
             <th className="px-4 py-3">School</th>
+            <th className="px-4 py-3">Mobile</th>
+            <th className="px-4 py-3">Age</th>
+            <th className="px-4 py-3">Level</th>
             <th className="px-4 py-3">Minor</th>
             <th className="px-4 py-3">Status</th>
             <th className="px-4 py-3">Joined</th>
@@ -375,6 +613,17 @@ export function AdminStudentsPage() {
                 <td className="px-4 py-3">{s.displayName}</td>
                 <td className="px-4 py-3 font-mono text-xs">{s.username}</td>
                 <td className="px-4 py-3 text-muted">{s.schoolId ? schoolsById[s.schoolId]?.name ?? "Unknown" : "—"}</td>
+                <td className="px-4 py-3 text-muted">{s.kyc?.mobile ?? "—"}</td>
+                <td className="px-4 py-3 text-muted">
+                  {s.kyc?.dateOfBirth ? Math.max(0, deriveAgeFromDob(s.kyc.dateOfBirth)) || "—" : "—"}
+                </td>
+                <td className="px-4 py-3 text-muted">
+                  {s.kyc?.studentLevel === "other"
+                    ? s.kyc.studentLevelOther ?? "Other"
+                    : s.kyc?.studentLevel
+                      ? s.kyc.studentLevel
+                      : "—"}
+                </td>
                 <td className="px-4 py-3">{s.isMinor ? "Yes" : "No"}</td>
                 <td className="px-4 py-3" data-testid="student-status">
                   <StatusPill value={s.status} />

@@ -1,4 +1,5 @@
 import { test, expect } from "@playwright/test";
+import { fillStudentRegisterKyc } from "./helpers/kyc";
 
 test("Student layout: sidebar navigation works and preserves query params", async ({ page }) => {
   const device = `studentLayout_${Date.now()}`;
@@ -8,6 +9,7 @@ test("Student layout: sidebar navigation works and preserves query params", asyn
   await page.getByLabel("Full name").fill("Student Layout");
   await page.getByLabel("Username").fill(username);
   await page.getByLabel("Password").fill("password123");
+  await fillStudentRegisterKyc(page);
   await page.getByRole("button", { name: "Register" }).click();
   if (page.url().includes("/login")) {
     await page.getByLabel("Username").fill(username);
@@ -35,6 +37,7 @@ test("Student layout: mobile drawer navigation works", async ({ page }) => {
   await page.getByLabel("Full name").fill("Student Layout Mobile");
   await page.getByLabel("Username").fill(username);
   await page.getByLabel("Password").fill("password123");
+  await fillStudentRegisterKyc(page);
   await page.getByRole("button", { name: "Register" }).click();
   await expect(page.getByTestId("student-mobile-header")).toBeVisible({ timeout: 30_000 });
 
@@ -55,6 +58,7 @@ test("Student layout: sidebar scroll is independent from main body", async ({ pa
   await page.getByLabel("Full name").fill("Student Sidebar Scroll");
   await page.getByLabel("Username").fill(username);
   await page.getByLabel("Password").fill("password123");
+  await fillStudentRegisterKyc(page);
   await page.getByRole("button", { name: "Register" }).click();
   await expect(page.getByTestId("student-layout")).toBeVisible({ timeout: 30_000 });
   await page.goto(`/student/lessons?device=${device}`);

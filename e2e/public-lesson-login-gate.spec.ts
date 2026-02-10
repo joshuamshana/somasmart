@@ -1,4 +1,5 @@
 import { test, expect } from "@playwright/test";
+import { fillStudentRegisterKyc } from "./helpers/kyc";
 
 test("Public landing: clicking a lesson requires login, then returns student to lesson via next=", async ({ page }) => {
   const device = `publicGate_${Date.now()}`;
@@ -19,6 +20,7 @@ test("Public landing: clicking a lesson requires login, then returns student to 
   await page.getByLabel("Full name").fill("Gate Student");
   await page.getByLabel("Username").fill(username);
   await page.getByLabel("Password").fill("password123");
+  await fillStudentRegisterKyc(page);
   await page.getByRole("button", { name: "Register" }).click();
 
   // Should land on the intended lesson after register (via next=).

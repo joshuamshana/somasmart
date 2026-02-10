@@ -1,4 +1,5 @@
 import { test, expect } from "@playwright/test";
+import { fillStudentRegisterKyc } from "./helpers/kyc";
 
 test("Payments: student mobile money pending -> admin verifies -> student pulls unlock", async ({ page }) => {
   const studentUsername = `pay_student_${Date.now()}`;
@@ -11,6 +12,7 @@ test("Payments: student mobile money pending -> admin verifies -> student pulls 
   await page.getByLabel("Full name").fill("Pay Student");
   await page.getByLabel("Username").fill(studentUsername);
   await page.getByLabel("Password").fill("password123");
+  await fillStudentRegisterKyc(page);
   await page.getByRole("button", { name: "Register" }).click();
   await expect(page.getByRole("link", { name: "Payments", exact: true })).toBeVisible();
 

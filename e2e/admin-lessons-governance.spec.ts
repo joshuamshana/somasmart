@@ -1,4 +1,5 @@
 import { test, expect } from "@playwright/test";
+import { fillStudentRegisterKyc } from "./helpers/kyc";
 
 test("Admin lessons governance: create new version for teacher; expire approved lesson hides from students", async ({
   page
@@ -50,6 +51,7 @@ test("Admin lessons governance: create new version for teacher; expire approved 
   await page.getByLabel("Full name").fill("Student X");
   await page.getByLabel("Username").fill(`s_${Date.now()}`);
   await page.getByLabel("Password").fill("pass123");
+  await fillStudentRegisterKyc(page);
   await page.getByRole("button", { name: "Register" }).click();
   await page.goto(`/student/lessons?device=${device}`);
   await expect(page.getByText("Introduction to Numbers")).toHaveCount(0);

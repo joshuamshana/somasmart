@@ -1,4 +1,5 @@
 import { test, expect } from "@playwright/test";
+import { fillSchoolUserKyc } from "./helpers/kyc";
 
 test("School admin: create student and grant sponsored access", async ({ page }) => {
   const device = `school_${Date.now()}`;
@@ -24,6 +25,7 @@ test("School admin: create student and grant sponsored access", async ({ page })
   await page.getByLabel("Full name").fill("School Student");
   await page.getByLabel("Username").fill(studentUsername);
   await page.getByLabel("Password").fill("password123");
+  await fillSchoolUserKyc(page, { role: "student" });
   await page.getByRole("button", { name: "Create" }).click();
   await expect(page.getByText("Student created.")).toBeVisible();
 

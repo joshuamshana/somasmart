@@ -18,7 +18,15 @@ test("Admin users CRUD: create/edit/reset/suspend/activate/delete student + admi
   await page.getByLabel("Name").first().fill("Student One");
   await page.getByLabel("Username").first().fill(studentUsername);
   await page.getByLabel("Temp password").first().fill("s1pass");
+  await page.getByLabel("Mobile").first().fill("+255700200001");
+  await page.getByLabel("Country").first().fill("Tanzania");
+  await page.getByLabel("Region").first().fill("Dar");
+  await page.getByLabel("Street").first().fill("Kijitonyama");
+  await page.getByLabel("Date of birth").first().fill("2012-01-01");
+  await page.getByLabel("Level").first().selectOption("secondary");
   await page.getByRole("checkbox", { name: "Minor" }).check();
+  await page.getByLabel("Guardian full name").first().fill("Guardian Crud");
+  await page.getByLabel("Guardian mobile").first().fill("+255700200002");
   await page.getByRole("button", { name: "Create" }).click();
   await expect(page.getByText("Student created.")).toBeVisible();
 
@@ -57,6 +65,11 @@ test("Admin users CRUD: create/edit/reset/suspend/activate/delete student + admi
   await page.getByLabel("Name").first().fill("New Admin");
   await page.getByLabel("Username").first().fill(adminUsername);
   await page.getByLabel("Temp password").first().fill("a1pass");
+  await page.getByLabel("Mobile").first().fill("+255700300001");
+  await page.getByLabel("Country").first().fill("Tanzania");
+  await page.getByLabel("Region").first().fill("Dar");
+  await page.getByLabel("Street").first().fill("Mikocheni");
+  await page.getByLabel("Date of birth").first().fill("1990-01-01");
   await page.getByRole("button", { name: "Create" }).click();
   await expect(page.getByText("Admin created.")).toBeVisible();
 

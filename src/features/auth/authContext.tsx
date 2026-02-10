@@ -5,6 +5,7 @@ import { seedIfEmpty } from "@/shared/db/seed";
 import { hashPassword, verifyPassword } from "@/shared/security/password";
 import { getSchoolByCode } from "@/shared/db/schoolsRepo";
 import { enqueueOutboxEvent } from "@/shared/offline/outbox";
+import { normalizeMobile } from "@/shared/kyc/kyc";
 
 import { getDeviceId } from "@/shared/device";
 
@@ -25,6 +26,17 @@ type AuthContextValue = {
     password: string;
     schoolCode?: string;
     isMinor?: boolean;
+    kyc: {
+      mobile: string;
+      address: { country: string; region: string; street: string };
+      dateOfBirth: string;
+      gender?: "male" | "female" | "other" | "prefer_not_to_say";
+      studentLevel: "primary" | "secondary" | "high" | "college" | "uni" | "other";
+      studentLevelOther?: string;
+      schoolName?: string;
+      guardianName?: string;
+      guardianMobile?: string;
+    };
   }) => Promise<{ ok: true } | { ok: false; error: string }>;
   logout: () => void;
   refresh: () => Promise<void>;
@@ -93,18 +105,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setUser(found);
         return { ok: true as const, user: found };
       },
-      async register({ displayName, username, password, schoolCode, isMinor }) {
+      async register({ displayName, username, password, schoolCode, isMinor, kyc }) {
         await seedIfEmpty();
         const existing = await findUserByUsername(username);
         if (existing) return { ok: false as const, error: "Username already exists." };
 
         const passwordHash = await hashPassword(password);
         let schoolId: string | undefined = undefined;
+        let linkedSchoolName: string | undefined = undefined;
         const code = schoolCode?.trim();
         if (code) {
           const school = await getSchoolByCode(code);
           if (!school) return { ok: false as const, error: "Invalid school code." };
           schoolId = school.id;
+          linkedSchoolName = school.name;
         }
         const newUser: User = {
           id: newId("user"),
@@ -115,6 +129,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           passwordHash,
           schoolId,
           isMinor: Boolean(isMinor),
+          kyc: {
+            mobile: normalizeMobile(kyc.mobile),
+            address: {
+              country: kyc.address.country.trim(),
+              region: kyc.address.region.trim(),
+              street: kyc.address.street.trim()
+            },
+            dateOfBirth: kyc.dateOfBirth.trim(),
+            gender: kyc.gender,
+            studentLevel: kyc.studentLevel,
+            studentLevelOther: kyc.studentLevelOther?.trim() || undefined,
+            schoolName: linkedSchoolName ?? (kyc.schoolName?.trim() || undefined),
+            guardianName: Boolean(isMinor) ? kyc.guardianName?.trim() || undefined : undefined,
+            guardianMobile: Boolean(isMinor) ? normalizeMobile(kyc.guardianMobile ?? "") || undefined : undefined,
+            updatedAt: nowIso()
+          },
           createdAt: nowIso()
         };
         await db.users.add(newUser);

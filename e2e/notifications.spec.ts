@@ -1,4 +1,5 @@
 import { test, expect } from "@playwright/test";
+import { fillSchoolUserKyc } from "./helpers/kyc";
 
 test("Notifications: teacher receives approval notification after sync", async ({ page }) => {
   const teacherUsername = `notif_teacher_${Date.now()}`;
@@ -18,6 +19,7 @@ test("Notifications: teacher receives approval notification after sync", async (
   await page.getByLabel("Full name").fill("Notif Teacher");
   await page.getByLabel("Username").fill(teacherUsername);
   await page.getByLabel("Password").fill("password123");
+  await fillSchoolUserKyc(page, { role: "teacher" });
   await page.getByRole("button", { name: "Create" }).click();
   await expect(page.getByText("Teacher created (pending admin approval).")).toBeVisible();
 

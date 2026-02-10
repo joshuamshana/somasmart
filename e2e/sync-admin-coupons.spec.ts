@@ -1,4 +1,5 @@
 import { test, expect } from "@playwright/test";
+import { fillStudentRegisterKyc } from "./helpers/kyc";
 
 test("Sync: admin coupon CRUD propagates to student device", async ({ page }) => {
   const server = `srv_sync_coupon_${Date.now()}`;
@@ -30,6 +31,7 @@ test("Sync: admin coupon CRUD propagates to student device", async ({ page }) =>
   await page.getByLabel("Full name").fill("Sync Coupon Student");
   await page.getByLabel("Username").fill(studentUsername);
   await page.getByLabel("Password").fill("password123");
+  await fillStudentRegisterKyc(page);
   await page.getByRole("button", { name: "Register" }).click();
   await expect(page.getByRole("link", { name: "Payments", exact: true })).toBeVisible({ timeout: 30_000 });
 

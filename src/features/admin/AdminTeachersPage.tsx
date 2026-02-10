@@ -16,6 +16,7 @@ import { Toolbar } from "@/shared/ui/Toolbar";
 import { DataTable } from "@/shared/ui/DataTable";
 import { StatusPill } from "@/shared/ui/StatusPill";
 import { formatDateYmd } from "@/shared/format";
+import { isDobInRangeForRole, isValidMobile, normalizeMobile } from "@/shared/kyc/kyc";
 
 function nowIso() {
   return new Date().toISOString();
@@ -23,6 +24,29 @@ function nowIso() {
 
 function newId(prefix: string) {
   return `${prefix}_${crypto.randomUUID()}`;
+}
+
+type BaseKycDraft = {
+  mobile: string;
+  country: string;
+  region: string;
+  street: string;
+  dateOfBirth: string;
+  gender: "" | "male" | "female" | "other" | "prefer_not_to_say";
+};
+
+function blankBaseKycDraft(): BaseKycDraft {
+  return { mobile: "", country: "", region: "", street: "", dateOfBirth: "", gender: "" };
+}
+
+function validateBaseKycDraft(role: "teacher" | "admin" | "school_admin", input: BaseKycDraft) {
+  if (!input.mobile.trim() || !isValidMobile(input.mobile)) return "Enter a valid mobile number.";
+  if (!input.country.trim()) return "Enter country.";
+  if (!input.region.trim()) return "Enter region.";
+  if (!input.street.trim()) return "Enter street.";
+  if (!input.dateOfBirth.trim()) return "Enter date of birth.";
+  if (!isDobInRangeForRole(role, input.dateOfBirth.trim())) return "Must be at least 18 years old.";
+  return null;
 }
 
 export function AdminTeachersPage() {
@@ -43,11 +67,14 @@ export function AdminTeachersPage() {
   const [createUsername, setCreateUsername] = useState("");
   const [createPassword, setCreatePassword] = useState("teacher123");
   const [createStatus, setCreateStatus] = useState<UserStatus>("pending");
+  const [createKyc, setCreateKyc] = useState<BaseKycDraft>(() => blankBaseKycDraft());
   const [msgCreate, setMsgCreate] = useState<string | null>(null);
 
   const [editOpen, setEditOpen] = useState(false);
   const [editUserId, setEditUserId] = useState<string | null>(null);
   const [editName, setEditName] = useState("");
+  const [editKyc, setEditKyc] = useState<BaseKycDraft>(() => blankBaseKycDraft());
+  const [editError, setEditError] = useState<string | null>(null);
 
   const [resetOpen, setResetOpen] = useState(false);
   const [resetUserId, setResetUserId] = useState<string | null>(null);
@@ -120,6 +147,8 @@ export function AdminTeachersPage() {
     const username = createUsername.trim();
     if (!displayName) return setMsgCreate("Enter teacher name.");
     if (!username) return setMsgCreate("Enter username.");
+    const createValidation = validateBaseKycDraft("teacher", createKyc);
+    if (createValidation) return setMsgCreate(createValidation);
     const existing = (await db.users.toArray()).find((u) => !u.deletedAt && u.username.toLowerCase() === username.toLowerCase());
     if (existing) return setMsgCreate("Username already exists.");
     const row: User = {
@@ -129,6 +158,17 @@ export function AdminTeachersPage() {
       displayName,
       username,
       passwordHash: await hashPassword(createPassword),
+      kyc: {
+        mobile: normalizeMobile(createKyc.mobile),
+        address: {
+          country: createKyc.country.trim(),
+          region: createKyc.region.trim(),
+          street: createKyc.street.trim()
+        },
+        dateOfBirth: createKyc.dateOfBirth.trim(),
+        gender: createKyc.gender || undefined,
+        updatedAt: nowIso()
+      },
       createdAt: nowIso()
     };
     await db.users.put(row);
@@ -138,6 +178,7 @@ export function AdminTeachersPage() {
     }
     setCreateName("");
     setCreateUsername("");
+    setCreateKyc(blankBaseKycDraft());
     setMsgCreate("Teacher created.");
     await refresh();
   }
@@ -145,19 +186,49 @@ export function AdminTeachersPage() {
   function openEdit(t: User) {
     setEditUserId(t.id);
     setEditName(t.displayName);
+    setEditKyc({
+      mobile: t.kyc?.mobile ?? "",
+      country: t.kyc?.address.country ?? "",
+      region: t.kyc?.address.region ?? "",
+      street: t.kyc?.address.street ?? "",
+      dateOfBirth: t.kyc?.dateOfBirth ?? "",
+      gender: t.kyc?.gender ?? ""
+    });
+    setEditError(null);
     setEditOpen(true);
   }
 
   async function saveEdit() {
-    if (!editUserId) return;
+    if (!editUserId) return false;
     const row = await db.users.get(editUserId);
-    if (!row) return;
-    await db.users.put({ ...row, displayName: editName.trim() || row.displayName });
+    if (!row) return false;
+    const editValidation = validateBaseKycDraft("teacher", editKyc);
+    if (editValidation) {
+      setEditError(editValidation);
+      return false;
+    }
+    setEditError(null);
+    await db.users.put({
+      ...row,
+      displayName: editName.trim() || row.displayName,
+      kyc: {
+        mobile: normalizeMobile(editKyc.mobile),
+        address: {
+          country: editKyc.country.trim(),
+          region: editKyc.region.trim(),
+          street: editKyc.street.trim()
+        },
+        dateOfBirth: editKyc.dateOfBirth.trim(),
+        gender: editKyc.gender || undefined,
+        updatedAt: nowIso()
+      }
+    });
     await enqueueOutboxEvent({ type: "user_update", payload: { userId: editUserId } });
     if (user) {
       await logAudit({ actorUserId: user.id, action: "teacher_update", entityType: "user", entityId: editUserId });
     }
     await refresh();
+    return true;
   }
 
   function openReset(t: User) {
@@ -187,17 +258,41 @@ export function AdminTeachersPage() {
         onClose={() => {
           setEditOpen(false);
           setEditUserId(null);
+          setEditError(null);
         }}
       >
         <div className="space-y-3">
           <Input label="Name" value={editName} onChange={(e) => setEditName(e.target.value)} />
+          <Input label="Mobile" value={editKyc.mobile} onChange={(e) => setEditKyc((prev) => ({ ...prev, mobile: e.target.value }))} />
+          <Input label="Country" value={editKyc.country} onChange={(e) => setEditKyc((prev) => ({ ...prev, country: e.target.value }))} />
+          <Input label="Region" value={editKyc.region} onChange={(e) => setEditKyc((prev) => ({ ...prev, region: e.target.value }))} />
+          <Input label="Street" value={editKyc.street} onChange={(e) => setEditKyc((prev) => ({ ...prev, street: e.target.value }))} />
+          <Input
+            label="Date of birth"
+            type="date"
+            value={editKyc.dateOfBirth}
+            onChange={(e) => setEditKyc((prev) => ({ ...prev, dateOfBirth: e.target.value }))}
+          />
+          <Select
+            label="Gender (optional)"
+            value={editKyc.gender}
+            onChange={(e) => setEditKyc((prev) => ({ ...prev, gender: e.target.value as BaseKycDraft["gender"] }))}
+          >
+            <option value="">Prefer not to say</option>
+            <option value="male">Male</option>
+            <option value="female">Female</option>
+            <option value="other">Other</option>
+            <option value="prefer_not_to_say">Prefer not to say</option>
+          </Select>
+          {editError ? <div className="rounded-md bg-status-danger-bg px-3 py-2 text-sm text-status-danger">{editError}</div> : null}
           <div className="flex justify-end gap-2">
             <Button variant="secondary" onClick={() => setEditOpen(false)}>
               Cancel
             </Button>
             <Button
               onClick={async () => {
-                await saveEdit();
+                const saved = await saveEdit();
+                if (!saved) return;
                 setEditOpen(false);
               }}
             >
@@ -258,6 +353,27 @@ export function AdminTeachersPage() {
             <option value="pending">Pending</option>
             <option value="active">Active</option>
             <option value="suspended">Suspended</option>
+          </Select>
+          <Input label="Mobile" value={createKyc.mobile} onChange={(e) => setCreateKyc((prev) => ({ ...prev, mobile: e.target.value }))} />
+          <Input label="Country" value={createKyc.country} onChange={(e) => setCreateKyc((prev) => ({ ...prev, country: e.target.value }))} />
+          <Input label="Region" value={createKyc.region} onChange={(e) => setCreateKyc((prev) => ({ ...prev, region: e.target.value }))} />
+          <Input label="Street" value={createKyc.street} onChange={(e) => setCreateKyc((prev) => ({ ...prev, street: e.target.value }))} />
+          <Input
+            label="Date of birth"
+            type="date"
+            value={createKyc.dateOfBirth}
+            onChange={(e) => setCreateKyc((prev) => ({ ...prev, dateOfBirth: e.target.value }))}
+          />
+          <Select
+            label="Gender (optional)"
+            value={createKyc.gender}
+            onChange={(e) => setCreateKyc((prev) => ({ ...prev, gender: e.target.value as BaseKycDraft["gender"] }))}
+          >
+            <option value="">Prefer not to say</option>
+            <option value="male">Male</option>
+            <option value="female">Female</option>
+            <option value="other">Other</option>
+            <option value="prefer_not_to_say">Prefer not to say</option>
           </Select>
           <div className="md:col-span-4">
             <Button onClick={() => void createTeacher()}>Create</Button>

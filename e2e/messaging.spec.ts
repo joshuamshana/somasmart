@@ -1,4 +1,5 @@
 import { test, expect } from "@playwright/test";
+import { fillStudentRegisterKyc } from "./helpers/kyc";
 
 test("Optional: offline messaging student <-> teacher", async ({ page }) => {
   const studentUsername = `msg_student_${Date.now()}`;
@@ -8,6 +9,7 @@ test("Optional: offline messaging student <-> teacher", async ({ page }) => {
   await page.getByLabel("Username").fill(studentUsername);
   await page.getByLabel("Password").fill("password123");
   await page.getByLabel("School code (optional)").fill("SOMA001");
+  await fillStudentRegisterKyc(page);
   await page.getByRole("button", { name: "Register" }).click();
 
   await page.getByRole("link", { name: "Support", exact: true }).click();

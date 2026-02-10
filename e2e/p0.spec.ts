@@ -1,10 +1,12 @@
 import { test, expect } from "@playwright/test";
+import { fillSchoolUserKyc, fillStudentRegisterKyc } from "./helpers/kyc";
 
 test("P0: student registers -> opens lesson -> completes quiz", async ({ page, context }) => {
   await page.goto("/register");
   await page.getByLabel("Full name").fill("Student One");
   await page.getByLabel("Username").fill(`student_${Date.now()}`);
   await page.getByLabel("Password").fill("password123");
+  await fillStudentRegisterKyc(page);
   await page.getByRole("button", { name: "Register" }).click();
   await expect(page.getByRole("link", { name: "Lessons", exact: true })).toBeVisible();
 
@@ -57,6 +59,7 @@ test("P0: teacher registers -> admin approves -> teacher submits lesson -> admin
   await page.getByLabel("Full name").fill("Teacher Two");
   await page.getByLabel("Username").fill(teacherUsername);
   await page.getByLabel("Password").fill("password123");
+  await fillSchoolUserKyc(page, { role: "teacher" });
   await page.getByRole("button", { name: "Create" }).click();
   await expect(page.getByText("Teacher created (pending admin approval).")).toBeVisible();
   await page.getByRole("button", { name: "Logout" }).click();
@@ -112,6 +115,7 @@ test("P0: student unlocks content via coupon", async ({ page }) => {
   await page.getByLabel("Full name").fill("Student Two");
   await page.getByLabel("Username").fill(`student_${Date.now()}`);
   await page.getByLabel("Password").fill("password123");
+  await fillStudentRegisterKyc(page);
   await page.getByRole("button", { name: "Register" }).click();
   await expect(page.getByRole("link", { name: "Payments", exact: true })).toBeVisible();
 

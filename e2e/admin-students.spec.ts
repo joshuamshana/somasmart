@@ -1,4 +1,5 @@
 import { test, expect } from "@playwright/test";
+import { fillStudentRegisterKyc } from "./helpers/kyc";
 
 test("Admin: suspend student and see audit log", async ({ page }) => {
   const studentUsername = `stud_${Date.now()}`;
@@ -9,6 +10,7 @@ test("Admin: suspend student and see audit log", async ({ page }) => {
   await page.getByLabel("Full name").fill("Student X");
   await page.getByLabel("Username").fill(studentUsername);
   await page.getByLabel("Password").fill("password123");
+  await fillStudentRegisterKyc(page);
   await page.getByRole("button", { name: "Register" }).click();
   await expect(page.getByText("Learn", { exact: true })).toBeVisible();
 

@@ -1,4 +1,5 @@
 import { test, expect } from "@playwright/test";
+import { fillStudentRegisterKyc } from "./helpers/kyc";
 
 test("Sync: student registration + suspension propagate across devices", async ({ page }) => {
   const studentUsername = `sync_student_${Date.now()}`;
@@ -11,6 +12,7 @@ test("Sync: student registration + suspension propagate across devices", async (
   await page.getByLabel("Full name").fill("Sync Student");
   await page.getByLabel("Username").fill(studentUsername);
   await page.getByLabel("Password").fill("password123");
+  await fillStudentRegisterKyc(page);
   await page.getByRole("button", { name: "Register" }).click();
   if (page.url().includes("/login")) {
     await page.getByLabel("Username").fill(studentUsername);

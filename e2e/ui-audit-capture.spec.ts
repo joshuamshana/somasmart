@@ -2,6 +2,7 @@ import { expect, test, type Page, type TestInfo } from "@playwright/test";
 import { randomUUID } from "node:crypto";
 import { mkdirSync } from "node:fs";
 import path from "node:path";
+import { fillStudentRegisterKyc } from "./helpers/kyc";
 
 type AuditViewport = {
   name: "large" | "medium" | "small";
@@ -77,6 +78,7 @@ test("UI audit capture: student lessons", async ({ page }, testInfo) => {
     await page.getByLabel("Full name").fill("Audit Student");
     await page.getByLabel("Username").fill(username);
     await page.getByLabel("Password").fill("password123");
+    await fillStudentRegisterKyc(page);
     await page.getByRole("button", { name: "Register" }).click();
     await page.waitForLoadState("networkidle");
     if (page.url().includes("/login")) {
