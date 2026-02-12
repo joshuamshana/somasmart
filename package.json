@@ -16,10 +16,15 @@
     "test:coverage:ci": "vitest run --coverage",
     "test:journeys:sync-map": "node scripts/sync-e2e-requirements-map.mjs",
     "test:journeys:matrix": "node scripts/validate-coverage-matrix.mjs",
+    "test:journeys:sync-map:backend": "node scripts/sync-requirements-map-backend.mjs",
+    "test:journeys:matrix:backend": "node scripts/validate-coverage-matrix-backend.mjs",
     "test:watch": "vitest",
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
-    "ci": "npm run typecheck && npm run test:coverage:ci && npm run test:journeys:matrix && npm run test:e2e -- --reporter=line"
+    "ci": "npm run typecheck && npm run test:coverage:ci && npm run test:journeys:matrix && npm run test:journeys:matrix:backend && npm run test:e2e -- --reporter=line",
+    "api:dev": "npm --prefix apps/api run dev",
+    "api:test": "npm --prefix apps/api run test",
+    "api:build": "npm --prefix apps/api run build"
   },
   "dependencies": {
     "@headlessui/react": "^2.2.7",

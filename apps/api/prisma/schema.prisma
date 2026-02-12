@@ -1,0 +1,212 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum ProjectLifecycleStatus {
+  active
+  suspended
+  archived
+}
+
+enum UserStatus {
+  active
+  pending
+  suspended
+}
+
+enum TenantRole {
+  student
+  teacher
+  admin
+  school_admin
+}
+
+enum PlatformJobStatus {
+  queued
+  running
+  succeeded
+  failed
+}
+
+model Project {
+  id        String                 @id @default(cuid())
+  key       String                 @unique
+  name      String
+  status    ProjectLifecycleStatus @default(active)
+  createdAt DateTime               @default(now())
+  updatedAt DateTime               @updatedAt
+
+  tenantUsers       TenantUser[]
+  syncBatches       SyncBatch[]
+  syncEvents        SyncEvent[]
+  changeLogs        ChangeLog[]
+  deviceCheckpoints DeviceCheckpoint[]
+  blobManifests     BlobManifest[]
+  platformJobs      PlatformJob[]
+  platformAuditLogs PlatformAuditLog[]
+}
+
+model PlatformAdminUser {
+  id           String    @id @default(cuid())
+  username     String    @unique
+  passwordHash String
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  sessions PlatformSession[]
+  audits   PlatformAuditLog[]
+}
+
+model PlatformSession {
+  id             String    @id @default(cuid())
+  platformAdminId String
+  refreshHash    String
+  expiresAt      DateTime
+  revokedAt      DateTime?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  platformAdmin PlatformAdminUser @relation(fields: [platformAdminId], references: [id], onDelete: Cascade)
+
+  @@index([platformAdminId])
+}
+
+model TenantUser {
+  id           String    @id @default(cuid())
+  projectId    String
+  username     String
+  displayName  String
+  passwordHash String
+  role         TenantRole
+  status       UserStatus @default(active)
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+  deletedAt    DateTime?
+
+  project      Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  sessions     TenantSession[]
+
+  @@unique([projectId, username])
+  @@index([projectId])
+}
+
+model TenantSession {
+  id          String    @id @default(cuid())
+  projectId   String
+  userId      String
+  refreshHash String
+  expiresAt   DateTime
+  revokedAt   DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  user TenantUser @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([projectId])
+  @@index([userId])
+}
+
+model SyncBatch {
+  id        String   @id @default(cuid())
+  projectId String
+  deviceId  String
+  batchId   String
+  createdAt DateTime @default(now())
+
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@unique([projectId, deviceId, batchId])
+}
+
+model SyncEvent {
+  id        String   @id @default(cuid())
+  projectId String
+  eventId   String
+  createdAt DateTime @default(now())
+
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@unique([projectId, eventId])
+}
+
+model ChangeLog {
+  id         String   @id @default(cuid())
+  projectId  String
+  seq        Int
+  entityType String
+  entityId   String
+  op         String
+  data       Json?
+  occurredAt DateTime @default(now())
+
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@unique([projectId, seq])
+  @@index([projectId, occurredAt])
+}
+
+model DeviceCheckpoint {
+  id        String   @id @default(cuid())
+  projectId String
+  userId    String
+  deviceId  String
+  scope     String
+  cursor    Int
+  updatedAt DateTime @updatedAt
+
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@unique([projectId, userId, deviceId, scope])
+}
+
+model BlobManifest {
+  id        String   @id @default(cuid())
+  projectId String
+  cid       String
+  mime      String
+  size      Int
+  createdAt DateTime @default(now())
+
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@unique([projectId, cid])
+}
+
+model PlatformJob {
+  id        String            @id @default(cuid())
+  projectId String
+  kind      String
+  status    PlatformJobStatus @default(queued)
+  payload   Json?
+  result    Json?
+  createdAt DateTime          @default(now())
+  updatedAt DateTime          @updatedAt
+
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@index([projectId])
+}
+
+model PlatformAuditLog {
+  id              String   @id @default(cuid())
+  actorAdminId    String
+  projectId       String?
+  action          String
+  reasonCode      String?
+  ticketRef       String?
+  traceId         String
+  beforeState     Json?
+  afterState      Json?
+  createdAt       DateTime @default(now())
+
+  actorAdmin PlatformAdminUser @relation(fields: [actorAdminId], references: [id], onDelete: Cascade)
+  project    Project?          @relation(fields: [projectId], references: [id], onDelete: SetNull)
+
+  @@index([actorAdminId, createdAt])
+  @@index([projectId, createdAt])
+}

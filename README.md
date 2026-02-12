@@ -34,6 +34,25 @@ Students can self-register. Teachers self-register as **pending** until approved
 - `docs/coverage-matrix.md`
 - `docs/data-model.md`
 - `docs/p0-journeys.md`
-# somasmart
-# somasmart
-# somasmart
+- `docs/requirements-backend-sync.md`
+- `docs/coverage-matrix-backend.md`
+- `docs/tdd-backend-sync.md`
+- `docs/e2e-backend-sync.md`
+
+## Backend API (Multi-Project Black-Box Sync)
+A backend workspace now exists at `/Users/joshuamshana/Documents/SomaSmart/apps/api`.
+
+### Backend install
+- `cd /Users/joshuamshana/Documents/SomaSmart/apps/api`
+- `npm install`
+
+### Backend run
+- `npm run dev`
+
+### Backend tests
+- `npm test`
+
+### Seeded API accounts (MemoryStore bootstrap)
+- Platform admin: `platform_admin / platform12345`
+- Tenant project keys: `somasmart`, `rafikiplus`
+- Per-project tenant admin: `admin / admin12345`

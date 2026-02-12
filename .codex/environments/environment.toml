@@ -6,9 +6,14 @@ name = "SomaSmart"
 script = ""
 
 [[actions]]
-name = "Run"
+name = "Run app"
 icon = "run"
 command = '''
 npm install
 npm run dev
 '''
+
+[[actions]]
+name = "Run backend"
+icon = "tool"
+command = "npm run api:dev"

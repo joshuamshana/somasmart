@@ -134,3 +134,9 @@ Improve teacher day-to-day workflow and visibility (no backend required; offline
 As of **2026-02-06**, `npm test` and `npm run test:e2e` are green, and all requirements in `docs/coverage-matrix.md` are marked `done`.
 
 Next work should be treated as enhancement scope (new requirements), not backlog recovery.
+
+Backend enhancement scope is tracked separately in:
+- `docs/requirements-backend-sync.md` (BREQ requirements)
+- `docs/coverage-matrix-backend.md` (backend implementation + test traceability)
+
+The next backend implementation phase is **Prisma persistence first** (replace MemoryStore with Prisma/Postgres while preserving current API contracts).

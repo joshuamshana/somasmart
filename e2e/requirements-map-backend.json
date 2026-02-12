@@ -1,0 +1,100 @@
+{
+  "BREQ-1001": [
+    "apps/api/test/auth-offline-enrollment-policy.test.ts"
+  ],
+  "BREQ-1002": [
+    "apps/api/test/auth-offline-enrollment-policy.test.ts"
+  ],
+  "BREQ-1003": [
+    "apps/api/test/auth-offline-enrollment-policy.test.ts"
+  ],
+  "BREQ-1004": [
+    "apps/api/test/auth-offline-enrollment-policy.test.ts"
+  ],
+  "BREQ-1005": [
+    "apps/api/test/auth-offline-enrollment-policy.test.ts"
+  ],
+  "BREQ-1006": [
+    "apps/api/test/auth-offline-enrollment-policy.test.ts"
+  ],
+  "BREQ-1101": [
+    "apps/api/test/sync-idempotency.test.ts"
+  ],
+  "BREQ-1102": [
+    "apps/api/test/sync-idempotency.test.ts"
+  ],
+  "BREQ-1103": [
+    "apps/api/test/sync-idempotency.test.ts"
+  ],
+  "BREQ-1104": [
+    "apps/api/test/e2e/tenant-isolation-under-platform-ops.api.spec.ts"
+  ],
+  "BREQ-1105": [
+    "apps/api/test/sync-tombstones-and-checkpoints.test.ts"
+  ],
+  "BREQ-1106": [
+    "apps/api/test/sync-tombstones-and-checkpoints.test.ts"
+  ],
+  "BREQ-1201": [
+    "apps/api/test/sync-tombstones-and-checkpoints.test.ts"
+  ],
+  "BREQ-1202": [],
+  "BREQ-1203": [
+    "apps/api/test/blob-project-scope.test.ts"
+  ],
+  "BREQ-1204": [
+    "apps/api/test/blob-project-scope.test.ts"
+  ],
+  "BREQ-1205": [],
+  "BREQ-1301": [
+    "apps/api/test/sync-tombstones-and-checkpoints.test.ts"
+  ],
+  "BREQ-1302": [],
+  "BREQ-1303": [
+    "apps/api/test/e2e/platform-data-mutation-audit.api.spec.ts"
+  ],
+  "BREQ-1401": [
+    "apps/api/test/e2e/tenant-isolation-under-platform-ops.api.spec.ts"
+  ],
+  "BREQ-1402": [
+    "apps/api/test/e2e/platform-vs-tenant-token-boundary.api.spec.ts"
+  ],
+  "BREQ-1403": [
+    "apps/api/test/e2e/tenant-isolation-under-platform-ops.api.spec.ts"
+  ],
+  "BREQ-1404": [
+    "apps/api/test/e2e/platform-vs-tenant-token-boundary.api.spec.ts"
+  ],
+  "BREQ-1405": [
+    "apps/api/test/blob-project-scope.test.ts"
+  ],
+  "BREQ-1406": [
+    "apps/api/test/audit-project-context.test.ts"
+  ],
+  "BREQ-1501": [
+    "apps/api/test/platform-auth.test.ts"
+  ],
+  "BREQ-1502": [
+    "apps/api/test/e2e/platform-project-lifecycle.api.spec.ts"
+  ],
+  "BREQ-1503": [
+    "apps/api/test/e2e/platform-data-mutation-audit.api.spec.ts"
+  ],
+  "BREQ-1504": [
+    "apps/api/test/e2e/platform-data-mutation-audit.api.spec.ts"
+  ],
+  "BREQ-1505": [
+    "apps/api/test/audit-project-context.test.ts",
+    "apps/api/test/e2e/platform-data-mutation-audit.api.spec.ts"
+  ],
+  "BREQ-1506": [
+    "apps/api/test/e2e/platform-vs-tenant-token-boundary.api.spec.ts"
+  ],
+  "BREQ-1507": [
+    "apps/api/test/e2e/platform-vs-tenant-token-boundary.api.spec.ts"
+  ],
+  "BREQ-1508": [],
+  "BREQ-1509": [
+    "apps/api/test/e2e/tenant-isolation-under-platform-ops.api.spec.ts"
+  ]
+}
