@@ -67,7 +67,7 @@ test("P0: teacher registers -> admin approves -> teacher submits lesson -> admin
   // admin approves teacher
   await page.goto("/login");
   await page.getByLabel("Username").fill("admin");
-  await page.getByLabel("Password").fill("admin123");
+  await page.getByLabel("Password").fill("admin12345");
   await page.getByRole("button", { name: "Login" }).click();
   await expect(page.getByRole("link", { name: "Teachers", exact: true })).toBeVisible();
   await page.getByRole("link", { name: "Teachers", exact: true }).click();
@@ -102,7 +102,7 @@ test("P0: teacher registers -> admin approves -> teacher submits lesson -> admin
   // admin approves lesson
   await page.goto("/login");
   await page.getByLabel("Username").fill("admin");
-  await page.getByLabel("Password").fill("admin123");
+  await page.getByLabel("Password").fill("admin12345");
   await page.getByRole("button", { name: "Login" }).click();
   await expect(page.getByRole("link", { name: "Lessons", exact: true })).toBeVisible();
   await page.getByRole("link", { name: "Lessons", exact: true }).click();

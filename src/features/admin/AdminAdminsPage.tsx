@@ -63,7 +63,7 @@ export function AdminAdminsPage() {
 
   const [createName, setCreateName] = useState("");
   const [createUsername, setCreateUsername] = useState("");
-  const [createPassword, setCreatePassword] = useState("admin123");
+  const [createPassword, setCreatePassword] = useState("admin12345");
   const [createKyc, setCreateKyc] = useState<BaseKycDraft>(() => blankBaseKycDraft());
   const [msg, setMsg] = useState<string | null>(null);
 
@@ -75,7 +75,7 @@ export function AdminAdminsPage() {
 
   const [resetOpen, setResetOpen] = useState(false);
   const [resetUserId, setResetUserId] = useState<string | null>(null);
-  const [resetPassword, setResetPassword] = useState("admin123");
+  const [resetPassword, setResetPassword] = useState("admin12345");
 
   async function refresh() {
     const users = await db.users.toArray();
@@ -230,7 +230,7 @@ export function AdminAdminsPage() {
 
   function openReset(a: User) {
     setResetUserId(a.id);
-    setResetPassword("admin123");
+    setResetPassword("admin12345");
     setResetOpen(true);
   }
 

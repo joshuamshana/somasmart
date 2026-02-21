@@ -30,7 +30,7 @@ test("Payments: student mobile money pending -> admin verifies -> student pulls 
   // Device B: admin pulls payment and verifies it
   await page.goto(`/login?device=${deviceAdminB}&server=${server}`);
   await page.getByLabel("Username").fill("admin");
-  await page.getByLabel("Password").fill("admin123");
+  await page.getByLabel("Password").fill("admin12345");
   await page.getByRole("button", { name: "Login" }).click();
   await expect(page.getByRole("link", { name: "Payments", exact: true })).toBeVisible({ timeout: 30_000 });
 

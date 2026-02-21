@@ -36,7 +36,7 @@ test("Video block: teacher uploads -> admin approves -> student plays offline", 
 
   await page.goto("/login");
   await page.getByLabel("Username").fill("admin");
-  await page.getByLabel("Password").fill("admin123");
+  await page.getByLabel("Password").fill("admin12345");
   await page.getByRole("button", { name: "Login" }).click();
   await expect(page.getByRole("link", { name: "Lessons", exact: true })).toBeVisible({ timeout: 30_000 });
   await page.goto("/admin/lessons");

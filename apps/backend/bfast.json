@@ -1,0 +1,17 @@
+{
+  "projectId": "somasmart",
+  "ignore": [
+    "**/node_modules/**",
+    "**/assets/**",
+    "**/data/**",
+    "**/.github/**",
+    "**/specs/**",
+    "**/*.specs.js",
+    "**/*.spec.js",
+    "**/*.specs.mjs",
+    "**/*.spec.mjs",
+    "**/hook.mjs",
+    "**/test.mjs",
+    "**/.mocharc.js"
+  ]
+}

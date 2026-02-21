@@ -2,10 +2,14 @@ import React, { createContext, useContext, useEffect, useMemo, useState } from "
 import type { OutboxEvent } from "@/shared/types";
 import { db } from "@/shared/db/db";
 import { MockSyncAdapter } from "@/shared/sync/mock/MockSyncAdapter";
+import { ApiSyncAdapter } from "@/shared/sync/api/ApiSyncAdapter";
+import { getSyncMode, type SyncMode } from "@/shared/sync/config";
 import { getSyncMeta, syncNow as runSyncNow } from "@/shared/sync/syncEngine";
 import { useAuth } from "@/features/auth/authContext";
+import type { SyncAdapter } from "@/shared/sync/SyncAdapter";
 
 type SyncState = {
+  mode: SyncMode;
   status: "idle" | "syncing" | "error";
   lastError?: string;
   lastSyncAt: string | null;
@@ -17,7 +21,8 @@ type SyncState = {
 
 const SyncContext = createContext<SyncState | null>(null);
 
-const adapter = new MockSyncAdapter();
+const mode = getSyncMode();
+const adapter: SyncAdapter = mode === "api" ? new ApiSyncAdapter() : new MockSyncAdapter();
 
 export function SyncProvider({ children }: { children: React.ReactNode }) {
   const { user, refresh: refreshAuth } = useAuth();
@@ -44,6 +49,7 @@ export function SyncProvider({ children }: { children: React.ReactNode }) {
 
   const value = useMemo<SyncState>(
     () => ({
+      mode,
       status,
       lastError,
       lastSyncAt,

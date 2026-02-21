@@ -1,0 +1,26 @@
+{
+  "name": "@somasmart/backend",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "npm run prisma:init && bfast fs serve -p 4000",
+    "start": "bfast fs serve -p 4000",
+    "test": "vitest run --config vitest.config.mjs",
+    "test:watch": "vitest --config vitest.config.mjs",
+    "prisma:init": "node scripts/prisma-init.mjs",
+    "prisma:generate": "./node_modules/.bin/prisma generate",
+    "prisma:migrate": "./node_modules/.bin/prisma migrate dev",
+    "prisma:deploy": "./node_modules/.bin/prisma migrate deploy"
+  },
+  "dependencies": {
+    "@prisma/client": "^6.19.2",
+    "zod": "^3.24.1"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.10",
+    "prisma": "^6.19.2",
+    "typescript": "^5.7.3",
+    "vitest": "^2.1.8"
+  }
+}

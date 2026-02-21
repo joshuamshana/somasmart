@@ -28,7 +28,7 @@ test("Admin can preview lesson as student for pending + approved content", async
   await page.getByRole("button", { name: "Logout" }).click();
   await page.goto(`/login?device=${device}`);
   await page.getByLabel("Username").fill("admin");
-  await page.getByLabel("Password").fill("admin123");
+  await page.getByLabel("Password").fill("admin12345");
   await page.getByRole("button", { name: "Login" }).click();
   await expect(page.getByTestId("admin-layout")).toBeVisible({ timeout: 30_000 });
 

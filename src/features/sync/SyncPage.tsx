@@ -1,10 +1,14 @@
 import React from "react";
+import { Link } from "react-router-dom";
 import { Card } from "@/shared/ui/Card";
 import { Button } from "@/shared/ui/Button";
 import { useSync } from "@/shared/sync/SyncContext";
+import { getEffectiveSyncConnection } from "@/shared/sync/config";
 
 export function SyncPage() {
-  const { status, lastError, lastSyncAt, queuedCount, failedCount, outbox, syncNow } = useSync();
+  const { mode, status, lastError, lastSyncAt, queuedCount, failedCount, outbox, syncNow } = useSync();
+  const connection = getEffectiveSyncConnection();
+  const sourceLabel = connection.hasRuntimeOverride ? "runtime override" : "env/default";
 
   return (
     <div className="space-y-4">
@@ -35,9 +39,26 @@ export function SyncPage() {
         </div>
         {lastError ? <div className="mt-3 text-sm text-danger-text">Sync error: {lastError}</div> : null}
         <div className="mt-2 text-xs text-muted">
-          This MVP uses a local mock server stored in IndexedDB (<span className="font-mono">somasmart_server_mock</span>)
-          to simulate periodic sync.
+          Sync adapter: <span className="font-mono">{mode}</span>.{" "}
+          {mode === "mock" ? (
+            <>
+              This mode uses a local mock server stored in IndexedDB (<span className="font-mono">somasmart_server_mock</span>).
+            </>
+          ) : (
+            <>This mode sends push/pull requests to your configured backend API.</>
+          )}
         </div>
+        {mode === "api" ? (
+          <div className="mt-2 text-xs text-muted">
+            Endpoint: <span className="font-mono">{connection.baseUrl}</span>. Project key:{" "}
+            <span className="font-mono">{connection.projectKey}</span>. Source:{" "}
+            <span className="font-mono">{sourceLabel}</span>.{" "}
+            <Link className="text-action-primary-active underline" to="/help/backend-integration">
+              Integration guide
+            </Link>
+            .
+          </div>
+        ) : null}
       </Card>
 
       <Card title="Outbox events">

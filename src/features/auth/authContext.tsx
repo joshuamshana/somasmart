@@ -6,6 +6,14 @@ import { hashPassword, verifyPassword } from "@/shared/security/password";
 import { getSchoolByCode } from "@/shared/db/schoolsRepo";
 import { enqueueOutboxEvent } from "@/shared/offline/outbox";
 import { normalizeMobile } from "@/shared/kyc/kyc";
+import {
+  clearSyncApiSession,
+  clearSyncRuntimeAuthProfile,
+  loginTenantWithPassword,
+  setSyncApiSessionTokens,
+  setSyncRuntimeAuthProfile
+} from "@/shared/sync/api/syncApiSession";
+import { getSyncMode } from "@/shared/sync/config";
 
 import { getDeviceId } from "@/shared/device";
 
@@ -58,6 +66,34 @@ async function findUserByUsername(username: string) {
   return all.find((u) => !u.deletedAt && u.username.toLowerCase() === lowered) ?? null;
 }
 
+async function upsertLocalUserFromRemote(input: {
+  id: string;
+  username: string;
+  displayName: string;
+  role: User["role"];
+  status: User["status"];
+  password: string;
+}) {
+  const existing = await db.users.get(input.id);
+  const localPasswordHash = await hashPassword(input.password);
+  const now = nowIso();
+  const user: User = {
+    id: input.id,
+    role: input.role,
+    status: input.status,
+    displayName: input.displayName,
+    username: input.username,
+    passwordHash: localPasswordHash,
+    createdAt: existing?.createdAt ?? now,
+    ...(existing?.schoolId ? { schoolId: existing.schoolId } : {}),
+    ...(existing?.isMinor !== undefined ? { isMinor: existing.isMinor } : {}),
+    ...(existing?.kyc ? { kyc: existing.kyc } : {}),
+    ...(existing?.deletedAt ? { deletedAt: undefined } : {})
+  };
+  await db.users.put(user);
+  return user;
+}
+
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
@@ -93,17 +129,61 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       async login({ username, password }) {
         await seedIfEmpty();
         const found = await findUserByUsername(username);
-        if (!found) return { ok: false as const, error: "Invalid username/password." };
-        const verified = await verifyPassword(password, found.passwordHash);
-        if (!verified.ok) return { ok: false as const, error: "Invalid username/password." };
-        if ("upgradedHash" in verified && verified.upgradedHash) {
-          await db.users.update(found.id, { passwordHash: verified.upgradedHash });
-          found.passwordHash = verified.upgradedHash;
+        if (found) {
+          const verified = await verifyPassword(password, found.passwordHash);
+          if (verified.ok) {
+            if ("upgradedHash" in verified && verified.upgradedHash) {
+              await db.users.update(found.id, { passwordHash: verified.upgradedHash });
+              found.passwordHash = verified.upgradedHash;
+            }
+            if (found.status === "suspended") return { ok: false as const, error: "Account suspended." };
+            localStorage.setItem(getSessionKey(), found.id);
+            setUser(found);
+            setSyncRuntimeAuthProfile({
+              username: found.username,
+              password,
+              displayName: found.displayName,
+              role: found.role
+            });
+            return { ok: true as const, user: found };
+          }
         }
-        if (found.status === "suspended") return { ok: false as const, error: "Account suspended." };
-        localStorage.setItem(getSessionKey(), found.id);
-        setUser(found);
-        return { ok: true as const, user: found };
+
+        if (getSyncMode() !== "api") {
+          return { ok: false as const, error: "Invalid username/password." };
+        }
+
+        const remoteLogin = await loginTenantWithPassword({ username, password });
+        if (!remoteLogin.ok) {
+          if (remoteLogin.code === "AUTH_SUSPENDED") return { ok: false as const, error: "Account suspended." };
+          if (remoteLogin.code === "AUTH_INVALID") return { ok: false as const, error: "Invalid username/password." };
+          if (remoteLogin.code === "PROJECT_NOT_AVAILABLE") return { ok: false as const, error: "Project is not available." };
+          if (remoteLogin.code === "NETWORK_ERROR") return { ok: false as const, error: "Backend auth unavailable. Check connection and try again." };
+          return { ok: false as const, error: remoteLogin.message };
+        }
+
+        const remoteUser = await upsertLocalUserFromRemote({
+          id: remoteLogin.user.id,
+          username: remoteLogin.user.username,
+          displayName: remoteLogin.user.displayName,
+          role: remoteLogin.user.role,
+          status: remoteLogin.user.status,
+          password
+        });
+
+        localStorage.setItem(getSessionKey(), remoteUser.id);
+        setUser(remoteUser);
+        setSyncRuntimeAuthProfile({
+          username: remoteUser.username,
+          password,
+          displayName: remoteUser.displayName,
+          role: remoteUser.role
+        });
+        setSyncApiSessionTokens({
+          accessToken: remoteLogin.accessToken,
+          refreshToken: remoteLogin.refreshToken
+        });
+        return { ok: true as const, user: remoteUser };
       },
       async register({ displayName, username, password, schoolCode, isMinor, kyc }) {
         await seedIfEmpty();
@@ -151,10 +231,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         await enqueueOutboxEvent({ type: "user_register", payload: { userId: newUser.id } });
         localStorage.setItem(getSessionKey(), newUser.id);
         setUser(newUser);
+        setSyncRuntimeAuthProfile({
+          username: newUser.username,
+          password,
+          displayName: newUser.displayName,
+          role: newUser.role
+        });
         return { ok: true as const };
       },
       logout() {
         localStorage.removeItem(getSessionKey());
+        clearSyncRuntimeAuthProfile();
+        clearSyncApiSession();
         setUser(null);
       },
       refresh

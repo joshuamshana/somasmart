@@ -1,0 +1,46 @@
+name: student-mobile-ci
+
+on:
+  pull_request:
+    paths:
+      - 'apps/student_mobile/**'
+      - '.github/workflows/student-mobile-ci.yml'
+  push:
+    branches: [ main ]
+    paths:
+      - 'apps/student_mobile/**'
+      - '.github/workflows/student-mobile-ci.yml'
+
+jobs:
+  flutter-mobile:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: apps/student_mobile
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.38.9'
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Codegen
+        run: dart run build_runner build --delete-conflicting-outputs
+
+      - name: Analyze
+        run: flutter analyze
+
+      - name: Tests
+        run: flutter test
+
+      - name: Build APK
+        run: flutter build apk --debug
+
+      - name: Build App Bundle
+        run: flutter build appbundle --debug

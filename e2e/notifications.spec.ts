@@ -40,7 +40,7 @@ test("Notifications: teacher receives approval notification after sync", async (
 
   await adminPage.goto(`/login?device=${deviceAdminB}&server=${server}`);
   await adminPage.getByLabel("Username").fill("admin");
-  await adminPage.getByLabel("Password").fill("admin123");
+  await adminPage.getByLabel("Password").fill("admin12345");
   await adminPage.getByRole("button", { name: "Login" }).click();
   await expect(adminPage.getByRole("link", { name: "Teachers", exact: true })).toBeVisible({ timeout: 30_000 });
   await adminPage.goto(`/sync?device=${deviceAdminB}&server=${server}`);

@@ -11,7 +11,7 @@ test("Sync: admin coupon CRUD propagates to student device", async ({ page }) =>
   // Device A: admin creates coupon and pushes
   await page.goto(`/login?device=${deviceAdminA}&server=${server}`);
   await page.getByLabel("Username").fill("admin");
-  await page.getByLabel("Password").fill("admin123");
+  await page.getByLabel("Password").fill("admin12345");
   await page.getByRole("button", { name: "Login" }).click();
   await expect(page.getByRole("link", { name: "Coupons", exact: true })).toBeVisible({ timeout: 30_000 });
 

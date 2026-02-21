@@ -12,7 +12,7 @@ Current implementation includes:
 - Platform control plane endpoints (`/platform/*`) with platform token class checks
 - Tenant endpoint token boundaries (`/auth/*`, `/sync/*`)
 - In-memory runtime data store (`MemoryStore`) with Prisma schema scaffold for persistence migration
-- API-level backend E2E tests under `apps/api/test/e2e/*`
+- API-level backend E2E tests under `apps/backend/test/e2e/*`
 
 ## Requirements register
 | Requirement | Statement | Status |

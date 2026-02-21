@@ -19,7 +19,7 @@ test("Admin: suspend student and see audit log", async ({ page }) => {
   // Admin suspends student
   await page.goto(`/login?device=adminB&server=${server}`);
   await page.getByLabel("Username").fill("admin");
-  await page.getByLabel("Password").fill("admin123");
+  await page.getByLabel("Password").fill("admin12345");
   await page.getByRole("button", { name: "Login" }).click();
   await expect(page.getByRole("link", { name: "Students", exact: true })).toBeVisible({ timeout: 30_000 });
   await page.goto(`/admin/students?device=adminB&server=${server}`);

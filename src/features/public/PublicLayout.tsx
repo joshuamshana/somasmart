@@ -13,7 +13,8 @@ const groups = [
     label: "Access",
     items: [
       { label: "Login", to: "/login" },
-      { label: "Register", to: "/register" }
+      { label: "Register", to: "/register" },
+      { label: "Connection settings", to: "/connection-settings" }
     ]
   }
 ] as const;
@@ -23,7 +24,13 @@ export function PublicLayout({ children }: { children?: React.ReactNode }) {
   const location = useLocation();
 
   const title =
-    location.pathname === "/login" ? "Login" : location.pathname === "/register" ? "Register" : "Learn";
+    location.pathname === "/login"
+      ? "Login"
+      : location.pathname === "/register"
+        ? "Register"
+        : location.pathname === "/connection-settings"
+          ? "Connection settings"
+          : "Learn";
 
   return (
     <div className="grid gap-4 lg:grid-cols-[280px_minmax(0,1fr)] xl:gap-5" data-testid="public-layout">

@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
+import { Link } from "react-router-dom";
 import { db } from "@/shared/db/db";
 import type {
   AppSetting,
@@ -17,6 +18,12 @@ import { useAuth } from "@/features/auth/authContext";
 import { logAudit } from "@/shared/audit/audit";
 import { enqueueOutboxEvent } from "@/shared/offline/outbox";
 import { PageHeader } from "@/shared/ui/PageHeader";
+import {
+  DEFAULT_SYNC_API_BASE_URL,
+  DEFAULT_SYNC_PROJECT_KEY,
+  getEffectiveSyncConnection
+} from "@/shared/sync/config";
+import { resetSyncConnectionOverride, saveSyncConnectionOverride } from "@/shared/sync/connectionSettings";
 
 function nowIso() {
   return new Date().toISOString();
@@ -217,6 +224,10 @@ export function AdminSettingsPage() {
   const [maxVideoMb, setMaxVideoMb] = useState("50");
   const [maxPdfMb, setMaxPdfMb] = useState("20");
   const [maxPptxMb, setMaxPptxMb] = useState("20");
+  const [syncBackendBaseUrl, setSyncBackendBaseUrl] = useState(DEFAULT_SYNC_API_BASE_URL);
+  const [syncBackendProjectKey, setSyncBackendProjectKey] = useState(DEFAULT_SYNC_PROJECT_KEY);
+  const [syncBackendMsg, setSyncBackendMsg] = useState<string | null>(null);
+  const [syncBackendError, setSyncBackendError] = useState<string | null>(null);
 
   const [categories, setCategories] = useState<CurriculumCategory[]>([]);
   const [levels, setLevels] = useState<CurriculumLevel[]>([]);
@@ -268,6 +279,9 @@ export function AdminSettingsPage() {
   useEffect(() => {
     void refreshSystem();
     void refreshCurriculum();
+    const effective = getEffectiveSyncConnection();
+    setSyncBackendBaseUrl(effective.baseUrl);
+    setSyncBackendProjectKey(effective.projectKey);
   }, []);
 
   const classesForSelectedLevel = useMemo(
@@ -476,6 +490,81 @@ export function AdminSettingsPage() {
           />
         </div>
         {msg ? <div className="mt-3 text-sm text-text">{msg}</div> : null}
+      </Card>
+
+      <Card title="Backend sync connection">
+        <div className="grid gap-3 md:grid-cols-2">
+          <Input
+            label="Backend URL"
+            placeholder="http://localhost:4000"
+            value={syncBackendBaseUrl}
+            onChange={(e) => {
+              setSyncBackendError(null);
+              setSyncBackendMsg(null);
+              setSyncBackendBaseUrl(e.target.value);
+            }}
+          />
+          <Input
+            label="Project key"
+            value={syncBackendProjectKey}
+            onChange={(e) => {
+              setSyncBackendError(null);
+              setSyncBackendMsg(null);
+              setSyncBackendProjectKey(e.target.value);
+            }}
+          />
+        </div>
+        <div className="mt-4 flex flex-wrap gap-2">
+          <Button
+            variant="secondary"
+            onClick={() => {
+              try {
+                const saved = saveSyncConnectionOverride({
+                  baseUrl: syncBackendBaseUrl,
+                  projectKey: syncBackendProjectKey
+                });
+                setSyncBackendBaseUrl(saved.baseUrl);
+                setSyncBackendProjectKey(saved.projectKey);
+                setSyncBackendError(null);
+                setSyncBackendMsg("Backend sync connection saved.");
+              } catch (error) {
+                setSyncBackendMsg(null);
+                setSyncBackendError(
+                  error instanceof Error ? error.message : "Unable to save backend sync connection."
+                );
+              }
+            }}
+          >
+            Save connection
+          </Button>
+          <Button
+            variant="secondary"
+            onClick={() => {
+              resetSyncConnectionOverride();
+              setSyncBackendBaseUrl(DEFAULT_SYNC_API_BASE_URL);
+              setSyncBackendProjectKey(DEFAULT_SYNC_PROJECT_KEY);
+              setSyncBackendError(null);
+              setSyncBackendMsg("Backend sync connection reset to defaults.");
+            }}
+          >
+            Reset to defaults
+          </Button>
+        </div>
+        {syncBackendError ? <div className="mt-3 text-sm text-status-danger">{syncBackendError}</div> : null}
+        {syncBackendMsg ? <div className="mt-3 text-sm text-text">{syncBackendMsg}</div> : null}
+        <div className="mt-3 text-xs text-muted">
+          This connection setting is local to this device/browser and is not synced to other users.
+        </div>
+        <div className="mt-1 text-xs text-muted">
+          Use full backend URL with protocol, e.g. <span className="font-mono">http://localhost:4000</span>.
+        </div>
+        <div className="mt-1 text-xs text-muted">
+          API contract details:{" "}
+          <Link className="text-action-primary-active underline" to="/help/backend-integration">
+            Backend integration guide
+          </Link>
+          .
+        </div>
       </Card>
 
       <Card title="Curriculum (levels → classes → subjects)">

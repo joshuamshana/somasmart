@@ -33,7 +33,7 @@ test("Admin licenses: extend/revoke grant and export payments CSV", async ({ pag
   await page.getByRole("button", { name: "Logout" }).click();
   await page.goto(`/login?device=${device}`);
   await page.getByLabel("Username").fill("admin");
-  await page.getByLabel("Password").fill("admin123");
+  await page.getByLabel("Password").fill("admin12345");
   await page.getByRole("button", { name: "Login" }).click();
   await expect(page.getByRole("link", { name: "Licenses", exact: true })).toBeVisible({ timeout: 30_000 });
 

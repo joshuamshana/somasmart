@@ -9,7 +9,7 @@ test("Sync: admin school CRUD propagates across devices", async ({ page }) => {
   // Device A: admin creates school and pushes
   await page.goto(`/login?device=${deviceA}&server=${server}`);
   await page.getByLabel("Username").fill("admin");
-  await page.getByLabel("Password").fill("admin123");
+  await page.getByLabel("Password").fill("admin12345");
   await page.getByRole("button", { name: "Login" }).click();
   await expect(page.getByRole("link", { name: "Schools", exact: true })).toBeVisible({ timeout: 30_000 });
 
@@ -27,7 +27,7 @@ test("Sync: admin school CRUD propagates across devices", async ({ page }) => {
   // Device B: admin pulls and sees school
   await page.goto(`/login?device=${deviceB}&server=${server}`);
   await page.getByLabel("Username").fill("admin");
-  await page.getByLabel("Password").fill("admin123");
+  await page.getByLabel("Password").fill("admin12345");
   await page.getByRole("button", { name: "Login" }).click();
   await expect(page.getByRole("link", { name: "Schools", exact: true })).toBeVisible({ timeout: 30_000 });
   await page.goto(`/sync?device=${deviceB}&server=${server}`);

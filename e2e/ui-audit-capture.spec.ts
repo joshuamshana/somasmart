@@ -115,7 +115,7 @@ test("UI audit capture: admin lessons", async ({ page }, testInfo) => {
     const device = `audit_admin_${viewport.name}`;
     await page.setViewportSize({ width: viewport.width, height: viewport.height });
 
-    await login(page, { username: "admin", password: "admin123" }, `device=${device}`);
+    await login(page, { username: "admin", password: "admin12345" }, `device=${device}`);
     await expect(page.getByTestId("admin-layout")).toBeVisible({ timeout: 30_000 });
 
     await page.goto(`/admin/lessons?device=${device}`);

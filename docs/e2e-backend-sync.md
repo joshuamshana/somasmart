@@ -26,10 +26,10 @@
 - Another project pull does not receive the mutation.
 
 ## Additional backend verification tests
-- `apps/api/test/auth-offline-enrollment-policy.test.ts`
-- `apps/api/test/sync-tombstones-and-checkpoints.test.ts`
-- `apps/api/test/blob-project-scope.test.ts`
-- `apps/api/test/audit-project-context.test.ts`
+- `apps/backend/test/auth-offline-enrollment-policy.test.ts`
+- `apps/backend/test/sync-tombstones-and-checkpoints.test.ts`
+- `apps/backend/test/blob-project-scope.test.ts`
+- `apps/backend/test/audit-project-context.test.ts`
 
 ## Exit Criteria
 - API E2E suite is green.

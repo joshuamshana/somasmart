@@ -4,8 +4,9 @@ import React from "react";
 import ReactDOM from "react-dom/client";
 import { AppProviders } from "@/app/providers";
 import { AppRouter } from "@/app/router";
+import { getSyncMode } from "@/shared/sync/config";
 
-if (import.meta.env.DEV) {
+if (import.meta.env.DEV && getSyncMode() === "mock") {
   import("@/mocks/browser").then(({ worker }) => worker.start());
 }
 

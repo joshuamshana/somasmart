@@ -11,7 +11,7 @@ async function login(page: Page, username: string, password: string, device: str
 test("Appearance settings supports light, dark, auto and persistence", async ({ page }) => {
   const device = `theme_admin_${Date.now()}`;
   await page.emulateMedia({ colorScheme: "dark" });
-  await login(page, "admin", "admin123", device);
+  await login(page, "admin", "admin12345", device);
 
   await page.goto(`/settings/appearance?device=${device}`);
   await expect(page.getByRole("heading", { name: "Appearance" })).toBeVisible();

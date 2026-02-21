@@ -14,6 +14,10 @@ test("Public layout: guest sees sidebar and can navigate with query params", asy
   await page.getByTestId("public-sidebar-panel").getByRole("link", { name: "Register", exact: true }).click();
   await expect(page).toHaveURL(new RegExp(`/register\\?device=${device}`));
   await expect(page.getByLabel("Full name")).toBeVisible();
+
+  await page.getByTestId("public-sidebar-panel").getByRole("link", { name: "Connection settings", exact: true }).click();
+  await expect(page).toHaveURL(new RegExp(`/connection-settings\\?device=${device}`));
+  await expect(page.getByLabel("Backend URL")).toBeVisible();
 });
 
 test("Public layout: mobile drawer navigation works", async ({ page }) => {
@@ -27,5 +31,10 @@ test("Public layout: mobile drawer navigation works", async ({ page }) => {
 
   await page.getByRole("dialog").getByRole("link", { name: "Login", exact: true }).click();
   await expect(page.getByLabel("Username")).toBeVisible();
+  await expect(page.getByText("Public menu")).toHaveCount(0);
+
+  await page.getByRole("button", { name: "Menu" }).click();
+  await page.getByRole("dialog").getByRole("link", { name: "Connection settings", exact: true }).click();
+  await expect(page.getByLabel("Backend URL")).toBeVisible();
   await expect(page.getByText("Public menu")).toHaveCount(0);
 });

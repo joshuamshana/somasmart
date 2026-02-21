@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useLocation, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "@/features/auth/authContext";
 import { getHomePathForUser } from "@/features/auth/homeRoute";
 import { getSafeNextFromSearch } from "@/features/auth/nextRoute";
@@ -88,11 +88,14 @@ export function LoginPage() {
           <Button type="submit" disabled={isSubmitting} className="w-full">
             {isSubmitting ? "Logging in…" : "Login"}
           </Button>
-          <div className="rounded-md bg-paper-2 px-3 py-2 text-xs text-text-subtle">
-            Seeded accounts: <span className="font-mono text-text-title">admin/admin123</span>,{" "}
-            <span className="font-mono text-text-title">teacher1/teacher123</span>
-          </div>
         </form>
+        <div className="mt-4 border-t border-border-subtle pt-4 text-xs text-text-subtle">
+          Need to configure backend first?{" "}
+          <Link className="text-action-primary-active underline" to={`/connection-settings${search}`}>
+            Open Connection settings
+          </Link>
+          .
+        </div>
       </Card>
     </div>
   );

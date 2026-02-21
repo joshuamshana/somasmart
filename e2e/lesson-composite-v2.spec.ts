@@ -60,7 +60,7 @@ test("Lesson creator v2: composite blocks + inline quiz gate + PDF pages", async
   await page.getByRole("button", { name: "Logout" }).click();
   await page.goto("/login");
   await page.getByLabel("Username").fill("admin");
-  await page.getByLabel("Password").fill("admin123");
+  await page.getByLabel("Password").fill("admin12345");
   await page.getByRole("button", { name: "Login" }).click();
   await page.getByRole("link", { name: "Lessons", exact: true }).click();
   await page.getByText(title).first().click();

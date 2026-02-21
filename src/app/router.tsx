@@ -92,6 +92,12 @@ const NotificationsPage = lazy(() =>
 const PublicLessonGateRedirect = lazy(() =>
   import("@/features/content/PublicLessonGateRedirect").then((module) => ({ default: module.PublicLessonGateRedirect }))
 );
+const BackendIntegrationPage = lazy(() =>
+  import("@/features/help/BackendIntegrationPage").then((module) => ({ default: module.BackendIntegrationPage }))
+);
+const PublicConnectionSettingsPage = lazy(() =>
+  import("@/features/public/PublicConnectionSettingsPage").then((module) => ({ default: module.PublicConnectionSettingsPage }))
+);
 const RouteErrorPage = lazy(() => import("@/app/RouteErrorPage").then((module) => ({ default: module.RouteErrorPage })));
 const AppearanceSettingsPage = lazy(() =>
   import("@/features/settings/AppearanceSettingsPage").then((module) => ({ default: module.AppearanceSettingsPage }))
@@ -117,6 +123,8 @@ const router = createBrowserRouter([
         children: [
           { path: "login", element: lazyPage(<LoginPage />) },
           { path: "register", element: lazyPage(<RegisterPage />) },
+          { path: "connection-settings", element: lazyPage(<PublicConnectionSettingsPage />) },
+          { path: "help/backend-integration", element: lazyPage(<BackendIntegrationPage />) },
           { path: "learn/lessons/:lessonId", element: lazyPage(<PublicLessonGateRedirect />) }
         ]
       },
