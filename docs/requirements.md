@@ -139,4 +139,4 @@ Backend enhancement scope is tracked separately in:
 - `docs/requirements-backend-sync.md` (BREQ requirements)
 - `docs/coverage-matrix-backend.md` (backend implementation + test traceability)
 
-The next backend implementation phase is **Prisma persistence first** (replace MemoryStore with Prisma/Postgres while preserving current API contracts).
+The next backend implementation phase is **Knex persistence hardening** (expand database migration/seed coverage while preserving current API contracts).

@@ -21,7 +21,6 @@
   - schema defaults and discriminated unions in `core/contracts.mjs`.
   - `httpResponse`, `errors`, `common`, `crypto`, `jwt`, and token-signing helpers.
   - bootstrap env validation and service auth helpers.
-  - `PrismaStore` key branch behavior with mocked Prisma adapter.
 
 ### Integration
 - Project lifecycle transitions (active -> suspended -> active).
@@ -49,8 +48,8 @@
 - No BREQ item is considered complete without at least one mapped automated test.
 - Any endpoint contract change requires corresponding test update.
 
-## Next Step Plan (Prisma Persistence First)
-1. Implement `PrismaStore` to satisfy `DataStore` parity for projects, users, sessions, sync batches/events, checkpoints, audits, and jobs.
-2. Wire store selection in app bootstrap (`MEMORY` default, `PRISMA` opt-in via env).
-3. Add migrations and seed flow for `somasmart`, `rafikiplus`, and `platform_admin`.
-4. Re-run all backend tests against Prisma-backed runtime and close remaining `partial` BREQ items incrementally.
+## Next Step Plan (Knex Persistence Hardening)
+1. Expand Knex migration and rollback coverage for sync/audit edge cases.
+2. Keep store selection limited to `memory` and `knex` with clear env validation.
+3. Improve migration + seed flow for `somasmart`, `rafikiplus`, and `platform_admin`.
+4. Re-run all backend tests against database-backed runtime and close remaining `partial` BREQ items incrementally.

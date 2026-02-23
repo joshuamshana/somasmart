@@ -64,14 +64,14 @@ describe("runtime hardening", () => {
 
     const config = loadRuntimeConfig({
       NODE_ENV: "production",
-      DATA_STORE: "prisma",
+      DATA_STORE: "knex",
       JWT_SECRET: "a".repeat(40),
       MAX_JSON_BODY_BYTES: "2048",
       REQUIRE_HTTPS: "true"
     });
 
     expect(config.nodeEnv).toBe("production");
-    expect(config.dataStore).toBe("prisma");
+    expect(config.dataStore).toBe("knex");
     expect(config.maxJsonBodyBytes).toBe(2048);
     expect(config.requireHttps).toBe(true);
   });

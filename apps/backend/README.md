@@ -20,6 +20,23 @@ npm run dev
 Backend now uses Knex + `DATABASE_URL` by default (physical DB).  
 For temporary in-memory mode, set `DATA_STORE=memory`.
 
+## Migrations (Knex)
+Run migrations against whatever `DATABASE_URL` is currently set.
+
+```bash
+# Apply all pending migrations
+npm run knex:migrate:latest
+
+# Roll back the last migration batch
+npm run knex:migrate:rollback
+```
+
+For a remote database URL, run:
+
+```bash
+DATABASE_URL='postgresql://user:pass@host:5432/dbname' npm run knex:migrate:latest
+```
+
 ## Required bootstrap env
 Backend startup requires these env vars (see `.env.example`):
 - `SEED_PROJECT_KEY`

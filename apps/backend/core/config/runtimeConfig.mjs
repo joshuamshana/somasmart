@@ -19,7 +19,8 @@ function parseBoolean(value, fallback = false) {
 
 export function loadRuntimeConfig(env = process.env) {
   const nodeEnv = String(env.NODE_ENV || "development").trim().toLowerCase();
-  const dataStore = String(env.DATA_STORE || "knex").trim().toLowerCase();
+  const requestedDataStore = String(env.DATA_STORE || "knex").trim().toLowerCase();
+  const dataStore = requestedDataStore === "prisma" ? "knex" : requestedDataStore;
   const maxJsonBodyBytes = parsePositiveInt(env.MAX_JSON_BODY_BYTES, DEFAULT_MAX_JSON_BODY_BYTES);
   const requireHttps = parseBoolean(env.REQUIRE_HTTPS, nodeEnv === "production");
 
@@ -27,8 +28,8 @@ export function loadRuntimeConfig(env = process.env) {
     throw new Error(`Unsupported NODE_ENV: ${nodeEnv}`);
   }
 
-  if (!["memory", "knex", "prisma"].includes(dataStore)) {
-    throw new Error(`Unsupported DATA_STORE: ${dataStore}`);
+  if (!["memory", "knex"].includes(dataStore)) {
+    throw new Error(`Unsupported DATA_STORE: ${requestedDataStore}`);
   }
 
   const jwtSecret = String(env.JWT_SECRET || "").trim();

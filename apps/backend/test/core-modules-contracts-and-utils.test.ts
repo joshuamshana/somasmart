@@ -38,7 +38,6 @@ import {
 } from "../core/auth/tokens.mjs";
 import { getBootstrapSeedConfig } from "../core/config/bootstrap.mjs";
 import { getTraceId as getServiceTraceId, requirePlatformAccess, requireTenantAccess } from "../core/services/helpers.mjs";
-import { PrismaStore } from "../core/data/prismaStore.mjs";
 import "../core/data/store.mjs";
 import "../core/types.mjs";
 
@@ -190,53 +189,5 @@ describe("core contracts and utility modules", () => {
     const traceFromHeader = getServiceTraceId({ headers: { "x-trace-id": "trace_srv" } } as never);
     expect(traceFromHeader).toBe("trace_srv");
     expect(getServiceTraceId({ headers: {} } as never)).toMatch(/^[0-9a-f-]{36}$/i);
-  });
-
-  it("covers key PrismaStore branches with a mock prisma client", async () => {
-    const prisma = {
-      project: {
-        findUnique: async ({ where }: { where: { key?: string; id?: string } }) => {
-          if (where.key === "projectkey") {
-            return {
-              id: "prj_1",
-              key: "projectkey",
-              name: "Project Key",
-              status: "active",
-              createdAt: new Date("2024-01-01T00:00:00.000Z"),
-              updatedAt: new Date("2024-01-01T00:00:00.000Z")
-            };
-          }
-          return null;
-        },
-        create: async () => {
-          throw new Error("dup");
-        }
-      },
-      platformSession: {
-        findUnique: async () => null,
-        update: async () => undefined
-      },
-      blobManifest: {
-        findMany: async () => [{ cid: "cid_1" }]
-      },
-      tenantSession: {
-        findUnique: async () => null
-      }
-    };
-
-    const store = new PrismaStore(prisma as never);
-
-    const project = await store.getProjectByKey(" ProjectKey ");
-    expect(project?.key).toBe("projectkey");
-
-    await expect(store.createProject({ key: "A", name: "A" })).rejects.toThrow("PROJECT_KEY_EXISTS");
-
-    await expect(store.updatePlatformSession("missing", { revokedAt: new Date().toISOString() })).resolves.toBeUndefined();
-
-    const missing = await store.listMissingBlobs("prj_1", ["cid_1", "cid_2"]);
-    expect(missing).toEqual(["cid_2"]);
-    expect(await store.listMissingBlobs("prj_1", [])).toEqual([]);
-
-    expect(await store.createOfflineTicketForTenantSession("missing")).toBeNull();
   });
 });

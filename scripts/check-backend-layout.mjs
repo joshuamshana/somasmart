@@ -41,13 +41,10 @@ const forbiddenImportFragments = [
   "from '../core/data/",
   "from '../core/contracts",
   "from '../core/lib/crypto",
-  'from "@prisma/client"',
-  'from "prisma"',
   'from "jose"'
 ];
 
 const forbiddenImplementationPatterns = [
-  'new PrismaClient(',
   'pbkdf2Sync(',
   'SignJWT(',
   'jwtVerify(',

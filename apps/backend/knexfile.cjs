@@ -10,10 +10,10 @@ module.exports = {
   migrations: {
     directory: path.resolve(__dirname, "migrations"),
     extension: "mjs",
+    loadExtensions: [".mjs"],
   },
   pool: {
     min: 0,
     max: 10,
   },
 };
-

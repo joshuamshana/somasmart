@@ -11,7 +11,7 @@ Scope: multi-project black-box sync backend with project isolation, platform con
 Current implementation includes:
 - Platform control plane endpoints (`/platform/*`) with platform token class checks
 - Tenant endpoint token boundaries (`/auth/*`, `/sync/*`)
-- In-memory runtime data store (`MemoryStore`) with Prisma schema scaffold for persistence migration
+- In-memory and database runtime data stores (`MemoryStore`, `KnexStore`)
 - API-level backend E2E tests under `apps/backend/test/e2e/*`
 - Core-module utility and contract tests under `apps/backend/test/core-modules-contracts-and-utils.test.ts`
 
@@ -55,8 +55,8 @@ Current implementation includes:
 | BREQ-1509 | Cross-project access is denied for non-platform principals. | done |
 
 ## Next implementation step
-The next step is **Prisma persistence first**:
-1. Implement `PrismaStore` for `DataStore` contract parity.
-2. Wire store selection by environment (`MEMORY` vs `PRISMA`) in app bootstrap.
-3. Add migrations + seeds for `somasmart`, `rafikiplus`, and `platform_admin`.
-4. Run full backend test suite against Prisma-backed runtime.
+The next step is **Knex persistence hardening**:
+1. Expand migration coverage for lifecycle, sync, and audit edge cases.
+2. Improve seed automation for `somasmart`, `rafikiplus`, and `platform_admin`.
+3. Run full backend test suite against database-backed runtime in CI.
+4. Close remaining `partial` BREQ items with test-backed delivery.

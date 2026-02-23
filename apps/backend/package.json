@@ -10,14 +10,9 @@
     "test:watch": "vitest --config vitest.config.mjs",
     "knex:migrate:make": "knex migrate:make --knexfile knexfile.cjs",
     "knex:migrate:latest": "knex migrate:latest --knexfile knexfile.cjs",
-    "knex:migrate:rollback": "knex migrate:rollback --knexfile knexfile.cjs",
-    "prisma:init": "node scripts/prisma-init.mjs",
-    "prisma:generate": "./node_modules/.bin/prisma generate",
-    "prisma:migrate": "./node_modules/.bin/prisma migrate dev",
-    "prisma:deploy": "./node_modules/.bin/prisma migrate deploy"
+    "knex:migrate:rollback": "knex migrate:rollback --knexfile knexfile.cjs"
   },
   "dependencies": {
-    "@prisma/client": "^6.19.2",
     "dotenv": "^16.6.1",
     "knex": "^3.1.0",
     "pg": "^8.13.1",
@@ -25,7 +20,6 @@
   },
   "devDependencies": {
     "@types/node": "^22.10.10",
-    "prisma": "^6.19.2",
     "typescript": "^5.7.3",
     "vitest": "^2.1.8"
   }

@@ -167,11 +167,9 @@ export async function checkBackendReadiness() {
   } catch (error) {
     const rawMessage = error instanceof Error ? error.message : '';
     const message = rawMessage && rawMessage.trim() ? rawMessage : 'Runtime initialization failed';
-    const rawStore = String(process.env.DATA_STORE || 'knex').toLowerCase();
-    const normalizedStore = rawStore === 'prisma' ? 'knex' : rawStore;
     return {
       ok: false,
-      store: normalizedStore,
+      store: String(process.env.DATA_STORE || 'knex').toLowerCase(),
       message
     };
   }
