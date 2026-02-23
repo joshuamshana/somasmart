@@ -438,4 +438,10 @@ export class MemoryStore {
         });
         return ticket;
     }
+    async checkReadiness() {
+        return {
+            ready: true,
+            store: "memory"
+        };
+    }
 }

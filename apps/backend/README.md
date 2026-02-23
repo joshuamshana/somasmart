@@ -13,12 +13,11 @@ This service implements a multi-project backend with:
 ```bash
 npm install
 cp .env.example .env
-npm run prisma:generate
-npm run prisma:migrate
+npm run knex:migrate:latest
 npm run dev
 ```
 
-Backend now uses Prisma + `DATABASE_URL` by default (physical DB).  
+Backend now uses Knex + `DATABASE_URL` by default (physical DB).  
 For temporary in-memory mode, set `DATA_STORE=memory`.
 
 ## Required bootstrap env
@@ -32,6 +31,13 @@ Backend startup requires these env vars (see `.env.example`):
 
 Optional:
 - `CORS_ORIGINS` comma-separated frontend origins allowed to call the API. Default allows common local dev ports.
+- `MAX_JSON_BODY_BYTES` max JSON request payload size (default `1048576`).
+- `REQUIRE_HTTPS` enforce HTTPS at the guard layer (`true` by default in production).
+
+Production safeguards:
+- `NODE_ENV=production` requires `DATA_STORE=knex` (or unset default).
+- `JWT_SECRET` must be set and at least 32 characters.
+- Expired sessions are rejected on `/auth/refresh` and `/platform/auth/refresh`.
 
 On startup, the API idempotently ensures:
 - one project from `SEED_PROJECT_*`

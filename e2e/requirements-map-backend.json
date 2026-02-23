@@ -3,7 +3,8 @@
     "apps/backend/test/auth-offline-enrollment-policy.test.ts"
   ],
   "BREQ-1002": [
-    "apps/backend/test/auth-offline-enrollment-policy.test.ts"
+    "apps/backend/test/auth-offline-enrollment-policy.test.ts",
+    "apps/backend/test/e2e/tenant-auth-lifecycle.api.spec.ts"
   ],
   "BREQ-1003": [
     "apps/backend/test/auth-offline-enrollment-policy.test.ts"
@@ -51,6 +52,7 @@
   ],
   "BREQ-1302": [],
   "BREQ-1303": [
+    "apps/backend/test/e2e/backend-negative-paths.api.spec.ts",
     "apps/backend/test/e2e/platform-data-mutation-audit.api.spec.ts"
   ],
   "BREQ-1401": [
@@ -88,12 +90,17 @@
     "apps/backend/test/e2e/platform-data-mutation-audit.api.spec.ts"
   ],
   "BREQ-1506": [
+    "apps/backend/test/e2e/backend-negative-paths.api.spec.ts",
     "apps/backend/test/e2e/platform-vs-tenant-token-boundary.api.spec.ts"
   ],
   "BREQ-1507": [
-    "apps/backend/test/e2e/platform-vs-tenant-token-boundary.api.spec.ts"
+    "apps/backend/test/e2e/backend-negative-paths.api.spec.ts",
+    "apps/backend/test/e2e/platform-vs-tenant-token-boundary.api.spec.ts",
+    "apps/backend/test/e2e/tenant-auth-lifecycle.api.spec.ts"
   ],
-  "BREQ-1508": [],
+  "BREQ-1508": [
+    "apps/backend/test/e2e/platform-reindex-job.api.spec.ts"
+  ],
   "BREQ-1509": [
     "apps/backend/test/e2e/tenant-isolation-under-platform-ops.api.spec.ts"
   ]

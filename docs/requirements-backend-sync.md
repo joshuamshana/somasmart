@@ -13,6 +13,7 @@ Current implementation includes:
 - Tenant endpoint token boundaries (`/auth/*`, `/sync/*`)
 - In-memory runtime data store (`MemoryStore`) with Prisma schema scaffold for persistence migration
 - API-level backend E2E tests under `apps/backend/test/e2e/*`
+- Core-module utility and contract tests under `apps/backend/test/core-modules-contracts-and-utils.test.ts`
 
 ## Requirements register
 | Requirement | Statement | Status |
@@ -50,7 +51,7 @@ Current implementation includes:
 | BREQ-1505 | Platform operations are fully audited with trace metadata. | done |
 | BREQ-1506 | Tenant identities cannot call `/platform/*` endpoints. | done |
 | BREQ-1507 | Platform tokens cannot call tenant `/auth/*` or `/sync/*` routes. | done |
-| BREQ-1508 | Management surface is API-only in v1. | partial |
+| BREQ-1508 | Management surface is API-only in v1. | done |
 | BREQ-1509 | Cross-project access is denied for non-platform principals. | done |
 
 ## Next implementation step

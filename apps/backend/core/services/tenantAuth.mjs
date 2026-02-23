@@ -2,6 +2,12 @@ import { tenantLoginSchema, tenantRegisterSchema } from "../contracts.mjs";
 import { expectTenantAccess, expectTenantRefresh, signTenantAccessToken, signTenantRefreshToken, verifyAndExtract } from "../auth/tokens.mjs";
 import { addDays } from "../lib/common.mjs";
 import { hashSecret, verifySecret } from "../lib/crypto.mjs";
+
+function isExpired(isoTimestamp) {
+    const ms = Date.parse(String(isoTimestamp || ""));
+    return !Number.isFinite(ms) || ms <= Date.now();
+}
+
 export async function registerTenantAuthRoutes(app) {
     app.post("/auth/register", async (request, reply) => {
         const parsed = tenantRegisterSchema.safeParse(request.body);
@@ -116,6 +122,9 @@ export async function registerTenantAuthRoutes(app) {
         const session = await app.store.findTenantSessionById(claims.sid);
         if (!session || session.revokedAt) {
             return reply.status(401).send({ code: "AUTH_SESSION_REVOKED" });
+        }
+        if (isExpired(session.expiresAt)) {
+            return reply.status(401).send({ code: "AUTH_SESSION_EXPIRED" });
         }
         if (!verifySecret(body.refreshToken, session.refreshHash)) {
             return reply.status(401).send({ code: "AUTH_INVALID" });
